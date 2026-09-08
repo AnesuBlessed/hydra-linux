@@ -383,6 +383,10 @@ systemctl --user status pipewire wireplumber
 
 ## Acknowledgments
 
+### Serpantinum
+
+The Quickshell desktop shell in Hydra Linux is built on [Serpantinum](https://github.com/ilyamiro/serpantinum) by [ilyamiro](https://github.com/ilyamiro). Serpantinum provides the foundational QML widget architecture, IPC system, and overall shell design for Wayland compositors. The original look and feel has been intentionally preserved because the design is already clean, functional, and well-suited for a daily-driver desktop. Rather than redesigning for the sake of it, Hydra Linux focuses on extending the shell with additional features, deeper system integration, and a unified installer experience.
+
 ### Silent SDDM
 
 The login greeter included in Hydra Linux is based on [Silent SDDM](https://github.com/uiriansan/SilentSDDM) by [uiriansan](https://github.com/uiriansan). It provides the animated video wallpaper support, multiple color presets, and the modular QML architecture that powers the greeter experience.
