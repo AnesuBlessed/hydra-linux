@@ -381,6 +381,22 @@ systemctl --user status pipewire wireplumber
 
 ---
 
+## Acknowledgments
+
+### Silent SDDM
+
+The login greeter included in Hydra Linux is based on [Silent SDDM](https://github.com/uiriansan/SilentSDDM) by [uiriansan](https://github.com/uiriansan). It provides the animated video wallpaper support, multiple color presets, and the modular QML architecture that powers the greeter experience.
+
+For standalone installation or more information about Silent SDDM, visit their repository:
+
+```bash
+git clone -b main --depth=1 https://github.com/uiriansan/SilentSDDM
+cd SilentSDDM
+./install.sh
+```
+
+---
+
 ## License
 
 This project is licensed under the [GNU General Public License v3.0](LICENSE).
