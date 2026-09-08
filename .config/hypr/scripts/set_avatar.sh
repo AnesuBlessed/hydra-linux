@@ -20,11 +20,11 @@ fi
 
 TMP_AVATAR="/tmp/hydra_avatar_${USER}.png"
 
-# Center crop 1:1 square and resize to 512x512
+# Center crop 1:1 square and upscale/resize to 1024x1024 with Lanczos filtering
 if command -v magick &>/dev/null; then
-    magick "$TARGET_IMG" -gravity center -crop 1:1 +repage -resize 512x512 "$TMP_AVATAR"
+    magick "$TARGET_IMG" -gravity center -crop 1:1 +repage -filter Lanczos -resize 1024x1024 -unsharp 0x0.5+0.5+0.005 "$TMP_AVATAR"
 elif command -v convert &>/dev/null; then
-    convert "$TARGET_IMG" -gravity center -crop 1:1 +repage -resize 512x512 "$TMP_AVATAR"
+    convert "$TARGET_IMG" -gravity center -crop 1:1 +repage -filter Lanczos -resize 1024x1024 -unsharp 0x0.5+0.5+0.005 "$TMP_AVATAR"
 else
     cp "$TARGET_IMG" "$TMP_AVATAR"
 fi
