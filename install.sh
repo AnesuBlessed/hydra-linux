@@ -147,9 +147,11 @@ CORE_PKGS=(
     "sddm" "qt6-svg" "qt6-virtualkeyboard" "qt6-multimedia-ffmpeg" "qt6-imageformats"
     # Audio & Media
     "pipewire" "wireplumber" "pipewire-pulse" "pipewire-alsa" "pipewire-jack" "libpulse" "pamixer" "playerctl" "pavucontrol" "alsa-utils" "easyeffects" "lsp-plugins"
+    # User Applications & Tools (mapped to default keybinds)
+    "firefox" "dolphin" "nautilus" "kitty"
     # Screen capture & Utilities
     "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays"
-    "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl" "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git" "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon" "nautilus"
+    "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl" "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git" "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon"
     # Qt / GTK engines
     "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects" "qt6-wayland" "qt5ct" "qt6ct" "adw-gtk-theme" "qt6-5compat" "qt6-websockets" "python-websockets"
 )
