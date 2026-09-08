@@ -17,14 +17,18 @@ hl.config({
         },
     },
     decoration = {
-        rounding = 4,
+        rounding = 8,
         active_opacity = 1.0,
-        inactive_opacity = 1.0,
+        inactive_opacity = 0.94,
+        dim_inactive = true,
+        dim_strength = 0.08,
         blur = {
             enabled = true,
             size = 8,
             passes = 2,
             new_optimizations = true,
+            xray = true,
+            ignore_opacity = true,
         },
         shadow = {
             enabled = false,
@@ -48,7 +52,7 @@ hl.config({
         vrr = 0,
     },
     render = {
-        direct_scanout = 0,
+        direct_scanout = 1,
     },
     ecosystem = {
         no_update_news = true,
@@ -60,65 +64,74 @@ hl.config({
 })
 
 hl.curve("myBezier", { type = "bezier", points = { {0.05, 0.9}, {0.1, 1.05} } })
+hl.curve("smoothOut", { type = "bezier", points = { {0.16, 1}, {0.3, 1} } })
+hl.curve("smoothIn", { type = "bezier", points = { {0.25, 1}, {0.5, 1} } })
+
 hl.animation({
     leaf = "windows",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
-    style = "popin 80%",
+    speed = 4,
+    bezier = "smoothOut",
+    style = "popin 85%",
 })
 hl.animation({
     leaf = "windowsOut",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
-    style = "popin 80%",
+    speed = 3,
+    bezier = "smoothIn",
+    style = "popin 85%",
+})
+hl.animation({
+    leaf = "windowsMove",
+    enabled = true,
+    speed = 4,
+    bezier = "smoothOut",
 })
 hl.animation({
     leaf = "layers",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
+    speed = 4,
+    bezier = "smoothOut",
     style = "fade",
 })
 hl.animation({
     leaf = "layersIn",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
+    speed = 3,
+    bezier = "smoothOut",
     style = "fade",
 })
 hl.animation({
     leaf = "layersOut",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
+    speed = 3,
+    bezier = "smoothIn",
     style = "fade",
 })
 hl.animation({
     leaf = "fade",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
+    speed = 4,
+    bezier = "smoothOut",
 })
 hl.animation({
     leaf = "workspaces",
     enabled = true,
     speed = 5,
-    bezier = "myBezier",
+    bezier = "smoothOut",
     style = "slide",
 })
 hl.animation({
     leaf = "specialWorkspaceIn",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
+    speed = 4,
+    bezier = "smoothOut",
     style = "fade",
 })
 hl.animation({
     leaf = "specialWorkspaceOut",
     enabled = true,
-    speed = 5,
-    bezier = "myBezier",
+    speed = 3,
+    bezier = "smoothIn",
     style = "fade",
 })
