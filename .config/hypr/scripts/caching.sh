@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 export QS_RUN_DIR="${XDG_RUNTIME_DIR:-/tmp}/quickshell"
-export QS_CACHE_DIR="$QS_RUN_DIR/cache"
-export QS_STATE_DIR="$QS_RUN_DIR/state"
+export QS_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/quickshell"
+export QS_STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/quickshell"
 export QS_LOG_DIR="$QS_RUN_DIR/logs"
 
 mkdir -p "$QS_CACHE_DIR" "$QS_STATE_DIR" "$QS_RUN_DIR" "$QS_LOG_DIR"
