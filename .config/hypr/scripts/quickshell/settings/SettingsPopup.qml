@@ -125,7 +125,7 @@ Item {
     }
 
     function maxHighlightForTab(tab) {
-        if (tab === 0) return 6;
+        if (tab === 0) return 7;
         if (tab === 1) return 3;
         if (tab === 2) return dynamicKeybindsModel.count - 1;
         if (tab === 3) return dynamicStartupModel.count - 1;
@@ -146,6 +146,8 @@ Item {
             } else if (root.highlightedBox === 5) {
                 if (generalLoader.item) generalLoader.item.focusWpDirInput();
             } else if (root.highlightedBox === 6) {
+            } else if (root.highlightedBox === 7) {
+                if (generalLoader.item) generalLoader.item.triggerAvatarChooser();
             }
         } else if (root.currentTab === 1) {
             if (root.highlightedBox === 0) {
@@ -183,6 +185,7 @@ Item {
             else if (box === 3 || box === 4) approxY = root.s(240);
             else if (box === 5) approxY = root.s(400);
             else if (box === 6) approxY = root.s(520);
+            else if (box === 7) approxY = root.s(640);
             generalLoader.item.scrollToBox(approxY);
         } else if (root.currentTab === 1 && weatherLoader.item) {
             let approxY = 0;
@@ -615,6 +618,7 @@ Item {
                     else if (targetBox === 3 || targetBox === 4) approxY = root.s(240);
                     else if (targetBox === 5) approxY = root.s(400);
                     else if (targetBox === 6) approxY = root.s(520);
+                    else if (targetBox === 7) approxY = root.s(640);
                     generalLoader.item.scrollTo(approxY);
                 } else if (targetTab === 1 && weatherLoader.item) {
                     if (targetBox === 1) approxY = root.s(140);
@@ -882,6 +886,7 @@ Item {
         { tab: 0, boxIndex: 4, label: "Layout shortcut",   desc: "Toggle combination",     icon: "󰯍", color: "teal" },
         { tab: 0, boxIndex: 5, label: "Wallpaper directory",desc: "Absolute source path",  icon: "󰋩", color: "mauve" },
         { tab: 0, boxIndex: 6, label: "Workspaces",        desc: "Static count in topbar", icon: "󰽿", color: "red" },
+        { tab: 0, boxIndex: 7, label: "Profile Avatar",    desc: "Change user picture",    icon: "󰀄", color: "pink" },
         { tab: 1, boxIndex: 1, label: "API Key",           desc: "OpenWeather API key",    icon: "󰌆", color: "blue" },
         { tab: 1, boxIndex: 2, label: "City ID",           desc: "OpenWeather city ID",    icon: "󰖐", color: "blue" },
         { tab: 1, boxIndex: 3, label: "Temperature Unit",  desc: "Celsius / Fahrenheit / K", icon: "󰔄", color: "blue" }
@@ -982,11 +987,54 @@ Item {
 
             function focusLangInput() { langInput.forceActiveFocus(); }
             function focusWpDirInput() { wpDirInput.forceActiveFocus(); }
+            function focusAvatarInput() { if (typeof avatarPathInput !== "undefined") avatarPathInput.forceActiveFocus(); }
+            function triggerAvatarChooser() {
+                avatarChooserProc.targetPath = "";
+                avatarChooserProc.running = false;
+                avatarChooserProc.running = true;
+            }
             function layoutListIncrementIndex() { layoutListView.incrementCurrentIndex(); }
             function layoutListDecrementIndex() { layoutListView.decrementCurrentIndex(); }
             function acceptLayoutSelection() {
                 if (layoutListView.currentIndex >= 0 && layoutListView.currentIndex < root.kbToggleModelArr.length) {
                     Config.kbOptions = root.kbToggleModelArr[layoutListView.currentIndex].val;
+                }
+            }
+
+            property string userAvatarPath: ""
+            property int avatarReloadToken: 0
+
+            Process {
+                id: avatarDetectProc
+                running: true
+                command: ["bash", "-c", "if [ -f ~/.face.icon ]; then readlink -f ~/.face.icon; elif [ -f ~/.face ]; then readlink -f ~/.face; fi"]
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        if (this.text && this.text.trim() !== "") {
+                            generalTabRoot.userAvatarPath = this.text.trim();
+                        }
+                    }
+                }
+            }
+
+            Process {
+                id: avatarChooserProc
+                property string targetPath: ""
+                command: targetPath !== ""
+                    ? ["bash", "-c", "bash ~/.config/hypr/scripts/set_avatar.sh \"" + targetPath.replace(/"/g, '\\"') + "\""]
+                    : ["bash", "-c", "bash ~/.config/hypr/scripts/set_avatar.sh"]
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        if (this.text && this.text.trim() !== "") {
+                            generalTabRoot.userAvatarPath = this.text.trim();
+                        }
+                        generalTabRoot.avatarReloadToken++;
+                    }
+                }
+                onRunningChanged: {
+                    if (!running) {
+                        targetPath = "";
+                    }
                 }
             }
             function scrollTo(y) {
@@ -1756,6 +1804,255 @@ Item {
                                             Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
                                         }
                                         MouseArea { id: wsPlusMa; anchors.fill: parent; hoverEnabled: true; onClicked: Config.workspaceCount = Math.min(10, Config.workspaceCount + 1) }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ── Box 7: Profile Avatar ─────────────────────────────────
+                    Rectangle {
+                        id: box7
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: col7av.implicitHeight + root.s(32)
+                        radius: root.s(12)
+
+                        property bool isActive: root.highlightedBox === 7
+                        color: isActive ? root.pink : root.surface0
+                        border.color: isActive ? root.pink : root.surface1
+                        border.width: 1
+                        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+
+                        MouseArea { anchors.fill: parent; onClicked: root.highlightedBox = 7; z: -1 }
+
+                        ColumnLayout {
+                            id: col7av
+                            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right; anchors.margins: root.s(16)
+                            spacing: root.s(14)
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: root.s(14)
+
+                                Item {
+                                    Layout.preferredWidth: root.s(22); Layout.alignment: Qt.AlignVCenter
+                                    Text {
+                                        anchors.centerIn: parent; text: "󰀄"; font.family: "Iosevka Nerd Font"; font.pixelSize: root.s(18)
+                                        color: box7.isActive ? root.base : root.pink
+                                        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true; Layout.alignment: Qt.AlignVCenter; spacing: root.s(3)
+                                    Text {
+                                        text: "Profile Avatar"; font.family: "Inter"; font.weight: Font.Bold; font.pixelSize: root.s(14)
+                                        color: box7.isActive ? root.base : root.text; Layout.fillWidth: true
+                                        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+                                    }
+                                    Text {
+                                        text: "Change user picture (circle display)"; font.family: "Inter"; font.pixelSize: root.s(11)
+                                        color: box7.isActive ? Qt.alpha(root.base, 0.75) : Qt.alpha(root.subtext0, 0.7); Layout.fillWidth: true
+                                        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+                                    }
+                                }
+
+                                // Circular Avatar Preview
+                                Item {
+                                    Layout.preferredWidth: root.s(48)
+                                    Layout.preferredHeight: root.s(48)
+                                    Layout.alignment: Qt.AlignVCenter
+
+                                    Rectangle {
+                                        id: avatarMaskBox7
+                                        anchors.fill: parent
+                                        radius: width / 2
+                                        color: "black"
+                                        visible: false
+                                        layer.enabled: true
+                                    }
+
+                                    Image {
+                                        id: avatarPreviewImg
+                                        anchors.fill: parent
+                                        source: generalTabRoot.userAvatarPath !== "" ? ("file://" + generalTabRoot.userAvatarPath.replace("file://", "") + "?t=" + generalTabRoot.avatarReloadToken) : ""
+                                        fillMode: Image.PreserveAspectCrop
+                                        visible: false
+                                        asynchronous: true
+                                        smooth: true
+                                        cache: false
+                                    }
+
+                                    MultiEffect {
+                                        source: avatarPreviewImg
+                                        anchors.fill: avatarPreviewImg
+                                        maskEnabled: true
+                                        maskSource: avatarMaskBox7
+                                        visible: generalTabRoot.userAvatarPath !== ""
+                                    }
+
+                                    Rectangle {
+                                        anchors.fill: parent
+                                        radius: width / 2
+                                        color: generalTabRoot.userAvatarPath === "" ? (box7.isActive ? Qt.alpha(root.base, 0.2) : root.surface1) : "transparent"
+                                        border.color: box7.isActive ? root.base : root.pink
+                                        border.width: 2
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: ""
+                                            font.family: "Iosevka Nerd Font"
+                                            font.pixelSize: root.s(22)
+                                            color: box7.isActive ? root.base : root.pink
+                                            visible: generalTabRoot.userAvatarPath === ""
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: avatarPreviewMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.highlightedBox = 7;
+                                            avatarChooserProc.targetPath = "";
+                                            avatarChooserProc.running = false;
+                                            avatarChooserProc.running = true;
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Controls Row: Path Input + Apply button + Browse button
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: root.s(8)
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: root.s(36)
+                                    radius: root.s(8)
+                                    color: box7.isActive ? Qt.alpha(root.base, 0.15) : root.surface1
+                                    border.color: avatarPathInput.activeFocus
+                                        ? (box7.isActive ? root.base : root.pink)
+                                        : (box7.isActive ? Qt.alpha(root.base, 0.3) : root.surface2)
+                                    border.width: 1
+                                    Behavior on border.color { ColorAnimation { duration: 200 } }
+                                    Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+
+                                    TextInput {
+                                        id: avatarPathInput
+                                        anchors.fill: parent
+                                        anchors.margins: root.s(8)
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        text: generalTabRoot.userAvatarPath
+                                        font.family: "JetBrains Mono"
+                                        font.pixelSize: root.s(11)
+                                        color: box7.isActive ? root.base : root.text
+                                        clip: true
+                                        selectByMouse: true
+                                        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+
+                                        Keys.onReturnPressed: (event) => applyCustomAvatar(event)
+                                        Keys.onEnterPressed: (event) => applyCustomAvatar(event)
+
+                                        function applyCustomAvatar(event) {
+                                            let p = avatarPathInput.text.trim();
+                                            if (p !== "") {
+                                                avatarChooserProc.targetPath = p;
+                                                avatarChooserProc.running = false;
+                                                avatarChooserProc.running = true;
+                                            }
+                                            focus = false;
+                                            if (event) event.accepted = true;
+                                        }
+
+                                        Text {
+                                            text: "Enter image path or click Browse..."; color: box7.isActive ? Qt.alpha(root.base, 0.5) : root.subtext0
+                                            visible: !parent.text && !parent.activeFocus; font: parent.font; anchors.verticalCenter: parent.verticalCenter
+                                        }
+                                    }
+                                }
+
+                                // Apply button
+                                Rectangle {
+                                    Layout.preferredWidth: root.s(64)
+                                    Layout.preferredHeight: root.s(36)
+                                    radius: root.s(8)
+                                    color: applyBtnMa.pressed ? Qt.alpha(root.pink, 0.4) : (applyBtnMa.containsMouse ? (box7.isActive ? Qt.alpha(root.base, 0.3) : Qt.alpha(root.pink, 0.2)) : (box7.isActive ? Qt.alpha(root.base, 0.15) : root.surface1))
+                                    border.color: box7.isActive ? root.base : root.pink
+                                    border.width: 1
+                                    Behavior on color { ColorAnimation { duration: 200 } }
+
+                                    RowLayout {
+                                        anchors.centerIn: parent
+                                        spacing: root.s(4)
+                                        Text {
+                                            text: "󰄬"
+                                            font.family: "Iosevka Nerd Font"
+                                            font.pixelSize: root.s(12)
+                                            color: box7.isActive ? root.base : root.pink
+                                        }
+                                        Text {
+                                            text: "Set"
+                                            font.family: "Inter"
+                                            font.weight: Font.DemiBold
+                                            font.pixelSize: root.s(12)
+                                            color: box7.isActive ? root.base : root.pink
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: applyBtnMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.highlightedBox = 7;
+                                            avatarPathInput.applyCustomAvatar(null);
+                                        }
+                                    }
+                                }
+
+                                // Browse button
+                                Rectangle {
+                                    Layout.preferredWidth: root.s(90)
+                                    Layout.preferredHeight: root.s(36)
+                                    radius: root.s(8)
+                                    color: browseMa.pressed ? Qt.alpha(root.pink, 0.4) : (browseMa.containsMouse ? (box7.isActive ? Qt.alpha(root.base, 0.3) : Qt.alpha(root.pink, 0.2)) : (box7.isActive ? Qt.alpha(root.base, 0.15) : root.surface1))
+                                    border.color: box7.isActive ? root.base : root.pink
+                                    border.width: 1
+                                    Behavior on color { ColorAnimation { duration: 200 } }
+
+                                    RowLayout {
+                                        anchors.centerIn: parent
+                                        spacing: root.s(6)
+                                        Text {
+                                            text: "󰉋"
+                                            font.family: "Iosevka Nerd Font"
+                                            font.pixelSize: root.s(13)
+                                            color: box7.isActive ? root.base : root.pink
+                                        }
+                                        Text {
+                                            text: "Browse"
+                                            font.family: "Inter"
+                                            font.weight: Font.DemiBold
+                                            font.pixelSize: root.s(12)
+                                            color: box7.isActive ? root.base : root.pink
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        id: browseMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.highlightedBox = 7;
+                                            avatarChooserProc.targetPath = "";
+                                            avatarChooserProc.running = false;
+                                            avatarChooserProc.running = true;
+                                        }
                                     }
                                 }
                             }
