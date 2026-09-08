@@ -103,4 +103,17 @@ fi
 # Reload Hyprland window border colors
 hyprctl reload >/dev/null 2>&1 || true
 
+# ------------------------------------------------------------------------------
+# 4. Sync Matugen Colors to Silent SDDM (if writable)
+# ------------------------------------------------------------------------------
+SDDM_CONF="/usr/share/sddm/themes/silent/configs/rei.conf"
+if [ -f "$SDDM_CONF" ] && [ -w "$SDDM_CONF" ]; then
+    PRIMARY_HEX=$(jq -r '.primary // empty' "$QS_JSON" 2>/dev/null)
+    if [ -n "$PRIMARY_HEX" ]; then
+        sed -i -E "s/color = \"#[A-Fa-f0-9]{6}\"/color = \"$PRIMARY_HEX\"/g" "$SDDM_CONF"
+        sed -i -E "s/active-border-color = \"#[A-Fa-f0-9]{6}\"/active-border-color = \"$PRIMARY_HEX\"/g" "$SDDM_CONF"
+        sed -i -E "s/content-color = \"#[A-Fa-f0-9]{6}\"/content-color = \"$PRIMARY_HEX\"/g" "$SDDM_CONF"
+    fi
+fi
+
 

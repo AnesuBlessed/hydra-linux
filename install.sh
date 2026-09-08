@@ -321,6 +321,17 @@ if [ "$INSTALL_SDDM" = true ] && [ -d "$SCRIPT_DIR/sddm/themes/silent" ]; then
         sudo cp -f "$SCRIPT_DIR/sddm/sddm.conf" /etc/sddm.conf
     fi
 
+    # Allow Matugen to sync accent colors to SDDM presets dynamically
+    sudo chmod 666 /usr/share/sddm/themes/silent/configs/*.conf 2>/dev/null || true
+
+    # User Avatar Integration
+    sudo mkdir -p /usr/share/sddm/faces
+    if [ -f "$HOME/.face.icon" ]; then
+        sudo cp -f "$HOME/.face.icon" "/usr/share/sddm/faces/$USER.face.icon"
+    elif [ -f "$HOME/.face" ]; then
+        sudo cp -f "$HOME/.face" "/usr/share/sddm/faces/$USER.face.icon"
+    fi
+
     # Disable conflicting display managers
     DMS=("gdm" "lightdm" "lxdm" "ly")
     for dm in "${DMS[@]}"; do

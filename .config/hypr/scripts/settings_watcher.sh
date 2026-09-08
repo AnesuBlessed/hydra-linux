@@ -38,11 +38,25 @@ compile_settings() {
     # Safely parse booleans so "false" doesn't trigger a fallback
     GUIDE_STARTUP=$(jq -r 'if has("openGuideAtStartup") then .openGuideAtStartup else true end' "$SETTINGS_FILE")
 
-    PIC_DIR="$(xdg-user-dir PICTURES 2>/dev/null || echo "$HOME/Pictures")"
-    VID_DIR="$(xdg-user-dir VIDEOS 2>/dev/null || echo "$HOME/Videos")"
+    PIC_DIR="$(xdg-user-dir PICTURES 2>/dev/null)"
+    [[ -z "$PIC_DIR" || "$PIC_DIR" == "$HOME" ]] && PIC_DIR="$HOME/Pictures"
+    VID_DIR="$(xdg-user-dir VIDEOS 2>/dev/null)"
+    [[ -z "$VID_DIR" || "$VID_DIR" == "$HOME" ]] && VID_DIR="$HOME/Videos"
 
     # Read the hardware variables injected by install.sh directly out of the JSON
     HW_ENV=$(jq -r '.hardwareEnvs[]? // empty' "$SETTINGS_FILE")
+
+    # Universal hardware acceleration detection fallback (works on any PC)
+    if [[ -z "$HW_ENV" ]]; then
+        GPU_RAW=$(lspci -nn 2>/dev/null | grep -iE 'vga|3d|display' || true)
+        if echo "$GPU_RAW" | grep -qi "nvidia"; then
+            HW_ENV=$'env = LIBVA_DRIVER_NAME,nvidia\nenv = __GLX_VENDOR_LIBRARY_NAME,nvidia\nenv = NVD_BACKEND,direct'
+        elif echo "$GPU_RAW" | grep -qi "amd\|advanced micro devices"; then
+            HW_ENV=$'env = LIBVA_DRIVER_NAME,radeonsi\nenv = VDPAU_DRIVER,radeonsi'
+        elif echo "$GPU_RAW" | grep -qi "intel"; then
+            HW_ENV=$'env = LIBVA_DRIVER_NAME,iHD\nenv = VDPAU_DRIVER,va_gl'
+        fi
+    fi
 
     # 1. Regenerate env.conf using the template
     echo "Regenerating env.conf..."

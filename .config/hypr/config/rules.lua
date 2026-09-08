@@ -39,6 +39,30 @@ hl.layer_rule({
     blur = true,
     ignore_alpha = 0.2,
 })
+hl.layer_rule({
+    name = "\"lr_quickshell\"",
+    match = {
+        namespace = "^(quickshell)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+hl.layer_rule({
+    name = "\"lr_qs_popups\"",
+    match = {
+        namespace = "^(qs-popups)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+hl.layer_rule({
+    name = "\"lr_qs_overlay\"",
+    match = {
+        namespace = "^(qs-floating-overlay)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
 
 -- ─────────────────────────────
 
