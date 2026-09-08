@@ -150,7 +150,7 @@ CORE_PKGS=(
     # User Applications & Tools (mapped to default keybinds)
     "firefox" "dolphin" "nautilus" "kitty"
     # Screen capture & Utilities
-    "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays"
+    "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays" "zenity"
     "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl" "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git" "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon"
     # Qt / GTK engines
     "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects" "qt6-wayland" "qt5ct" "qt6ct" "adw-gtk-theme" "qt6-5compat" "qt6-websockets" "python-websockets"
@@ -267,6 +267,16 @@ for cfg in "${CONFIGS_TO_DEPLOY[@]}"; do
     fi
 done
 
+# Deploy default profile avatar
+if [ -f "$SCRIPT_DIR/assets/default_avatar.png" ]; then
+    if [ ! -f "$HOME/.face.icon" ]; then
+        cp -f "$SCRIPT_DIR/assets/default_avatar.png" "$HOME/.face.icon"
+        cp -f "$SCRIPT_DIR/assets/default_avatar.png" "$HOME/.face"
+        chmod 644 "$HOME/.face.icon" "$HOME/.face"
+        echo -e "  -> ${C_GREEN}[ OK ] Default circular profile avatar deployed (~/.face.icon)${RESET}"
+    fi
+fi
+
 # Deploy utility cava wrapper
 if [ -f "$SCRIPT_DIR/utils/bin/cava" ]; then
     cp -f "$SCRIPT_DIR/utils/bin/cava" "$HOME/.local/bin/cava"
@@ -332,7 +342,11 @@ if [ "$INSTALL_SDDM" = true ] && [ -d "$SCRIPT_DIR/sddm/themes/silent" ]; then
         sudo cp -f "$HOME/.face.icon" "/usr/share/sddm/faces/$USER.face.icon"
     elif [ -f "$HOME/.face" ]; then
         sudo cp -f "$HOME/.face" "/usr/share/sddm/faces/$USER.face.icon"
+    elif [ -f "$SCRIPT_DIR/assets/default_avatar.png" ]; then
+        sudo cp -f "$SCRIPT_DIR/assets/default_avatar.png" "/usr/share/sddm/faces/$USER.face.icon"
     fi
+    sudo chown "$USER:$USER" "/usr/share/sddm/faces/$USER.face.icon" 2>/dev/null || true
+    sudo chmod 644 "/usr/share/sddm/faces/$USER.face.icon" 2>/dev/null || true
 
     # Disable conflicting display managers
     DMS=("gdm" "lightdm" "lxdm" "ly")
