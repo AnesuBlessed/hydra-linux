@@ -1,0 +1,16 @@
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  ◈ MONITORS & HDMI HOTPLUG CONFIGURATION
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Internal Laptop Screen (Primary)
+monitor = eDP-1, 1366x768@60.00, 0x0, 1
+
+# External HDMI Monitor / TV (Lock to stable 1080p @ 60Hz timing)
+monitor = HDMI-A-1, 1920x1080@60.00, 1366x0, 1
+
+# Fallback for any other external display / projector
+monitor = , preferred, auto, 1
+
+# Clamshell Mode: Turn off laptop screen when lid is closed
+bindl = , switch:on:Lid Switch, exec, hyprctl keyword monitor "eDP-1, disable"
+bindl = , switch:off:Lid Switch, exec, hyprctl keyword monitor "eDP-1, 1366x768@60.00, 0x0, 1"
