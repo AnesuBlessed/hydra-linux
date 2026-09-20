@@ -1522,7 +1522,7 @@ Variants {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: barWindow.s(10)
-                                    opacity: initAnimTrigger ? 1 : 0.0 
+                                    opacity: 1.0 
                                     Behavior on opacity { NumberAnimation { duration: 300 } }
                                     gradient: Gradient {
                                         orientation: Gradient.Horizontal
@@ -1628,5 +1628,4 @@ Variants {
             }
         }
     }
-}
 }
