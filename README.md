@@ -9,7 +9,18 @@
 ╚═╝  ╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝
 ```
 
-# Hydra Linux
+# 🐉 Hydra Linux
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Hyprland-Dynamic%20Tiling-blue?style=for-the-badge&logo=hyprland&logoColor=white" />
+  <img src="https://img.shields.io/badge/Quickshell-Desktop%20UI-purple?style=for-the-badge&logo=qt&logoColor=white" />
+  <img src="https://img.shields.io/badge/Matugen-Dynamic%20Colors-orange?style=for-the-badge&logo=materialdesign&logoColor=white" />
+  <img src="https://img.shields.io/badge/Arch_Linux-Native-1793d1?style=for-the-badge&logo=arch-linux&logoColor=white" />
+  <img src="https://img.shields.io/badge/License-GPL_3.0-green?style=for-the-badge" />
+</div>
+
+<br>
+
 
 **A complete, unified Hyprland desktop environment with Quickshell, Matugen dynamic theming, and Silent SDDM.**
 
