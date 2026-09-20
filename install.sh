@@ -152,6 +152,8 @@ CORE_PKGS=(
     # Screen capture & Utilities
     "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays" "zenity"
     "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl" "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git" "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon"
+    # Fonts
+    "ttf-jetbrains-mono-nerd" "ttf-iosevka-nerd"
     # Qt / GTK engines
     "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects" "qt6-wayland" "qt5ct" "qt6ct" "adw-gtk-theme" "qt6-5compat" "qt6-websockets" "python-websockets"
 )
@@ -295,15 +297,11 @@ if [ -f "$HOME/.config/hypr/scripts/settings_watcher.sh" ]; then
 fi
 
 # ==============================================================================
-# Phase 4: Fonts & Wallpapers
+# Phase 4: Wallpapers & Assets
 # ==============================================================================
-echo -e "\n${C_CYAN}[ INFO ]${RESET} Installing fonts and assets..."
-mkdir -p "$HOME/.local/share/fonts"
-if [ -d "$SCRIPT_DIR/.local/share/fonts" ]; then
-    cp -rn "$SCRIPT_DIR/.local/share/fonts/"* "$HOME/.local/share/fonts/" 2>/dev/null || true
-fi
+echo -e "\n${C_CYAN}[ INFO ]${RESET} Updating font cache..."
 fc-cache -fv >/dev/null 2>&1 || true
-echo -e "  -> ${C_GREEN}[ OK ] Fonts deployed and font cache updated.${RESET}"
+echo -e "  -> ${C_GREEN}[ OK ] Font cache updated.${RESET}"
 
 if [ "$INSTALL_WALLPAPERS" = true ]; then
     mkdir -p "$WALLPAPER_DIR"
