@@ -1498,7 +1498,8 @@ Variants {
                                     spacing: barWindow.s(8)
                                     Text { 
                                         anchors.verticalCenter: parent.verticalCenter
-                                        text: barWindow.powerProfile === "performance" ? "☕" : (barWindow.powerProfile === "power-saver" ? "🍃" : "⚖️"); 
+                                        text: barWindow.powerProfile === "performance" ? "" : (barWindow.powerProfile === "power-saver" ? "" : "󰾆");
+                                        font.family: "Iosevka Nerd Font"; 
                                         font.pixelSize: barWindow.s(16); 
                                         color: (barWindow.powerProfile === "performance" || barWindow.powerProfile === "power-saver") ? mocha.base : mocha.subtext0 
                                         Behavior on color { ColorAnimation { duration: 300 } }
