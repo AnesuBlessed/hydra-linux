@@ -250,6 +250,7 @@ Variants {
             property bool isMuted: false
             
             property string batPercent: "100%"
+            property string powerProfile: "balanced"
             property string batIcon: "󰁹"
             property string batStatus: "Unknown"
             
@@ -516,6 +517,8 @@ Variants {
             Process { id: btWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/bt_wait.sh"]; onExited: { btPoller.running = false; btPoller.running = true; } }
 
             Process {
+            Timer { id: powerProfilePoller; running: true; repeat: true; interval: 2000; onTriggered: powerProfileFetcher.running = true }
+            Process { id: powerProfileFetcher; command: ["bash", "-c", "powerprofilesctl get 2>/dev/null || echo \"balanced\""]; stdout: StdioCollector { onStreamFinished: { let txt = this.text.trim(); if (txt !== "") barWindow.powerProfile = txt; } } }
                 id: batteryPoller; running: true
                 command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/battery_fetch.sh"]
                 stdout: StdioCollector {
@@ -1457,6 +1460,60 @@ Variants {
                             }
 
                             Rectangle {
+                            Rectangle {
+                                property bool isHovered: powerMouse.containsMouse
+                                color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.6) : Qt.rgba(mocha.surface0.r, mocha.surface0.g, mocha.surface0.b, 0.4); 
+                                radius: barWindow.s(10); height: sysLayout.pillHeight;
+                                clip: true
+
+                                Rectangle {
+                                    anchors.fill: parent
+                                    radius: barWindow.s(10)
+                                    opacity: barWindow.powerProfile === "performance" ? 1.0 : (barWindow.powerProfile === "power-saver" ? 0.8 : 0.0)
+                                    Behavior on opacity { NumberAnimation { duration: 300 } }
+                                    gradient: Gradient {
+                                        orientation: Gradient.Horizontal
+                                        GradientStop { position: 0.0; color: barWindow.powerProfile === "performance" ? mocha.maroon : mocha.green; Behavior on color { ColorAnimation { duration: 300 } } }
+                                        GradientStop { position: 1.0; color: barWindow.powerProfile === "performance" ? Qt.lighter(mocha.maroon, 1.3) : Qt.lighter(mocha.green, 1.3); Behavior on color { ColorAnimation { duration: 300 } } }
+                                    }
+                                }
+                                
+                                property real targetWidth: powerLayoutRow.implicitWidth + barWindow.s(24)
+                                width: targetWidth
+                                Behavior on width { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
+                                
+                                scale: isHovered ? 1.05 : 1.0
+                                Behavior on scale { NumberAnimation { duration: 250; easing.type: Easing.OutExpo } }
+                                Behavior on color { ColorAnimation { duration: 200 } }
+
+                                property bool initAnimTrigger: false
+                                Timer { running: rightContent.showLayout && !parent.initAnimTrigger; interval: 150; onTriggered: parent.initAnimTrigger = true }
+                                opacity: initAnimTrigger ? 1 : 0
+                                transform: Translate { y: parent.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
+                                Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
+
+                                Row { 
+                                    id: powerLayoutRow
+                                    anchors.centerIn: parent
+                                    spacing: barWindow.s(8)
+                                    Text { 
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: barWindow.powerProfile === "performance" ? "☕" : (barWindow.powerProfile === "power-saver" ? "🍃" : "⚖️"); 
+                                        font.pixelSize: barWindow.s(16); 
+                                        color: (barWindow.powerProfile === "performance" || barWindow.powerProfile === "power-saver") ? mocha.base : mocha.subtext0 
+                                        Behavior on color { ColorAnimation { duration: 300 } }
+                                    }
+                                    Text { 
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        text: barWindow.powerProfile === "performance" ? "Turbo" : (barWindow.powerProfile === "power-saver" ? "Eco" : "Auto"); 
+                                        font.family: "JetBrains Mono"; font.pixelSize: barWindow.s(13); font.weight: Font.Black; 
+                                        color: (barWindow.powerProfile === "performance" || barWindow.powerProfile === "power-saver") ? mocha.base : mocha.text 
+                                        Behavior on color { ColorAnimation { duration: 300 } }
+                                    }
+                                }
+                                MouseArea { id: powerMouse; hoverEnabled: true; anchors.fill: parent; onClicked: { Quickshell.execDetached(["bash", "-c", "~/.config/hypr/scripts/power_toggle.sh"]); powerProfileFetcher.running = true; } }
+                            }
+                                                            Rectangle {
                                 property bool isHovered: batMouse.containsMouse
                                 color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.6) : Qt.rgba(mocha.surface0.r, mocha.surface0.g, mocha.surface0.b, 0.4); 
                                 radius: barWindow.s(10); height: sysLayout.pillHeight;
