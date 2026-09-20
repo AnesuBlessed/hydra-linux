@@ -516,9 +516,9 @@ Variants {
             }
             Process { id: btWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/bt_wait.sh"]; onExited: { btPoller.running = false; btPoller.running = true; } }
 
-            Process {
             Timer { id: powerProfilePoller; running: true; repeat: true; interval: 2000; onTriggered: powerProfileFetcher.running = true }
             Process { id: powerProfileFetcher; command: ["bash", "-c", "powerprofilesctl get 2>/dev/null || echo \"balanced\""]; stdout: StdioCollector { onStreamFinished: { let txt = this.text.trim(); if (txt !== "") barWindow.powerProfile = txt; } } }
+            Process {
                 id: batteryPoller; running: true
                 command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/battery_fetch.sh"]
                 stdout: StdioCollector {
@@ -1628,4 +1628,5 @@ Variants {
             }
         }
     }
+}
 }
