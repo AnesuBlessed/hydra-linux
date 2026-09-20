@@ -1460,7 +1460,6 @@ Variants {
                             }
 
                             Rectangle {
-                            Rectangle {
                                 property bool isHovered: powerMouse.containsMouse
                                 color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.6) : Qt.rgba(mocha.surface0.r, mocha.surface0.g, mocha.surface0.b, 0.4); 
                                 radius: barWindow.s(10); height: sysLayout.pillHeight;
@@ -1523,7 +1522,7 @@ Variants {
                                 Rectangle {
                                     anchors.fill: parent
                                     radius: barWindow.s(10)
-                                    opacity: 1.0 
+                                    opacity: initAnimTrigger ? 1 : 0.0 
                                     Behavior on opacity { NumberAnimation { duration: 300 } }
                                     gradient: Gradient {
                                         orientation: Gradient.Horizontal
