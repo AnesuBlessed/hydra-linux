@@ -2,7 +2,7 @@
   "uiScale": 0.7,
   "openGuideAtStartup": true,
   "topbarHelpIcon": true,
-  "workspaceCount": 8,
+  "workspaceCount": 7,
   "wallpaperDir": "/home/anesu/Pictures/Wallpapers",
   "language": "us",
   "kbOptions": "grp:alt_shift_toggle",
@@ -476,6 +476,27 @@
       "key": "TAB",
       "dispatcher": "exec",
       "command": "~/.config/hypr/scripts/focus_next_monitor.sh"
+    },
+    {
+      "type": "bind",
+      "mods": "$mainMod",
+      "key": "Backspace",
+      "dispatcher": "togglespecialworkspace",
+      "command": "magic"
+    },
+    {
+      "type": "bind",
+      "mods": "$mainMod SHIFT",
+      "key": "Backspace",
+      "dispatcher": "movetoworkspace",
+      "command": "special:magic"
+    },
+    {
+      "type": "bind",
+      "mods": "$mainMod",
+      "key": "I",
+      "dispatcher": "exec",
+      "command": "bash ~/.config/hypr/scripts/qs_manager.sh toggle hydra"
     }
   ],
   "startup": [
@@ -520,6 +541,9 @@
     },
     {
       "command": "~/.config/hypr/scripts/hdmi_watcher.sh &"
+    },
+    {
+      "command": "~/.config/hypr/scripts/pocket_watcher.sh &"
     }
   ]
 }

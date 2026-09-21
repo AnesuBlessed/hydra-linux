@@ -46,4 +46,5 @@ rm -rf "/run/user/${UID}/quickshell/cache/guide" 2>/dev/null || true
 # Send desktop notification with avatar preview
 notify-send -a "Hydra Linux" -i "$HOME/.face.icon" "Avatar Updated" "Profile picture has been successfully updated!" 2>/dev/null || true
 
+bash ~/.config/hypr/scripts/qs_manager.sh reload
 echo "$HOME/.face.icon"

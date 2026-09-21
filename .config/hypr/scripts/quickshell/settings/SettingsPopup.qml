@@ -204,8 +204,8 @@ Item {
     }
 
     property int currentTab: 0
-    property var tabNames: ["General", "Weather", "Keybinds", "Startup"]
-    property var tabIcons: ["󰒓", "󰖐", "󰌌", "󰐥"]
+    property var tabNames: ["General", "Keybinds", "Startup"]
+    property var tabIcons: ["󰒓", "󰌌", "󰐥"]
     property var tabColors: ["teal", "blue", "peach", "green"]
 
     property bool tab0Loaded: false
@@ -3413,7 +3413,7 @@ Item {
                                     width: tabBarFlickable.tabItemW
                                     height: parent.height
 
-                                    property bool isActive: root.currentTab === index
+                                    property bool isActive: root.currentTab === (index >= 1 ? index + 1 : index)
 
                                     RowLayout {
                                         anchors.centerIn: parent
@@ -3439,7 +3439,7 @@ Item {
                                         anchors.fill: parent
                                         hoverEnabled: true
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: { root.currentTab = index; root.clearHighlight(); }
+                                        onClicked: { root.currentTab = (index >= 1 ? index + 1 : index); root.clearHighlight(); }
                                     }
                                 }
                             }
