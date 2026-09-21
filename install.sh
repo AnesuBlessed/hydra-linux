@@ -176,11 +176,16 @@ if [ "$UNATTENDED" = false ]; then
         gum style --foreground 99 "System:  $(gum style --bold "$OS_PRETTY")"
         gum style --foreground 99 "GPU:     $(gum style --bold "$GPU_VENDOR")"
         echo ""
-        gum style --bold "Select installation components (Space to toggle, Enter to confirm):"
+        gum style --foreground 240 "  Controls:  Arrow keys to move   Space to toggle on/off   Enter to confirm"
+        echo ""
+        gum style --bold "Select installation components:"
         CHOICES=$(gum choose --no-limit --cursor="> " \
             --selected="Silent SDDM & Animated Wallpapers,Bundled Wallpapers" \
-            "Silent SDDM & Animated Wallpapers" "Bundled Wallpapers" \
-            "Neovim with Lua Support" "Zsh Shell" "Skip Package Installation")
+            "Silent SDDM & Animated Wallpapers" \
+            "Bundled Wallpapers" \
+            "Neovim with Lua Support" \
+            "Zsh Shell" \
+            "Skip Package Installation")
 
         echo "$CHOICES" | grep -q "Silent SDDM"        && INSTALL_SDDM=true      || INSTALL_SDDM=false
         echo "$CHOICES" | grep -q "Bundled Wallpapers"  && INSTALL_WALLPAPERS=true || INSTALL_WALLPAPERS=false
@@ -195,25 +200,28 @@ if [ "$UNATTENDED" = false ]; then
         fi
     else
         echo -e "\e[1mSystem:\e[0m $OS_PRETTY"
-        echo -e "\e[1mGPU:   \e[0m $GPU_VENDOR\n"
+        echo -e "\e[1mGPU:   \e[0m $GPU_VENDOR"
+        echo ""
+        echo -e "\e[2m  Answer Y (yes) or N (no). Press Enter to accept the default (shown in CAPS).\e[0m"
+        echo ""
 
-        read -p "Install Silent SDDM Greeter & Animated Wallpapers? [Y/n]: " ans_sddm
+        read -p "  Install Silent SDDM Greeter & Animated Wallpapers? [Y/n]: " ans_sddm
         [[ "$ans_sddm" =~ ^[Nn]$ ]] && INSTALL_SDDM=false
 
-        read -p "Install bundled wallpapers? [Y/n]: " ans_wp
+        read -p "  Install bundled wallpapers?                          [Y/n]: " ans_wp
         [[ "$ans_wp" =~ ^[Nn]$ ]] && INSTALL_WALLPAPERS=false
 
-        read -p "Install Neovim with Lua support? [y/N]: " ans_nvim
+        read -p "  Install Neovim with Lua support?                     [y/N]: " ans_nvim
         [[ "$ans_nvim" =~ ^[Yy]$ ]] && INSTALL_NVIM=true
 
-        read -p "Install Zsh? [y/N]: " ans_zsh
+        read -p "  Install Zsh shell?                                   [y/N]: " ans_zsh
         [[ "$ans_zsh" =~ ^[Yy]$ ]] && INSTALL_ZSH=true
 
-        read -p "Skip Package Installation (Deploy Configs Only)? [y/N]: " ans_skip
+        read -p "  Skip package installation (deploy configs only)?     [y/N]: " ans_skip
         [[ "$ans_skip" =~ ^[Yy]$ ]] && SKIP_PKGS=true
 
         if [ "$GPU_VENDOR" == "NVIDIA" ]; then
-            read -p "Install NVIDIA proprietary drivers? [y/N]: " ans_gpu
+            read -p "  Install NVIDIA proprietary drivers?                  [y/N]: " ans_gpu
             [[ "$ans_gpu" =~ ^[Yy]$ ]] && DRIVER_PKGS+=("nvidia-dkms" "nvidia-utils" "lib32-nvidia-utils" "linux-headers" "egl-wayland")
         fi
     fi
