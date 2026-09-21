@@ -3501,7 +3501,6 @@ Item {
                             property int prevTab: 0
                             property int curTab: root.currentTab
 
-                            property int visualTab: curTab === 0 ? 0 : (curTab === 2 ? 1 : (curTab === 3 ? 2 : 0))
                             onCurTabChanged: {
                                 if (curTab > prevTab) {
                                     tabRightAnim.duration = 200; tabLeftAnim.duration = 350;
@@ -3511,7 +3510,8 @@ Item {
                                 prevTab = curTab;
                                 
                                 // Graceful scrolling: center the newly selected tab
-                                let tLeft = root.s(3) + visualTab * tabBarFlickable.tabItemW;
+                                let vIdx = curTab === 0 ? 0 : (curTab === 2 ? 1 : 2);
+                                let tLeft = root.s(3) + vIdx * tabBarFlickable.tabItemW;
                                 let targetX = tLeft - (tabBarFlickable.width / 2) + (tabBarFlickable.tabItemW / 2);
                                 
                                 // Clamp bounds
@@ -3521,7 +3521,10 @@ Item {
                                 smoothScrollAnim.start();
                             }
 
-                            property real targetLeft: root.s(3) + visualTab * tabBarFlickable.tabItemW
+                            property real targetLeft: {
+                                let vi = curTab === 0 ? 0 : (curTab === 2 ? 1 : 2);
+                                return root.s(3) + vi * tabBarFlickable.tabItemW;
+                            }
                             property real targetRight: targetLeft + tabBarFlickable.tabItemW
 
                             property real actualLeft: targetLeft
