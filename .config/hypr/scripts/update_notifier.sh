@@ -16,7 +16,7 @@ while true; do
     LOCAL_VERSION=${LOCAL_VERSION:-"Unknown"}
     
     # Fetch remote version (Hydra Linux)
-    REMOTE_VERSION=$(curl -m 5 -s https://raw.githubusercontent.com/hydra-linux/hydra-linux/main/version.txt 2>/dev/null | tr -d '\r\n')
+    REMOTE_VERSION=$(curl -m 5 -s https://raw.githubusercontent.com/AnesuBlessed/hydra-linux/main/version.txt 2>/dev/null | tr -d '\r\n')
 
     # Check if we got valid responses and they don't match
     if [[ -n "$REMOTE_VERSION" && "$LOCAL_VERSION" != "Unknown" && "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then

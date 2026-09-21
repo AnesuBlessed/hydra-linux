@@ -112,7 +112,7 @@ Item {
     Process {
         id: remoteVerProcess
         running: false
-        command: ["bash", "-c", "curl -m 5 -s https://raw.githubusercontent.com/hydra-linux/hydra-linux/main/version.txt 2>/dev/null | tr -d '\\r\\n'"]
+        command: ["bash", "-c", "curl -m 5 -s https://raw.githubusercontent.com/AnesuBlessed/hydra-linux/main/version.txt 2>/dev/null | tr -d '\\r\\n'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text ? this.text.trim() : "";
@@ -135,7 +135,7 @@ try:
         
     local_v = parse_v(local_str)
 
-    req = urllib.request.Request('https://raw.githubusercontent.com/hydra-linux/hydra-linux/main/updates.json')
+    req = urllib.request.Request('https://raw.githubusercontent.com/AnesuBlessed/hydra-linux/main/updates.json')
     res = urllib.request.urlopen(req, timeout=5)
     data = json.loads(res.read().decode())
 
@@ -194,7 +194,7 @@ except Exception:
     property string fetchScript: `
 import urllib.request, json, subprocess
 
-repo = 'hydra-linux/hydra-linux'
+repo = 'AnesuBlessed/hydra-linux'
 
 try:
     local = subprocess.check_output("source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION", shell=True).decode('utf-8').strip()
