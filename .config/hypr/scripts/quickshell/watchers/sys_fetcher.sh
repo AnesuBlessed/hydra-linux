@@ -24,10 +24,10 @@ RX_RATE=$(((rx2 - rx1) * 2))
 TX_RATE=$(((tx2 - tx1) * 2))
 
 # --- RAM Calculation ---
-while IFS=":" read -r key val; do
+while IFS=": " read -r key val _; do
     case "$key" in
-        MemTotal) TOTAL_MEM=$(echo "$val" | awk '{print $1}') ;;
-        MemAvailable) AVAIL_MEM=$(echo "$val" | awk '{print $1}') ;;
+        MemTotal) TOTAL_MEM="${val// /}" ;;
+        MemAvailable) AVAIL_MEM="${val// /}" ;;
     esac
 done < /proc/meminfo
 USED_MEM=$((TOTAL_MEM - AVAIL_MEM))

@@ -167,7 +167,14 @@ handle_network_prep() {
 # IPC ROUTING
 # -----------------------------------------------------------------------------
 if [[ "$ACTION" == "reload" ]]; then
-    pkill -f "quickshell.*Shell.qml" 2>/dev/null
+    # Kill QS and all its watcher children cleanly
+    QS_PID=$(pgrep -f "quickshell.*Shell.qml" | head -n1)
+    if [[ -n "$QS_PID" ]]; then
+        pkill -P "$QS_PID" 2>/dev/null  # kill children first
+        kill "$QS_PID" 2>/dev/null
+    fi
+    # Clean up any lingering watcher scripts
+    pkill -f "qs_battery_wait\|qs_network_wait\|inotifywait.*quickshell\|bt_wait\.sh\|audio_wait\.sh\|kb_wait\.sh\|network_wait\.sh\|battery_wait\.sh" 2>/dev/null
     sleep 0.5
     WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" \
     XDG_RUNTIME_DIR="/run/user/$(id -u)" \

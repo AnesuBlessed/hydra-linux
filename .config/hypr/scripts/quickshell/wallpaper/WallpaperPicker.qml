@@ -91,32 +91,21 @@ Item {
         
         stdout: StdioCollector {
             onStreamFinished: {
-                console.log("[MonitorSync] Process finished. Reading stdout directly.");
                 let response = this.text; 
-                
                 if (response && response.trim().length > 0) {
                     try {
                         var monitors = JSON.parse(response);
-                        console.log("[MonitorSync] JSON parsed successfully. Found " + monitors.length + " monitors.");
-                        
                         monitorModel.clear();
                         for (var i = 0; i < monitors.length; i++) {
                             monitorModel.append({ "name": monitors[i].name, "selected": true });
-                            console.log("[MonitorSync] -> Injected: " + monitors[i].name);
                         }
-                    } catch(e) {
-                        console.log("[MonitorSync] ERROR parsing JSON: " + e);
-                        console.log("[MonitorSync] RAW TEXT DUMP: " + response);
-                    }
-                } else {
-                    console.log("[MonitorSync] ERROR: stdout was empty.");
+                    } catch(e) {}
                 }
             }
         }
     }
 
     function loadMonitors() {
-        console.log("[MonitorSync] Starting native hyprctl process...");
         monitorProc.running = true;
     }
 
