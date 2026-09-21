@@ -626,11 +626,7 @@ Item {
                     }
 
                     Rectangle {
-                        anchors.fill: parent
-                        anchors.margins: window.s(4)
-
-                    Rectangle {
-                        z: 5
+                        z: 10
                         anchors.top: parent.top
                         anchors.right: parent.right
                         anchors.margins: window.s(8)
@@ -654,12 +650,28 @@ Item {
                             onClicked: {
                                 let id = model.id;
                                 Quickshell.execDetached(["bash", "-c", "cliphist list | awk -v id=" + id + " -F'\t' '$1==id {print $0}' | cliphist delete"]);
-                                window.allClips.splice(index, 1);
-                                clipModel.remove(index);
-                                window.filterClips(searchInput.text);
+                                
+                                // Proper deletion logic for QML list
+                                for(let i=0; i<window.allClips.length; i++){
+                                    if(window.allClips[i].id === id) {
+                                        window.allClips.splice(i, 1);
+                                        break;
+                                    }
+                                }
+                                for(let i=0; i<clipModel.count; i++){
+                                    if(clipModel.get(i).id === id) {
+                                        clipModel.remove(i);
+                                        break;
+                                    }
+                                }
                             }
                         }
                     }
+
+
+                    Rectangle {
+                        anchors.fill: parent
+                        anchors.margins: window.s(4)
 
                         visible: model.type === "image"
                         color: "transparent"
