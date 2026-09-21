@@ -166,6 +166,14 @@ handle_network_prep() {
 # -----------------------------------------------------------------------------
 # IPC ROUTING
 # -----------------------------------------------------------------------------
+if [[ "$ACTION" == "reload" ]]; then
+    pkill -f "quickshell.*Shell.qml" 2>/dev/null
+    sleep 0.5
+    WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
+    disown
+    exit 0
+fi
+
 if [[ "$ACTION" == "close" ]]; then
     quickshell -p "$SHELL_QML_PATH" ipc call main handleCommand "close" "" "" >/dev/null 2>&1
     if [[ "$TARGET" == "network" || "$TARGET" == "all" || -z "$TARGET" ]]; then
