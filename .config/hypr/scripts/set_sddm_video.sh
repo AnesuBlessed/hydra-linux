@@ -4,22 +4,33 @@ THEME_DIR="/usr/share/sddm/themes/silent"
 DEST_DIR="$THEME_DIR/backgrounds"
 
 # Get all current mp4/mkv files in the backgrounds directory
-AVAILABLE_VIDEOS=$(ls -1 "$DEST_DIR" | grep -E "\.(mp4|mkv|webm)$")
+AVAILABLE_VIDEOS=$(ls -1 "$DEST_DIR" | grep -E "\.(mp4|mkv|webm)$" | sort)
 
 # Build zenity list arguments
 LIST_ARGS=()
 for v in $AVAILABLE_VIDEOS; do
-    LIST_ARGS+=("$v" "")
+    LIST_ARGS+=("🎥 $v" "$v")
 done
-LIST_ARGS+=("+ Add Custom Video..." "")
+LIST_ARGS+=("✨ + Add Custom Video..." "custom")
 
-CHOICE=$(zenity --list --title="SDDM Video Selection" --text="Select a login screen video or add a new one:" --column="Video" --column="Status" --hide-column=2 --print-column=1 "${LIST_ARGS[@]}" 2>/dev/null)
+MSG="Select a background video for the login screen.\n\nYou can also manually copy videos into:\n<b>$DEST_DIR</b>\nand they will automatically appear in this list!"
+
+CHOICE=$(zenity --list \
+    --title="SDDM Video Manager" \
+    --text="$MSG" \
+    --width=600 \
+    --height=500 \
+    --column="Video" \
+    --column="ID" \
+    --hide-column=2 \
+    --print-column=2 \
+    "${LIST_ARGS[@]}" 2>/dev/null)
 
 if [ -z "$CHOICE" ]; then
     exit 0
 fi
 
-if [ "$CHOICE" == "+ Add Custom Video..." ]; then
+if [ "$CHOICE" == "custom" ]; then
     VIDEO_FILE=$(zenity --file-selection --title="Select a Video for SDDM" --file-filter="Video files | *.mp4 *.mkv *.webm" 2>/dev/null)
     if [ -z "$VIDEO_FILE" ]; then exit 0; fi
     BASENAME=$(basename "$VIDEO_FILE")
