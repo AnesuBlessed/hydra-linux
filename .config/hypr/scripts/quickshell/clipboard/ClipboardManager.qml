@@ -437,6 +437,33 @@ Item {
                         event.accepted = true;
                     }
                 }
+
+                Rectangle {
+                    width: window.s(32)
+                    height: window.s(32)
+                    radius: window.s(8)
+                    color: clearMa.containsMouse ? window.mauve : Qt.rgba(window.surface0.r, window.surface0.g, window.surface0.b, 0.4)
+                    
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰃢" 
+                        font.family: "Iosevka Nerd Font"
+                        font.pixelSize: window.s(16)
+                        color: clearMa.containsMouse ? window.crust : window.text
+                    }
+                    MouseArea {
+                        id: clearMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            Quickshell.execDetached(["bash", "-c", "cliphist wipe"]);
+                            window.allClips = [];
+                            clipModel.clear();
+                        }
+                    }
+                }
+
             }
         }
 
@@ -601,6 +628,39 @@ Item {
                     Rectangle {
                         anchors.fill: parent
                         anchors.margins: window.s(4)
+
+                    Rectangle {
+                        z: 5
+                        anchors.top: parent.top
+                        anchors.right: parent.right
+                        anchors.margins: window.s(8)
+                        width: window.s(22)
+                        height: window.s(22)
+                        radius: window.s(6)
+                        color: deleteMa.containsMouse ? window.mauve : Qt.rgba(window.surface0.r, window.surface0.g, window.surface0.b, 0.7)
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰅖"
+                            font.family: "Iosevka Nerd Font"
+                            font.pixelSize: window.s(12)
+                            color: deleteMa.containsMouse ? window.crust : window.text
+                        }
+                        MouseArea {
+                            id: deleteMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                let id = model.id;
+                                Quickshell.execDetached(["bash", "-c", "cliphist list | awk -v id=" + id + " -F'\t' '$1==id {print $0}' | cliphist delete"]);
+                                window.allClips.splice(index, 1);
+                                clipModel.remove(index);
+                                window.filterClips(searchInput.text);
+                            }
+                        }
+                    }
+
                         visible: model.type === "image"
                         color: "transparent"
                         radius: window.s(6)

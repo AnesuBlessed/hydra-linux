@@ -2058,6 +2058,93 @@ Item {
                             }
                         }
                     }
+
+                    // ─────────────────────────────────────────────────────────────────
+                    // SDDM Video Manager
+                    // ─────────────────────────────────────────────────────────────────
+                    Rectangle {
+                        id: box8
+                        Layout.fillWidth: true
+                        implicitHeight: sddmContent.implicitHeight + root.s(40)
+                        radius: root.s(12)
+                        
+                        property bool isActive: root.highlightedBox === 8
+                        color: isActive ? root.surface1 : root.surface0
+                        border.color: isActive ? root.mauve : "transparent"
+                        border.width: isActive ? root.s(1) : 0
+                        Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutExpo } }
+
+                        MouseArea {
+                            anchors.fill: parent; hoverEnabled: true
+                            onClicked: { root.highlightedBox = 8; }
+                        }
+
+                        ColumnLayout {
+                            id: sddmContent
+                            anchors.fill: parent
+                            anchors.margins: root.s(20)
+                            spacing: root.s(15)
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: root.s(15)
+
+                                Rectangle {
+                                    width: root.s(48); height: root.s(48)
+                                    radius: root.s(12)
+                                    color: box8.isActive ? root.mauve : Qt.rgba(root.text.r, root.text.g, root.text.b, 0.05)
+                                    Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutExpo } }
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: "󰎁"
+                                        font.family: "Iosevka Nerd Font"; font.pixelSize: root.s(24)
+                                        color: box8.isActive ? root.crust : root.text
+                                        Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutExpo } }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: root.s(4)
+                                    Text {
+                                        text: "SDDM Login Video"
+                                        font.family: "JetBrains Mono"; font.pixelSize: root.s(16); font.weight: Font.Bold
+                                        color: box8.isActive ? root.mauve : root.text
+                                        Behavior on color { ColorAnimation { duration: 250; easing.type: Easing.OutExpo } }
+                                    }
+                                    Text {
+                                        text: "Change your login screen background video"
+                                        font.family: "JetBrains Mono"; font.pixelSize: root.s(12)
+                                        color: root.subtext0; wrapMode: Text.WordWrap
+                                        Layout.fillWidth: true
+                                    }
+                                }
+
+                                Rectangle {
+                                    width: root.s(140); height: root.s(36)
+                                    radius: root.s(8)
+                                    color: sddmBtnMa.containsMouse ? root.mauve : root.surface2
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    
+                                    RowLayout {
+                                        anchors.centerIn: parent; spacing: root.s(8)
+                                        Text { text: "󰋎"; font.family: "Iosevka Nerd Font"; font.pixelSize: root.s(14); color: sddmBtnMa.containsMouse ? root.crust : root.text }
+                                        Text { text: "Change Video"; font.family: "JetBrains Mono"; font.pixelSize: root.s(13); font.weight: Font.Bold; color: sddmBtnMa.containsMouse ? root.crust : root.text }
+                                    }
+
+                                    MouseArea {
+                                        id: sddmBtnMa
+                                        anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            root.highlightedBox = 8;
+                                            Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/set_sddm_video.sh"]);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                 }
             }        
         }
