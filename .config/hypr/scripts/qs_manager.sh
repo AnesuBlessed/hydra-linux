@@ -169,7 +169,10 @@ handle_network_prep() {
 if [[ "$ACTION" == "reload" ]]; then
     pkill -f "quickshell.*Shell.qml" 2>/dev/null
     sleep 0.5
-    WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
+    WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" \
+    XDG_RUNTIME_DIR="/run/user/$(id -u)" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
+    quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
     disown
     exit 0
 fi
