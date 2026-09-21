@@ -3,47 +3,26 @@
 THEME_DIR="/usr/share/sddm/themes/silent"
 DEST_DIR="$THEME_DIR/backgrounds"
 
-# Get all current mp4/mkv files in the backgrounds directory
-AVAILABLE_VIDEOS=$(ls -1 "$DEST_DIR" | grep -E "\.(mp4|mkv|webm)$" | sort)
+# Direct file selection starting in the backgrounds folder
+VIDEO_FILE=$(zenity --file-selection \
+    --title="Select a Video for SDDM" \
+    --filename="$DEST_DIR/" \
+    --file-filter="Video files | *.mp4 *.mkv *.webm" 2>/dev/null)
 
-# Build zenity list arguments
-LIST_ARGS=()
-for v in $AVAILABLE_VIDEOS; do
-    LIST_ARGS+=("🎥 $v" "$v")
-done
-LIST_ARGS+=("✨ + Add Custom Video..." "custom")
+if [ -z "$VIDEO_FILE" ]; then exit 0; fi
+if [ ! -f "$VIDEO_FILE" ]; then exit 0; fi
 
-MSG="Select a background video for the login screen.\n\nYou can also manually copy videos into:\n<b>$DEST_DIR</b>\nand they will automatically appear in this list!"
+BASENAME=$(basename "$VIDEO_FILE")
+TARGET_VIDEO="$BASENAME"
 
-CHOICE=$(zenity --list \
-    --title="SDDM Video Manager" \
-    --text="$MSG" \
-    --width=600 \
-    --height=500 \
-    --column="Video" \
-    --column="ID" \
-    --hide-column=2 \
-    --print-column=2 \
-    "${LIST_ARGS[@]}" 2>/dev/null)
-
-if [ -z "$CHOICE" ]; then
-    exit 0
-fi
-
-if [ "$CHOICE" == "custom" ]; then
-    VIDEO_FILE=$(zenity --file-selection --title="Select a Video for SDDM" --file-filter="Video files | *.mp4 *.mkv *.webm" 2>/dev/null)
-    if [ -z "$VIDEO_FILE" ]; then exit 0; fi
-    BASENAME=$(basename "$VIDEO_FILE")
-    
-    # Copy new video with pkexec
+# Check if the chosen file is already in the DEST_DIR.
+# If it's a new custom file from somewhere else, copy it over.
+if [[ "$VIDEO_FILE" != "$DEST_DIR/$BASENAME" ]]; then
     pkexec bash -c "cp \"$VIDEO_FILE\" \"$DEST_DIR/$BASENAME\" && chmod 644 \"$DEST_DIR/$BASENAME\""
     if [ $? -ne 0 ]; then
         zenity --error --text="Failed to copy video. Permission denied."
         exit 1
     fi
-    TARGET_VIDEO="$BASENAME"
-else
-    TARGET_VIDEO="$CHOICE"
 fi
 
 ACTIVE_CONF=$(grep "^ConfigFile=" "$THEME_DIR/metadata.desktop" | cut -d'=' -f2 | head -n 1)
@@ -59,7 +38,7 @@ CONF_PATH="$THEME_DIR/$ACTIVE_CONF"
 pkexec bash -c "sed -i 's/background = \".*\"/background = \"$TARGET_VIDEO\"/g' \"$CONF_PATH\""
 
 if [ $? -eq 0 ]; then
-    zenity --info --text="Successfully set SDDM background to $TARGET_VIDEO!"
+    notify-send -a "Hydra Linux" -i "video-x-generic" "SDDM Video Updated" "Login video successfully set to $TARGET_VIDEO" 2>/dev/null || true
 else
     zenity --error --text="Failed to update SDDM config."
 fi
