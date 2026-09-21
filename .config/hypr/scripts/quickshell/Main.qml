@@ -435,6 +435,7 @@ PanelWindow {
         let props = {};
         if (newWidget === "wallpaper" && arg !== "") props["widgetArg"] = arg;
         if (newWidget === "network" && arg !== "") props["activeMode"] = arg;
+        if (newWidget === "battery") { props["notifModel"] = globalNotificationHistory; props["liveNotifs"] = masterWindow.liveNotifs; }
 
         if (immediate) {
             widgetStack.replace(t.comp, props, StackView.Immediate);
