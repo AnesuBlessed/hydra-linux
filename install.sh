@@ -29,7 +29,7 @@ clear
 gum style \
 	--foreground 212 --border-foreground 212 --border double \
 	--align center --width 80 --margin "1 2" --padding "1 2" \
-	"🐉 HYDRA LINUX" \
+	"HYDRA LINUX" \
 	"Unified Hyprland, Quickshell & Silent SDDM Environment" \
 	"Version ${HYDRA_VERSION}"
 
@@ -118,7 +118,7 @@ if [ "$UNATTENDED" = false ]; then
     echo ""
 
     gum style --bold "Select installation components (Space to toggle, Enter to confirm):"
-    CHOICES=$(gum choose --no-limit --cursor="🐉 " --selected="Silent SDDM & Animated Wallpapers,Bundled Wallpapers" "Silent SDDM & Animated Wallpapers" "Bundled Wallpapers" "Neovim with Lua Support" "Zsh Shell" "Skip Package Installation")
+    CHOICES=$(gum choose --no-limit --cursor="> " --selected="Silent SDDM & Animated Wallpapers,Bundled Wallpapers" "Silent SDDM & Animated Wallpapers" "Bundled Wallpapers" "Neovim with Lua Support" "Zsh Shell" "Skip Package Installation")
     
     if echo "$CHOICES" | grep -q "Silent SDDM"; then INSTALL_SDDM=true; else INSTALL_SDDM=false; fi
     if echo "$CHOICES" | grep -q "Bundled Wallpapers"; then INSTALL_WALLPAPERS=true; else INSTALL_WALLPAPERS=false; fi
@@ -138,7 +138,7 @@ fi
 
 # --- Phase 1: Packages ---
 if [ "$SKIP_PKGS" = false ]; then
-    gum style --foreground 212 --bold "📦 Phase 1: Installing Packages"
+    gum style --foreground 212 --bold ":: Phase 1: Installing Packages"
     
     ALL_PKGS=("${CORE_PKGS[@]}" "${DRIVER_PKGS[@]}")
     MISSING_PKGS=()
@@ -172,7 +172,7 @@ if [ "$SKIP_PKGS" = false ]; then
 fi
 
 # --- Phase 2: Configuration Backup ---
-gum style --foreground 212 --bold "💾 Phase 2: Backing up existing configurations"
+gum style --foreground 212 --bold ":: Phase 2: Backing up existing configurations"
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$HOME/.config/hydra_backup/backup_${BACKUP_DATE}"
 
@@ -188,7 +188,7 @@ gum style --foreground 46 "✓ Existing configs safely backed up."
 echo ""
 
 # --- Phase 3: Deployment ---
-gum style --foreground 212 --bold "🚀 Phase 3: Deploying Hydra Linux Environment"
+gum style --foreground 212 --bold ":: Phase 3: Deploying Hydra Linux Environment"
 
 gum spin --spinner dot --title "Deploying configuration files..." -- bash -c "
     mkdir -p '$HOME/.config' '$HOME/.local/bin'
@@ -236,7 +236,7 @@ echo ""
 
 # --- Phase 4: SDDM ---
 if [ "$INSTALL_SDDM" = true ] && [ -d "$SCRIPT_DIR/sddm/themes/silent" ]; then
-    gum style --foreground 212 --bold "🔒 Phase 4: Configuring Silent SDDM Greeter"
+    gum style --foreground 212 --bold ":: Phase 4: Configuring Silent SDDM Greeter"
     
     gum spin --spinner dot --title "Setting up login manager..." -- bash -c "
         sudo mkdir -p /usr/share/sddm/themes/silent
@@ -286,7 +286,7 @@ EOF
 gum style \
 	--foreground 46 --border-foreground 46 --border rounded \
 	--align left --width 80 --margin "1 2" --padding "1 2" \
-	"🎉 INSTALLATION COMPLETE!" \
+	"INSTALLATION COMPLETE!" \
 	"" \
 	"Hydra Linux has been successfully deployed to your system." \
 	" - Compositor: Hyprland with Lua engine" \
