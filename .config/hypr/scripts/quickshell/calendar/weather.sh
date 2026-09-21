@@ -336,4 +336,15 @@ elif [[ "$1" == "--current-hex" ]]; then
         hex=$(cat "$json_file" | jq -r '.current_hex')
     fi
     echo "$hex"
+elif [[ "$1" == "--current-all" ]]; then
+    icon=$(jq -r '.current_icon // empty' "$json_file" 2>/dev/null)
+    t=$(jq -r '.current_temp // empty' "$json_file" 2>/dev/null)
+    hex=$(jq -r '.current_hex // empty' "$json_file" 2>/dev/null)
+    if [[ -z "$icon" || "$icon" == "null" || -z "$t" || "$t" == "null" ]]; then
+        get_data
+        icon=$(jq -r '.current_icon' "$json_file" 2>/dev/null)
+        t=$(jq -r '.current_temp' "$json_file" 2>/dev/null)
+        hex=$(jq -r '.current_hex' "$json_file" 2>/dev/null)
+    fi
+    echo "${icon}|${t}${UNIT_SYM}|${hex:-#cdd6f4}"
 fi

@@ -67,14 +67,27 @@ PanelWindow {
     Process {
         id: dndPoller
         command: ["bash", "-c", "cat '" + paths.getCacheDir("dnd") + "/state' 2>/dev/null || echo '0'"]
+        running: true
         stdout: StdioCollector {
-            onStreamFinished: popupWindow.dndEnabled = (this.text.trim() === "1")
+            onStreamFinished: {
+                popupWindow.dndEnabled = (this.text.trim() === "1");
+                dndWaiter.running = false;
+                dndWaiter.running = true;
+            }
         }
     }
-    Timer {
-        interval: 1000; running: true; repeat: true; triggeredOnStart: true
-        onTriggered: dndPoller.running = true
+    Process {
+        id: dndWaiter
+        command: ["bash", "-c",
+            "mkdir -p '" + paths.getCacheDir("dnd") + "' && " +
+            "inotifywait -qq -e create,modify,close_write '" + paths.getCacheDir("dnd") + "/' 2>/dev/null || sleep 5"]
+        running: false
+        onExited: {
+            dndPoller.running = false;
+            dndPoller.running = true;
+        }
     }
+
 
     Item {
         id: contentWrapper
@@ -91,7 +104,8 @@ PanelWindow {
 
         property real globalOrbitAngle: 0
         NumberAnimation on globalOrbitAngle {
-            from: 0; to: Math.PI * 2; duration: 25000; loops: Animation.Infinite; running: true
+            from: 0; to: Math.PI * 2; duration: 25000; loops: Animation.Infinite
+            running: popupList.count > 0
         }
 
         ListView {

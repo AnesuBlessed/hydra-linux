@@ -16,12 +16,7 @@ Variants {
             
 	    Caching { id: paths }
 
-	    Component.onCompleted: {
- 	        console.log("runDir:", paths.runDir)
- 	        console.log("manual path:", paths.runDir + "/workspaces")
- 	        console.log("env test:", Quickshell.env("QS_RUN_WORKSPACES"))
- 	        console.log("wsPath:", paths.getRunDir("workspaces"))
-	    }	     	
+
         
             IpcHandler {
                 target: "topbar"
@@ -428,11 +423,14 @@ Variants {
                 id: artRetryTimer
                 interval: 500
                 repeat: true
-                running: barWindow.displayArtUrl && barWindow.displayArtUrl.indexOf("placeholder_blank.png") !== -1
+                property int retryCount: 0
+                running: barWindow.displayArtUrl && barWindow.displayArtUrl.indexOf("placeholder_blank.png") !== -1 && retryCount < 6
                 onTriggered: {
+                    retryCount++;
                     musicForceRefresh.running = false;
                     musicForceRefresh.running = true;
                 }
+                onRunningChanged: if (!running) retryCount = 0
             }
 
             Process {
@@ -516,7 +514,7 @@ Variants {
             }
             Process { id: btWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/bt_wait.sh"]; onExited: { btPoller.running = false; btPoller.running = true; } }
 
-            Timer { id: powerProfilePoller; running: true; repeat: true; interval: 2000; onTriggered: powerProfileFetcher.running = true }
+            Timer { id: powerProfilePoller; running: true; repeat: true; interval: 30000; triggeredOnStart: true; onTriggered: powerProfileFetcher.running = true }
             Process { id: powerProfileFetcher; command: ["bash", "-c", "powerprofilesctl get 2>/dev/null || echo \"balanced\""]; stdout: StdioCollector { onStreamFinished: { let txt = this.text.trim(); if (txt !== "") barWindow.powerProfile = txt; } } }
             Process {
                 id: batteryPoller; running: true
@@ -542,18 +540,14 @@ Variants {
 
             Process {
                 id: weatherPoller
-                command: ["bash", "-c", `
-                    echo "$(~/.config/hypr/scripts/quickshell/calendar/weather.sh --current-icon)"
-                    echo "$(~/.config/hypr/scripts/quickshell/calendar/weather.sh --current-temp)"
-                    echo "$(~/.config/hypr/scripts/quickshell/calendar/weather.sh --current-hex)"
-                `]
+                command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/calendar/weather.sh --current-all"]
                 stdout: StdioCollector {
                     onStreamFinished: {
-                        let lines = this.text.trim().split("\n");
-                        if (lines.length >= 3) {
-                            barWindow.weatherIcon = lines[0];
-                            barWindow.weatherTemp = lines[1];
-                            barWindow.weatherHex = lines[2] || mocha.yellow;
+                        let parts = this.text.trim().split("|");
+                        if (parts.length >= 3) {
+                            barWindow.weatherIcon = parts[0];
+                            barWindow.weatherTemp = parts[1];
+                            barWindow.weatherHex = parts[2] || mocha.yellow;
                         }
                     }
                 }
