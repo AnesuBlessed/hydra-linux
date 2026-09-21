@@ -1,73 +1,57 @@
 #!/usr/bin/env bash
-
-# ==============================================================================
-#
-#   ██╗  ██╗██╗   ██╗██████╗ ██████╗  █████╗     ██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗
-#   ██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗██╔══██╗    ██║     ██║████╗  ██║██║   ██║╚██╗██╔╝
-#   ███████║ ╚████╔╝ ██║  ██║██████╔╝███████║    ██║     ██║██╔██╗ ██║██║   ██║ ╚███╔╝ 
-#   ██╔══██║  ╚██╔╝  ██║  ██║██╔══██╗██╔══██║    ██║     ██║██║╚██╗██║██║   ██║ ██╔██╗ 
-#   ██║  ██║   ██║   ██████╔╝██║  ██║██║  ██║    ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗
-#   ╚═╝  ╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝
-#
-#   Hydra Linux - Unified Hyprland, Quickshell & Silent SDDM Environment
-#   Installer & System Deployment Script
-#
-# ==============================================================================
-
 set -e
+
+# ==============================================================================
+#   HYDRA LINUX INSTALLER (TUI EDITION)
+# ==============================================================================
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 HYDRA_VERSION="1.0.0"
 VERSION_FILE="$HOME/.local/state/hydra-linux-version"
 
-# Colors & UI
-RESET="\e[0m"
-BOLD="\e[1m"
-DIM="\e[2m"
-C_BLUE="\e[34m"
-C_CYAN="\e[36m"
-C_GREEN="\e[32m"
-C_YELLOW="\e[33m"
-C_RED="\e[31m"
-C_MAGENTA="\e[35m"
+# --- 0. Bootstrap UI ---
+# Check and install 'gum' for a beautiful UI experience
+if ! command -v gum &>/dev/null; then
+    echo -e "\e[36m[ INFO ]\e[0m Bootstrapping modern installer UI (gum)..."
+    sudo pacman -Sy --noconfirm --needed gum >/dev/null 2>&1 || true
+fi
 
-draw_header() {
-    clear
-    echo -e "${C_CYAN}"
-    echo "  ██╗  ██╗██╗   ██╗██████╗ ██████╗  █████╗     ██╗     ██╗███╗   ██╗██╗   ██╗██╗  ██╗"
-    echo "  ██║  ██║╚██╗ ██╔╝██╔══██╗██╔══██╗██╔══██╗    ██║     ██║████╗  ██║██║   ██║╚██╗██╔╝"
-    echo "  ███████║ ╚████╔╝ ██║  ██║██████╔╝███████║    ██║     ██║██╔██╗ ██║██║   ██║ ╚███╔╝ "
-    echo "  ██╔══██║  ╚██╔╝  ██║  ██║██╔══██╗██╔══██║    ██║     ██║██║╚██╗██║██║   ██║ ██╔██╗ "
-    echo "  ██║  ██║   ██║   ██████╔╝██║  ██║██║  ██║    ███████╗██║██║ ╚████║╚██████╔╝██╔╝ ██╗"
-    echo "  ╚═╝  ╚═╝   ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝    ╚══════╝╚═╝╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝"
-    echo -e "${RESET}"
-    echo -e "         ${BOLD}${C_MAGENTA}Hydra Linux Desktop Suite${RESET}  ${DIM}|${RESET}  ${C_BLUE}Version ${HYDRA_VERSION}${RESET}"
-    echo -e "   ${DIM}Hyprland (Lua + Conf) • Quickshell • Matugen • Silent SDDM${RESET}"
-    echo -e "${C_CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
-}
+# Fallback if gum fails to install
+if ! command -v gum &>/dev/null; then
+    echo -e "\e[31m[ ERROR ] Failed to install 'gum'. Falling back to basic installation.\e[0m"
+    exec "$SCRIPT_DIR/install_basic.sh" "$@"
+fi
+
+# Clean Screen
+clear
+
+# --- Draw Beautiful Header with Gum ---
+gum style \
+	--foreground 212 --border-foreground 212 --border double \
+	--align center --width 80 --margin "1 2" --padding "1 2" \
+	"🐉 HYDRA LINUX" \
+	"Unified Hyprland, Quickshell & Silent SDDM Environment" \
+	"Version ${HYDRA_VERSION}"
+
+gum style --foreground 240 --italic "Press Ctrl+C at any time to abort installation."
 
 # --- 1. Distro Detection ---
 if [ -f /etc/os-release ]; then
     DETECTED_OS=$(awk -F= '/^ID=/{gsub(/"/, "", $2); print $2}' /etc/os-release)
     OS_PRETTY=$(grep '^PRETTY_NAME=' /etc/os-release | cut -d= -f2 | tr -d '"')
 else
-    echo -e "${C_RED}Cannot detect OS. /etc/os-release not found.${RESET}"
+    gum style --foreground 196 "Cannot detect OS. /etc/os-release not found."
     exit 1
 fi
 
 case "$DETECTED_OS" in
-    arch|cachyos|endeavouros|garuda|manjaro|parch)
-        ;;
+    arch|cachyos|endeavouros|garuda|manjaro|parch) ;;
     *)
-        echo -e "${C_RED}Unsupported distribution: '$DETECTED_OS'${RESET}"
-        echo -e "${C_YELLOW}Hydra Linux currently targets Arch Linux and Arch-based systems (CachyOS, EndeavourOS, etc.).${RESET}"
+        gum style --foreground 196 "Unsupported distribution: '$DETECTED_OS'"
+        gum style --foreground 214 "Hydra Linux targets Arch-based systems."
         exit 1
         ;;
 esac
-
-# Prevent TTY screen blanking during package compilation
-setterm -blank 0 -powerdown 0 2>/dev/null || true
-printf '\033[9;0]' 2>/dev/null || true
 
 # Parse Command-line Arguments
 UNATTENDED=false
@@ -84,290 +68,213 @@ while [[ "$#" -gt 0 ]]; do
         --no-sddm) INSTALL_SDDM=false; shift ;;
         --with-nvim) INSTALL_NVIM=true; shift ;;
         --with-zsh) INSTALL_ZSH=true; shift ;;
-        -h|--help)
-            echo "Hydra Linux Installer"
-            echo "Usage: ./install.sh [options]"
-            echo ""
-            echo "Options:"
-            echo "  -y, --yes          Run non-interactively with defaults"
-            echo "  --skip-pkgs        Skip package installation phase"
-            echo "  --no-sddm          Skip SDDM theme installation"
-            echo "  --with-nvim        Install Neovim with Lua language server"
-            echo "  --with-zsh         Install Zsh shell"
-            echo "  -h, --help         Show this help message"
-            exit 0
-            ;;
-        *) echo "Unknown option: $1"; exit 1 ;;
+        *) gum style --foreground 196 "Unknown option: $1"; exit 1 ;;
     esac
 done
 
-# User paths
 WALLPAPER_DIR="${HOME}/Pictures/Wallpapers"
 
 # Hardware / GPU detection
 GPU_VENDOR="Unknown"
 GPU_RAW=$(lspci -nn 2>/dev/null | grep -iE 'vga|3d|display' || true)
-if echo "$GPU_RAW" | grep -qi "nvidia"; then
-    GPU_VENDOR="NVIDIA"
-elif echo "$GPU_RAW" | grep -qi "amd\|advanced micro devices"; then
-    GPU_VENDOR="AMD"
-elif echo "$GPU_RAW" | grep -qi "intel"; then
-    GPU_VENDOR="Intel"
+if echo "$GPU_RAW" | grep -qi "nvidia"; then GPU_VENDOR="NVIDIA"
+elif echo "$GPU_RAW" | grep -qi "amd\|advanced micro devices"; then GPU_VENDOR="AMD"
+elif echo "$GPU_RAW" | grep -qi "intel"; then GPU_VENDOR="Intel"
 fi
 
 # Bootstrap minimal prerequisites
-if ! command -v fzf &>/dev/null || ! command -v jq &>/dev/null || ! command -v curl &>/dev/null; then
-    echo -e "${C_CYAN}[ INFO ] Bootstrapping installer dependencies (fzf, jq, curl)...${RESET}"
-    sudo pacman -Sy --noconfirm --needed fzf jq curl >/dev/null 2>&1 || true
+if ! command -v jq &>/dev/null || ! command -v curl &>/dev/null; then
+    gum spin --spinner dot --title "Bootstrapping core dependencies (jq, curl)..." -- sudo pacman -S --noconfirm --needed jq curl >/dev/null 2>&1
 fi
 
-# Check for AUR Helper
 if ! command -v yay &>/dev/null && ! command -v paru &>/dev/null; then
-    echo -e "${C_CYAN}[ INFO ] Installing 'yay' (AUR helper)...${RESET}"
-    sudo pacman -S --noconfirm --needed base-devel git
-    git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin >/dev/null 2>&1
-    (cd /tmp/yay-bin && makepkg -si --noconfirm >/dev/null 2>&1)
-    rm -rf /tmp/yay-bin
+    gum spin --spinner dot --title "Installing AUR helper (yay)..." -- bash -c 'sudo pacman -S --noconfirm --needed base-devel git && git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin && cd /tmp/yay-bin && makepkg -si --noconfirm && rm -rf /tmp/yay-bin' >/dev/null 2>&1
 fi
 
-if command -v yay &>/dev/null; then
-    PKG_MANAGER="yay -S --noconfirm --needed"
-elif command -v paru &>/dev/null; then
-    PKG_MANAGER="paru -S --noconfirm --needed"
-else
-    PKG_MANAGER="sudo pacman -S --noconfirm --needed"
+if command -v yay &>/dev/null; then PKG_MANAGER="yay -S --noconfirm --needed"
+elif command -v paru &>/dev/null; then PKG_MANAGER="paru -S --noconfirm --needed"
+else PKG_MANAGER="sudo pacman -S --noconfirm --needed"
 fi
 
 # Package Lists
 CORE_PKGS=(
-    # Compositor & Shell
     "hyprland" "hypridle" "hyprpolkitagent" "xdg-desktop-portal-hyprland" "xdg-desktop-portal-gtk"
     "quickshell-git" "matugen-bin" "swayosd-git" "rofi" "kitty" "cava" "fastfetch"
-    # Silent SDDM & dependencies
     "sddm" "qt6-svg" "qt6-virtualkeyboard" "qt6-multimedia-ffmpeg" "qt6-imageformats"
-    # Audio & Media
     "pipewire" "wireplumber" "pipewire-pulse" "pipewire-alsa" "pipewire-jack" "libpulse" "pamixer" "playerctl" "pavucontrol" "alsa-utils" "easyeffects" "lsp-plugins"
-    # User Applications & Tools (mapped to default keybinds)
-    "firefox" "dolphin" "nautilus" "kitty"
-    # Screen capture & Utilities
+    "firefox" "dolphin" "nautilus"
     "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays" "zenity"
     "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl" "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git" "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon"
-    # Fonts
     "ttf-jetbrains-mono-nerd" "ttf-iosevka-nerd"
-    # Qt / GTK engines
     "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects" "qt6-wayland" "qt5ct" "qt6ct" "adw-gtk-theme" "qt6-5compat" "qt6-websockets" "python-websockets"
 )
 
 DRIVER_PKGS=()
 
-# Interactive Menu if not unattended
+# Interactive Menu
 if [ "$UNATTENDED" = false ]; then
-    draw_header
-    echo -e "${BOLD}Detected System:${RESET} $OS_PRETTY"
-    echo -e "${BOLD}Detected GPU:${RESET}    $GPU_VENDOR\n"
+    gum style --foreground 99 "System Detected: $(gum style --bold "$OS_PRETTY")"
+    gum style --foreground 99 "GPU Detected:    $(gum style --bold "$GPU_VENDOR")"
+    echo ""
 
-    # Interactive TUI choices
-    if command -v fzf &>/dev/null; then
-        echo -e "${C_CYAN}Select installation components (TAB or SPACE to toggle, ENTER to confirm):${RESET}\n"
-        CHOICES=$(printf "Silent SDDM Greeter & Animated Wallpapers\nWallpapers Collection\nNeovim with Lua Language Server\nZsh Shell\nSkip Package Installation (Deploy Configs Only)\n" | fzf -m --prompt="Hydra Linux > " --pointer="▶" --header="Options")
-        
-        if echo "$CHOICES" | grep -q "Silent SDDM"; then INSTALL_SDDM=true; else INSTALL_SDDM=false; fi
-        if echo "$CHOICES" | grep -q "Wallpapers Collection"; then INSTALL_WALLPAPERS=true; else INSTALL_WALLPAPERS=false; fi
-        if echo "$CHOICES" | grep -q "Neovim"; then INSTALL_NVIM=true; fi
-        if echo "$CHOICES" | grep -q "Zsh"; then INSTALL_ZSH=true; fi
-        if echo "$CHOICES" | grep -q "Skip Package Installation"; then SKIP_PKGS=true; fi
-    else
-        read -p "Install Silent SDDM Greeter & Animated Wallpapers? [Y/n]: " ans_sddm
-        [[ "$ans_sddm" =~ ^[Nn]$ ]] && INSTALL_SDDM=false
+    gum style --bold "Select installation components (Space to toggle, Enter to confirm):"
+    CHOICES=$(gum choose --no-limit --cursor="🐉 " --selected="Silent SDDM & Animated Wallpapers,Bundled Wallpapers" "Silent SDDM & Animated Wallpapers" "Bundled Wallpapers" "Neovim with Lua Support" "Zsh Shell" "Skip Package Installation")
+    
+    if echo "$CHOICES" | grep -q "Silent SDDM"; then INSTALL_SDDM=true; else INSTALL_SDDM=false; fi
+    if echo "$CHOICES" | grep -q "Bundled Wallpapers"; then INSTALL_WALLPAPERS=true; else INSTALL_WALLPAPERS=false; fi
+    if echo "$CHOICES" | grep -q "Neovim"; then INSTALL_NVIM=true; fi
+    if echo "$CHOICES" | grep -q "Zsh"; then INSTALL_ZSH=true; fi
+    if echo "$CHOICES" | grep -q "Skip Package"; then SKIP_PKGS=true; fi
 
-        read -p "Install bundled wallpapers? [Y/n]: " ans_wp
-        [[ "$ans_wp" =~ ^[Nn]$ ]] && INSTALL_WALLPAPERS=false
-
-        read -p "Install Neovim with Lua support? [y/N]: " ans_nvim
-        [[ "$ans_nvim" =~ ^[Yy]$ ]] && INSTALL_NVIM=true
-
-        read -p "Install Zsh? [y/N]: " ans_zsh
-        [[ "$ans_zsh" =~ ^[Yy]$ ]] && INSTALL_ZSH=true
-    fi
-
-    # GPU Driver Option
     if [ "$GPU_VENDOR" == "NVIDIA" ]; then
-        read -p "Install NVIDIA proprietary drivers and configure kernel modesetting? [y/N]: " ans_gpu
-        if [[ "$ans_gpu" =~ ^[Yy]$ ]]; then
+        if gum confirm "Install NVIDIA proprietary drivers and configure kernel modesetting?"; then
             DRIVER_PKGS+=("nvidia-dkms" "nvidia-utils" "lib32-nvidia-utils" "linux-headers" "egl-wayland")
         fi
     fi
 fi
 
-# Append optional packages
 [[ "$INSTALL_NVIM" = true ]] && CORE_PKGS+=("neovim" "lua-language-server" "nodejs" "npm" "python3")
 [[ "$INSTALL_ZSH" = true ]] && CORE_PKGS+=("zsh")
 
-# ==============================================================================
-# Phase 1: Package Installation
-# ==============================================================================
+# --- Phase 1: Packages ---
 if [ "$SKIP_PKGS" = false ]; then
-    echo -e "\n${C_CYAN}[ INFO ]${RESET} Checking missing packages..."
+    gum style --foreground 212 --bold "📦 Phase 1: Installing Packages"
+    
     ALL_PKGS=("${CORE_PKGS[@]}" "${DRIVER_PKGS[@]}")
     MISSING_PKGS=()
 
-    for pkg in "${ALL_PKGS[@]}"; do
-        [[ -z "$pkg" ]] && continue
-        if ! pacman -Q "$pkg" &>/dev/null; then
-            MISSING_PKGS+=("$pkg")
-        fi
-    done
+    gum spin --spinner dot --title "Analyzing required packages..." -- bash -c '
+        for pkg in "$@"; do
+            [[ -z "$pkg" ]] && continue
+            if ! pacman -Q "$pkg" &>/dev/null; then echo "$pkg" >> /tmp/missing_pkgs; fi
+        done
+    ' _ "${ALL_PKGS[@]}"
+
+    if [ -f /tmp/missing_pkgs ]; then
+        readarray -t MISSING_PKGS < /tmp/missing_pkgs
+        rm /tmp/missing_pkgs
+    fi
 
     if [ ${#MISSING_PKGS[@]} -eq 0 ]; then
-        echo -e "  -> ${C_GREEN}All required packages are already installed!${RESET}"
+        gum style --foreground 46 "✓ All required packages are already installed."
     else
-        echo -e "  -> ${C_YELLOW}Found ${#MISSING_PKGS[@]} packages to install:${RESET} ${MISSING_PKGS[*]}"
-        SAFE_JOBS=$(( $(nproc) / 2 ))
-        [[ $SAFE_JOBS -lt 1 ]] && SAFE_JOBS=1
-        [[ $SAFE_JOBS -gt 4 ]] && SAFE_JOBS=4
-
+        gum style --foreground 214 "Found ${#MISSING_PKGS[@]} missing packages."
+        SAFE_JOBS=$(( $(nproc) / 2 )); [[ $SAFE_JOBS -lt 1 ]] && SAFE_JOBS=1; [[ $SAFE_JOBS -gt 4 ]] && SAFE_JOBS=4
+        
         for pkg in "${MISSING_PKGS[@]}"; do
-            echo -e "\n${C_BLUE}::${RESET} Installing ${BOLD}${pkg}${RESET}..."
-            if yes "Y" 2>/dev/null | env CARGO_BUILD_JOBS="$SAFE_JOBS" MAKEFLAGS="-j$SAFE_JOBS" $PKG_MANAGER "$pkg"; then
-                echo -e "  -> ${C_GREEN}[ OK ] Installed ${pkg}${RESET}"
-            else
-                echo -e "  -> ${C_RED}[ FAILED ] Could not install ${pkg}, continuing...${RESET}"
+            if ! gum spin --spinner meter --title "Installing $pkg..." -- bash -c "yes 'Y' | env CARGO_BUILD_JOBS=$SAFE_JOBS MAKEFLAGS='-j$SAFE_JOBS' $PKG_MANAGER $pkg >/tmp/pkg_install.log 2>&1"; then
+                gum style --foreground 196 "✗ Failed to install $pkg (check /tmp/pkg_install.log)"
             fi
         done
+        gum style --foreground 46 "✓ Package installation complete."
     fi
+    echo ""
 fi
 
-# ==============================================================================
-# Phase 2: Configuration Backup
-# ==============================================================================
+# --- Phase 2: Configuration Backup ---
+gum style --foreground 212 --bold "💾 Phase 2: Backing up existing configurations"
 BACKUP_DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="$HOME/.config/hydra_backup/backup_${BACKUP_DATE}"
 
-echo -e "\n${C_CYAN}[ INFO ]${RESET} Creating backup of existing configurations..."
-mkdir -p "$BACKUP_DIR"
+gum spin --spinner dot --title "Creating backups in $BACKUP_DIR..." -- bash -c "
+    mkdir -p '$BACKUP_DIR'
+    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch; do
+        if [ -d \"\$HOME/.config/\$cfg\" ] || [ -f \"\$HOME/.config/\$cfg\" ]; then
+            cp -rf \"\$HOME/.config/\$cfg\" \"$BACKUP_DIR/\" 2>/dev/null || true
+        fi
+    done
+"
+gum style --foreground 46 "✓ Existing configs safely backed up."
+echo ""
 
-CONFIGS_TO_DEPLOY=("hypr" "quickshell" "kitty" "cava" "matugen" "rofi" "swayosd" "fastfetch")
+# --- Phase 3: Deployment ---
+gum style --foreground 212 --bold "🚀 Phase 3: Deploying Hydra Linux Environment"
 
-for cfg in "${CONFIGS_TO_DEPLOY[@]}"; do
-    if [ -d "$HOME/.config/$cfg" ] || [ -f "$HOME/.config/$cfg" ]; then
-        cp -rf "$HOME/.config/$cfg" "$BACKUP_DIR/" 2>/dev/null || true
+gum spin --spinner dot --title "Deploying configuration files..." -- bash -c "
+    mkdir -p '$HOME/.config' '$HOME/.local/bin'
+    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch; do
+        if [ -d \"$SCRIPT_DIR/.config/\$cfg\" ]; then
+            rm -rf \"\$HOME/.config/\$cfg\"
+            cp -r \"$SCRIPT_DIR/.config/\$cfg\" \"\$HOME/.config/\"
+        fi
+    done
+    
+    if [ -f \"$SCRIPT_DIR/assets/default_avatar.png\" ] && [ ! -f \"\$HOME/.face.icon\" ]; then
+        cp -f \"$SCRIPT_DIR/assets/default_avatar.png\" \"\$HOME/.face.icon\"
+        cp -f \"$SCRIPT_DIR/assets/default_avatar.png\" \"\$HOME/.face\"
+        chmod 644 \"\$HOME/.face.icon\" \"\$HOME/.face\"
     fi
-done
-echo -e "  -> ${C_GREEN}[ OK ] Existing configs backed up to:${RESET} $BACKUP_DIR"
-
-# ==============================================================================
-# Phase 3: Dotfiles Deployment
-# ==============================================================================
-echo -e "\n${C_CYAN}[ INFO ]${RESET} Deploying Hydra Linux dotfiles..."
-mkdir -p "$HOME/.config" "$HOME/.local/bin"
-
-for cfg in "${CONFIGS_TO_DEPLOY[@]}"; do
-    if [ -d "$SCRIPT_DIR/.config/$cfg" ]; then
-        rm -rf "$HOME/.config/$cfg"
-        cp -r "$SCRIPT_DIR/.config/$cfg" "$HOME/.config/"
-        echo -e "  -> ${C_GREEN}[ OK ] Deployed ~/.config/${cfg}${RESET}"
+    
+    if [ -f \"$SCRIPT_DIR/utils/bin/cava\" ]; then
+        cp -f \"$SCRIPT_DIR/utils/bin/cava\" \"\$HOME/.local/bin/cava\"
+        chmod +x \"\$HOME/.local/bin/cava\"
     fi
-done
-
-# Deploy default profile avatar
-if [ -f "$SCRIPT_DIR/assets/default_avatar.png" ]; then
-    if [ ! -f "$HOME/.face.icon" ]; then
-        cp -f "$SCRIPT_DIR/assets/default_avatar.png" "$HOME/.face.icon"
-        cp -f "$SCRIPT_DIR/assets/default_avatar.png" "$HOME/.face"
-        chmod 644 "$HOME/.face.icon" "$HOME/.face"
-        echo -e "  -> ${C_GREEN}[ OK ] Default circular profile avatar deployed (~/.face.icon)${RESET}"
+    
+    if [ -d \"\$HOME/.config/hypr/scripts\" ]; then
+        find \"\$HOME/.config/hypr/scripts\" -type f -name '*.sh' -exec chmod +x {} +
     fi
-fi
+"
+gum style --foreground 46 "✓ Core configurations deployed."
 
-# Deploy utility cava wrapper
-if [ -f "$SCRIPT_DIR/utils/bin/cava" ]; then
-    cp -f "$SCRIPT_DIR/utils/bin/cava" "$HOME/.local/bin/cava"
-    chmod +x "$HOME/.local/bin/cava"
-fi
-
-# Ensure all scripts are executable
-if [ -d "$HOME/.config/hypr/scripts" ]; then
-    find "$HOME/.config/hypr/scripts" -type f -name "*.sh" -exec chmod +x {} +
-fi
-
-# Initial template compile
+# Compile templates
 if [ -f "$HOME/.config/hypr/scripts/settings_watcher.sh" ]; then
-    echo -e "  -> Compiling configuration templates..."
-    bash "$HOME/.config/hypr/scripts/settings_watcher.sh" --compile >/dev/null 2>&1 || true
+    gum spin --spinner dot --title "Compiling engine templates..." -- bash "$HOME/.config/hypr/scripts/settings_watcher.sh" --compile >/dev/null 2>&1 || true
 fi
 
-# ==============================================================================
-# Phase 4: Wallpapers & Assets
-# ==============================================================================
-echo -e "\n${C_CYAN}[ INFO ]${RESET} Updating font cache..."
-fc-cache -fv >/dev/null 2>&1 || true
-echo -e "  -> ${C_GREEN}[ OK ] Font cache updated.${RESET}"
+gum spin --spinner dot --title "Updating font cache..." -- fc-cache -fv >/dev/null 2>&1 || true
 
 if [ "$INSTALL_WALLPAPERS" = true ]; then
-    mkdir -p "$WALLPAPER_DIR"
-    if [ -d "$SCRIPT_DIR/wallpapers" ]; then
-        cp -rn "$SCRIPT_DIR/wallpapers/"* "$WALLPAPER_DIR/" 2>/dev/null || true
-    fi
-    echo -e "  -> ${C_GREEN}[ OK ] Showcase wallpapers deployed to:${RESET} $WALLPAPER_DIR"
+    gum spin --spinner dot --title "Deploying showcase wallpapers..." -- bash -c "
+        mkdir -p '$WALLPAPER_DIR'
+        if [ -d \"$SCRIPT_DIR/wallpapers\" ]; then
+            cp -rn \"$SCRIPT_DIR/wallpapers/\"* \"$WALLPAPER_DIR/\" 2>/dev/null || true
+        fi
+    "
+    gum style --foreground 46 "✓ Wallpapers deployed."
 fi
+echo ""
 
-# ==============================================================================
-# Phase 5: Silent SDDM Installation & Configuration
-# ==============================================================================
+# --- Phase 4: SDDM ---
 if [ "$INSTALL_SDDM" = true ] && [ -d "$SCRIPT_DIR/sddm/themes/silent" ]; then
-    echo -e "\n${C_CYAN}[ INFO ]${RESET} Configuring Silent SDDM theme..."
-    sudo mkdir -p /usr/share/sddm/themes/silent
-    sudo cp -rf "$SCRIPT_DIR/sddm/themes/silent/"* /usr/share/sddm/themes/silent/
-
-    # Install RedHat fonts for SDDM
-    if [ -d "$SCRIPT_DIR/sddm/themes/silent/fonts" ]; then
-        sudo cp -r "$SCRIPT_DIR/sddm/themes/silent/fonts/"{redhat,redhat-vf} /usr/share/fonts/ 2>/dev/null || true
-        sudo fc-cache -f >/dev/null 2>&1 || true
-    fi
-
-    # Configure /etc/sddm.conf
-    if [ -f "$SCRIPT_DIR/sddm/sddm.conf" ]; then
-        [ -f /etc/sddm.conf ] && sudo cp -f /etc/sddm.conf /etc/sddm.conf.hydra_bkp
-        sudo cp -f "$SCRIPT_DIR/sddm/sddm.conf" /etc/sddm.conf
-    fi
-
-    # Allow Matugen to sync accent colors to SDDM presets dynamically
-    sudo chmod 666 /usr/share/sddm/themes/silent/configs/*.conf 2>/dev/null || true
-
-    # User Avatar Integration
-    sudo mkdir -p /usr/share/sddm/faces
-    if [ -f "$HOME/.face.icon" ]; then
-        sudo cp -f "$HOME/.face.icon" "/usr/share/sddm/faces/$USER.face.icon"
-    elif [ -f "$HOME/.face" ]; then
-        sudo cp -f "$HOME/.face" "/usr/share/sddm/faces/$USER.face.icon"
-    elif [ -f "$SCRIPT_DIR/assets/default_avatar.png" ]; then
-        sudo cp -f "$SCRIPT_DIR/assets/default_avatar.png" "/usr/share/sddm/faces/$USER.face.icon"
-    fi
-    sudo chown "$USER:$USER" "/usr/share/sddm/faces/$USER.face.icon" 2>/dev/null || true
-    sudo chmod 644 "/usr/share/sddm/faces/$USER.face.icon" 2>/dev/null || true
-
+    gum style --foreground 212 --bold "🔒 Phase 4: Configuring Silent SDDM Greeter"
+    
+    gum spin --spinner dot --title "Setting up login manager..." -- bash -c "
+        sudo mkdir -p /usr/share/sddm/themes/silent
+        sudo cp -rf \"$SCRIPT_DIR/sddm/themes/silent/\"* /usr/share/sddm/themes/silent/
+        if [ -d \"$SCRIPT_DIR/sddm/themes/silent/fonts\" ]; then
+            sudo cp -r \"$SCRIPT_DIR/sddm/themes/silent/fonts/\"{redhat,redhat-vf} /usr/share/fonts/ 2>/dev/null || true
+            sudo fc-cache -f >/dev/null 2>&1 || true
+        fi
+        if [ -f \"$SCRIPT_DIR/sddm/sddm.conf\" ]; then
+            [ -f /etc/sddm.conf ] && sudo cp -f /etc/sddm.conf /etc/sddm.conf.hydra_bkp
+            sudo cp -f \"$SCRIPT_DIR/sddm/sddm.conf\" /etc/sddm.conf
+        fi
+        sudo chmod 666 /usr/share/sddm/themes/silent/configs/*.conf 2>/dev/null || true
+        sudo mkdir -p /usr/share/sddm/faces
+        if [ -f \"\$HOME/.face.icon\" ]; then sudo cp -f \"\$HOME/.face.icon\" \"/usr/share/sddm/faces/\$USER.face.icon\"; fi
+        sudo chown \"\$USER:\$USER\" \"/usr/share/sddm/faces/\$USER.face.icon\" 2>/dev/null || true
+        sudo chmod 644 \"/usr/share/sddm/faces/\$USER.face.icon\" 2>/dev/null || true
+    "
+    
     # Disable conflicting display managers
     DMS=("gdm" "lightdm" "lxdm" "ly")
     for dm in "${DMS[@]}"; do
         if systemctl is-enabled "$dm.service" &>/dev/null; then
-            echo "  -> Disabling conflicting Display Manager: $dm"
             sudo systemctl disable "$dm.service" 2>/dev/null || true
         fi
     done
-
-    # Enable SDDM
+    
     sudo systemctl enable sddm.service -f >/dev/null 2>&1 || true
-    echo -e "  -> ${C_GREEN}[ OK ] Silent SDDM installed and enabled with animated theme!${RESET}"
+    gum style --foreground 46 "✓ SDDM enabled with animated video backgrounds."
+    echo ""
 fi
 
-# ==============================================================================
-# Phase 6: System Services & State
-# ==============================================================================
-echo -e "\n${C_CYAN}[ INFO ]${RESET} Enabling core system services..."
-sudo systemctl enable NetworkManager.service >/dev/null 2>&1 || true
-sudo systemctl enable power-profiles-daemon.service >/dev/null 2>&1 || true
+# --- Phase 5: Services ---
+gum spin --spinner dot --title "Enabling core system services..." -- bash -c "
+    sudo systemctl enable NetworkManager.service >/dev/null 2>&1 || true
+    sudo systemctl enable power-profiles-daemon.service >/dev/null 2>&1 || true
+"
 
-# Write Hydra Linux version stamp
 mkdir -p "$(dirname "$VERSION_FILE")"
 cat <<EOF > "$VERSION_FILE"
 LOCAL_VERSION="${HYDRA_VERSION}"
@@ -375,14 +282,16 @@ INSTALL_DATE="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
 WALLPAPER_DIR="${WALLPAPER_DIR}"
 EOF
 
-# ==============================================================================
-# Phase 7: Completion
-# ==============================================================================
-draw_header
-echo -e "${C_GREEN}${BOLD}✓ Installation Complete!${RESET}\n"
-echo -e "Hydra Linux has been successfully deployed to your system."
-echo -e "  • ${BOLD}Compositor:${RESET}    Hyprland with Lua engine (~/.config/hypr/hyprland.lua)"
-echo -e "  • ${BOLD}Desktop Shell:${RESET} Quickshell widgets with dynamic Matugen theming"
-echo -e "  • ${BOLD}Greeter:${RESET}       Silent SDDM with animated video wallpapers"
-echo -e "  • ${BOLD}Backups:${RESET}       $BACKUP_DIR\n"
-echo -e "${C_YELLOW}Note: It is recommended to log out or restart your system for all changes to take effect.${RESET}\n"
+# --- Final Completion ---
+gum style \
+	--foreground 46 --border-foreground 46 --border rounded \
+	--align left --width 80 --margin "1 2" --padding "1 2" \
+	"🎉 INSTALLATION COMPLETE!" \
+	"" \
+	"Hydra Linux has been successfully deployed to your system." \
+	" - Compositor: Hyprland with Lua engine" \
+	" - Shell: Quickshell widgets with dynamic Matugen theming" \
+	" - Backups: $BACKUP_DIR"
+
+gum format "# It is highly recommended to log out or restart your system now."
+echo ""
