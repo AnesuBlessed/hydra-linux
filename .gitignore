@@ -3,16 +3,24 @@
 *.tmp
 *.swp
 *.bak
+*.orig
 *~
 
 # OS artifacts
 .DS_Store
 Thumbs.db
 
-# Cache directories
-.cache/
+# Python
 __pycache__/
 *.pyc
+*.pyo
 
-# Local runtime state
+# Runtime state / QS caches
+.cache/
 .env.local
+*.fifo
+
+# Editor artifacts
+.vscode/
+.idea/
+*.kate-swp
