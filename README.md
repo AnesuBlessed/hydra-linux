@@ -21,7 +21,6 @@
 
 <br>
 
-
 **A complete, unified Hyprland desktop environment with Quickshell, Matugen dynamic theming, and Silent SDDM.**
 
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL--3.0-blue.svg)](LICENSE)
@@ -68,40 +67,43 @@ Unlike minimal dotfile collections, Hydra Linux ships as a complete, unified sys
 
 ### Quickshell Desktop Shell
 
-A full-featured Qt6/QML desktop shell with 17 interactive widgets:
+A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-scale aware:
 
-- Top bar with system tray, clock, workspace indicators, and status icons.
-- Application launcher with fuzzy search.
-- Dynamic wallpaper picker with thumbnail previews and DuckDuckGo image search.
-- Calendar with integrated weather forecasts (Open-Meteo API, no API key required).
-- Network manager (WiFi, Ethernet, Bluetooth panels with sound effects).
-- Music player with album art and equalizer visualization.
-- Volume and brightness controls with OSD overlays.
-- Battery monitor with power profile switching.
-- Focus time tracker with session statistics.
-- Clipboard manager with history.
-- Notification system.
-- System settings panel (general, weather, keybinds, startup apps, profile avatar).
-- Stewart AI assistant widget.
-- Monitor management and display configuration.
-- Interactive guide/tutorial system.
+- **Top bar** with system tray, clock, workspace indicators, media controls, weather, and status pills.
+- **Application launcher** with fuzzy search and icon grid.
+- **Dynamic wallpaper picker** with thumbnail previews and DuckDuckGo image search.
+- **Calendar** with integrated weather forecasts (Open-Meteo API, no API key required).
+- **Network manager** with WiFi, Ethernet, and Bluetooth panels.
+- **Music player** with album art, progress tracking, and equalizer visualization.
+- **Volume and brightness controls** with OSD overlays via SwayOSD.
+- **Battery monitor** with power profile switching.
+- **Focus time tracker** with session statistics.
+- **Clipboard manager** with full history, per-item delete, and one-click wipe.
+- **Notification system** with inline action buttons and typewriter animations.
+- **System settings panel** (General, Keybinds, Startup Apps).
+- **SDDM video manager** — change the login screen background video from within the settings panel.
+- **Profile avatar manager** — set your login and desktop avatar with automatic cropping.
+- **Monitor management** and display configuration.
+- **Interactive guide/tutorial** system for new users.
+- **Hydra AI assistant** widget.
 
 ### Matugen Dynamic Theming
 
 - Set any wallpaper and Matugen automatically generates a system-wide color palette.
-- Colors propagate in real-time to Quickshell, Kitty, Cava, Rofi, SwayOSD, and SDDM.
+- Colors propagate in real-time to Quickshell, Kitty, Cava, Rofi, SwayOSD, and Silent SDDM.
 - No manual theme editing required.
 
 ### Silent SDDM Login Greeter
 
 - Animated video wallpapers (Rei, Ken, Silvia presets) with static image fallbacks.
+- **Change the login video directly from the Quickshell settings panel** — no manual config editing needed.
 - 16 built-in color presets: Catppuccin (Mocha, Latte, Frappe, Macchiato), Nord, Gruvbox, Everforest, Eldritch (Abyss, Cthulhu, Dusk), and more.
 - Circular user avatar display, virtual keyboard, session selector, and power menu.
 - Automatic Matugen accent color synchronization.
 
 ### Automated Installer
 
-- Interactive TUI with `fzf` multi-select or traditional prompts.
+- Interactive TUI with `gum` for a beautiful modern installer experience.
 - Safe backup of existing configurations before deployment.
 - NVIDIA proprietary driver installation with kernel modesetting setup.
 - Optional Neovim (with Lua LSP) and Zsh installation.
@@ -192,24 +194,23 @@ Run with all recommended defaults and no prompts:
 
 ## Quickshell Widgets
 
-All widgets are built with Qt6/QML and managed through the Quickshell shell runtime. They communicate via IPC through `qs_manager.sh`.
+All widgets are built with Qt6/QML and managed through the Quickshell shell runtime. They communicate via IPC through `qs_manager.sh`. Every widget is UI-scale aware and adapts automatically to your display scaling factor.
 
 | Widget | Description |
 |--------|-------------|
 | **App Launcher** | Fuzzy-search application launcher with icon grid |
 | **Battery** | Battery status, charge percentage, and power profile controls |
 | **Calendar** | Monthly calendar with weather forecast integration (Open-Meteo) |
-| **Clipboard** | Clipboard history manager powered by `cliphist` |
+| **Clipboard** | Clipboard history manager powered by `cliphist` — with per-item delete and full wipe |
 | **Focus Time** | Productivity timer with session tracking and statistics |
 | **Guide** | Interactive onboarding tutorial with visual previews |
 | **Monitors** | Display configuration and multi-monitor management |
-| **Movies** | Media widget |
 | **Music** | MPRIS music player with album art and Cava equalizer |
 | **Network** | WiFi, Ethernet, and Bluetooth connection manager |
-| **Notifications** | System notification popup handler |
+| **Notifications** | System notification popup handler with inline action buttons |
 | **Quick Actions** | Drawing tools, system usage monitor, and timer |
-| **Settings** | Full settings panel: general, weather, keybinds, startup, avatar |
-| **Stewart** | AI assistant integration widget |
+| **Settings** | Full settings panel: general, keybinds, startup, avatar, SDDM video |
+| **Hydra AI** | AI assistant integration widget |
 | **Updater** | System update checker and notification panel |
 | **Volume** | Audio device control with per-app volume and OSD |
 | **Wallpaper** | Visual wallpaper picker with thumbnail carousel and web search |
@@ -218,9 +219,19 @@ All widgets are built with Qt6/QML and managed through the Quickshell shell runt
 
 ## Silent SDDM Greeter
 
+### Changing the Login Video
+
+The easiest way is through the Quickshell settings panel:
+
+1. Open Settings (gear icon in the top bar or `Super + S`).
+2. Go to the **General** tab.
+3. Scroll to **SDDM Login Video**.
+4. Click **Browse…** to pick any video file, or drop a video into `/usr/share/sddm/themes/silent/backgrounds/`.
+5. The built-in presets (Rei, Ken, Silvia) appear as options automatically.
+
 ### Available Presets
 
-Switch the active preset by editing `/usr/share/sddm/themes/silent/metadata.desktop`:
+Switch the active preset manually by editing `/usr/share/sddm/themes/silent/metadata.desktop`:
 
 ```ini
 [SddmGreeterTheme]
@@ -252,40 +263,46 @@ ConfigFile=configs/rei.conf
 
 Press `Super + W` to open the wallpaper picker. Select any image and Matugen will automatically regenerate colors across the entire desktop.
 
-Wallpapers are stored in `~/Pictures/Wallpapers`. Drop new images into that directory and they will appear in the picker on the next launch.
+Wallpapers are stored in `~/Pictures/Wallpapers`. Drop new images into that directory and they appear in the picker on the next launch.
 
 ### Profile Avatar
 
-Run the avatar picker from Settings (General tab, Profile Avatar section) or from the terminal:
+Open Settings → General → **Profile Avatar**, then click **Browse…** to pick any image. It is automatically center-cropped to a circle and deployed to both the login screen and the desktop shell.
+
+You can also run it from the terminal:
 
 ```bash
 ~/.config/hypr/scripts/set_avatar.sh
 ```
 
-This opens a file chooser, center-crops the image to a circle, and deploys it to the login screen and desktop.
+### SDDM Login Video
+
+Open Settings → General → **SDDM Login Video**, then click **Browse…** to pick any `.mp4` file. Drop additional videos into `/usr/share/sddm/themes/silent/backgrounds/` and they appear as options immediately.
+
+### UI Scale
+
+The entire shell respects a single `uiScale` value in `~/.config/hypr/settings.json`. Change it in Settings → General → **UI Scale** slider. All widgets, icons, and spacing scale proportionally.
+
+### Settings Panel
+
+The settings panel (`Super + S` or click the ⚙ icon) provides a GUI for:
+
+- **General** — UI scale, help icon toggle, workspace count, profile avatar, SDDM video
+- **Keybinds** — Full keybind editor, add/edit/remove bindings
+- **Startup** — Manage autostart applications
+
+Settings are stored in `~/.config/hypr/settings.json` and applied immediately without restarting.
 
 ### Hyprland Configuration
 
-Hyprland configs live in `~/.config/hypr/`. The Lua configuration files in `config/` are the primary source:
+Hyprland configs live in `~/.config/hypr/`. The modular config files in `config/` are the primary source of truth:
 
-- `config/keybindings.lua` - Keyboard shortcuts
-- `config/rules.lua` - Window rules and layer rules
-- `config/monitors.lua` - Monitor layout and scaling
-- `config/autostart.lua` - Startup applications
-- `config/variables.lua` - General Hyprland settings
-- `config/env.lua` - Environment variables
-
-### Settings
-
-The Quickshell settings panel (`Super + S` or click the gear icon) provides a GUI for configuring:
-
-- General preferences (animations, blur, gaps, rounding)
-- Weather location and units
-- Keybind customization
-- Startup application management
-- Profile avatar
-
-Settings are stored in `~/.config/hypr/settings.json`.
+- `config/keybindings.conf` — Keyboard shortcuts
+- `config/rules.conf` — Window rules and layer rules
+- `config/monitors.conf` — Monitor layout and scaling
+- `config/autostart.conf` — Startup applications (auto-generated from settings.json)
+- `config/variables.conf` — General Hyprland settings
+- `config/env.conf` — Environment variables (auto-generated)
 
 ---
 
@@ -293,49 +310,93 @@ Settings are stored in `~/.config/hypr/settings.json`.
 
 ```
 hydra-linux/
-|-- .config/
-|   |-- hypr/                  # Hyprland configuration
-|   |   |-- hyprland.lua       # Main Lua entry point
-|   |   |-- config/            # Modular Lua and Conf configs
-|   |   |   |-- keybindings.lua
-|   |   |   |-- rules.lua
-|   |   |   |-- monitors.lua
-|   |   |   |-- autostart.lua
-|   |   |   |-- variables.lua
-|   |   |   |-- env.lua
-|   |   |   `-- settings.lua
-|   |   |-- scripts/           # Shell scripts and Quickshell widgets
-|   |   |   |-- quickshell/    # All QML widget source code
-|   |   |   |-- qs_manager.sh  # Quickshell IPC manager
-|   |   |   |-- caching.sh     # Cache path configuration
-|   |   |   `-- set_avatar.sh  # Profile avatar utility
-|   |   |-- settings.json      # User preferences
-|   |   `-- default_settings.json
-|   |-- kitty/                 # Kitty terminal config + Matugen colors
-|   |-- cava/                  # Cava audio visualizer config
-|   |-- matugen/               # Matugen color generation templates
-|   |-- rofi/                  # Rofi launcher styling
-|   |-- swayosd/               # SwayOSD volume/brightness overlay
-|   `-- fastfetch/             # System info display config
-|-- sddm/
-|   |-- themes/silent/         # Silent SDDM theme
-|   |   |-- Main.qml           # Theme entry point
-|   |   |-- components/        # QML UI components
-|   |   |-- configs/           # 16 color preset configs
-|   |   |-- backgrounds/       # Video and static backgrounds
-|   |   |-- fonts/             # RedHat font family
-|   |   |-- icons/             # UI and session icons
-|   |   `-- docs/              # Theme documentation and previews
-|   `-- sddm.conf              # Display manager configuration
-|-- .local/share/fonts/        # Bundled fonts (JetBrains Mono, Iosevka Nerd Font)
-|-- assets/                    # Default profile avatar
-|-- wallpapers/                # Starter wallpaper collection
-|-- utils/                     # Utility wrappers (Cava theme injector)
-|-- install.sh                 # Automated installer
-|-- version.txt                # Current version (1.0.0)
-|-- updates.json               # Update metadata
-`-- LICENSE                    # GNU GPL v3.0
+├── .config/
+│   ├── hypr/                    # Hyprland configuration
+│   │   ├── hyprland.conf        # Main entry point
+│   │   ├── config/              # Modular configs (auto-generated from settings.json)
+│   │   │   ├── keybindings.conf
+│   │   │   ├── rules.conf
+│   │   │   ├── monitors.conf
+│   │   │   ├── autostart.conf
+│   │   │   ├── variables.conf
+│   │   │   └── env.conf
+│   │   ├── scripts/             # Shell scripts and Quickshell widgets
+│   │   │   ├── quickshell/      # All QML widget source code
+│   │   │   │   ├── Shell.qml    # Quickshell entry point
+│   │   │   │   ├── TopBar.qml   # Top bar (clock, workspaces, tray)
+│   │   │   │   ├── SysData.qml  # Singleton: CPU/RAM/temp data provider
+│   │   │   │   ├── Config.qml   # Singleton: settings.json reader/writer
+│   │   │   │   ├── watchers/    # Event-driven data scripts (inotifywait pattern)
+│   │   │   │   ├── settings/    # Settings popup panel
+│   │   │   │   ├── clipboard/   # Clipboard history manager
+│   │   │   │   ├── calendar/    # Calendar + weather widget
+│   │   │   │   ├── music/       # MPRIS music player
+│   │   │   │   ├── network/     # WiFi/BT/Ethernet panel
+│   │   │   │   ├── wallpaper/   # Wallpaper picker
+│   │   │   │   └── ...          # Other widgets
+│   │   │   ├── qs_manager.sh    # Quickshell IPC manager
+│   │   │   ├── caching.sh       # Cache/run path configuration
+│   │   │   ├── set_avatar.sh    # Profile avatar utility
+│   │   │   ├── set_sddm_video.sh # SDDM login video setter
+│   │   │   └── settings_watcher.sh # Watches settings.json → rebuilds configs
+│   │   ├── templates/           # Config templates (populated by settings_watcher)
+│   │   └── settings.json        # User preferences (source of truth)
+│   ├── kitty/                   # Kitty terminal config + Matugen colors
+│   ├── cava/                    # Cava audio visualizer config
+│   ├── matugen/                 # Matugen color generation templates
+│   ├── rofi/                    # Rofi launcher styling
+│   ├── swayosd/                 # SwayOSD volume/brightness overlay
+│   └── fastfetch/               # System info display config
+├── sddm/
+│   ├── themes/silent/           # Silent SDDM theme
+│   │   ├── Main.qml             # Theme entry point
+│   │   ├── components/          # QML UI components
+│   │   ├── configs/             # 16 color preset configs
+│   │   ├── backgrounds/         # Video and static backgrounds
+│   │   ├── fonts/               # RedHat font family
+│   │   └── icons/               # UI and session icons
+│   └── sddm.conf                # Display manager configuration
+├── .local/share/fonts/          # Bundled fonts (JetBrains Mono, Iosevka Nerd Font)
+├── assets/                      # Default profile avatar and branding
+├── wallpapers/                  # Starter wallpaper collection
+├── utils/                       # Utility wrappers
+├── install.sh                   # Automated installer
+├── version.txt                  # Current version
+├── updates.json                 # Update metadata
+└── LICENSE                      # GNU GPL v3.0
 ```
+
+---
+
+## Architecture Notes
+
+### How the Shell Communicates
+
+All widget open/close/toggle actions go through `qs_manager.sh`, which routes IPC calls to the running Quickshell process:
+
+```bash
+~/.config/hypr/scripts/qs_manager.sh toggle settings
+~/.config/hypr/scripts/qs_manager.sh toggle clipboard
+~/.config/hypr/scripts/qs_manager.sh toggle calendar
+```
+
+### How Settings Are Applied
+
+`settings.json` is the single source of truth. `settings_watcher.sh` watches it with `inotifywait` and rebuilds all Hyprland config files from templates whenever it changes. No manual `hyprctl reload` is needed — it happens automatically.
+
+### How Data Watchers Work
+
+All live data (audio, battery, network, Bluetooth, keyboard layout) uses an event-driven pattern:
+
+1. A **fetcher** script reads the current state and outputs JSON.
+2. A **waiter** script blocks on `inotifywait` or `udevadm`/`nmcli monitor` until a hardware event fires.
+3. When the waiter exits, QML re-runs the fetcher and restarts the waiter.
+
+This means **zero polling overhead** when nothing is changing.
+
+### CPU/RAM/Temperature
+
+`SysData.qml` is a singleton that reads CPU, RAM, and temperature every 2 seconds only when at least one widget has subscribed (called `subscribe()`). When all widgets close it stops automatically.
 
 ---
 
@@ -343,15 +404,15 @@ hydra-linux/
 
 The installer handles all dependencies automatically. For reference, the core packages include:
 
-**Compositor and Shell**: hyprland, hypridle, quickshell-git, matugen-bin, swayosd-git, rofi, kitty
+**Compositor and Shell**: `hyprland`, `hypridle`, `quickshell-git`, `matugen-bin`, `swayosd-git`, `rofi`, `kitty`
 
-**Audio**: pipewire, wireplumber, pipewire-pulse, pamixer, playerctl, pavucontrol, easyeffects, cava
+**Audio**: `pipewire`, `wireplumber`, `pipewire-pulse`, `pamixer`, `playerctl`, `pavucontrol`, `easyeffects`, `cava`
 
-**Display Manager**: sddm, qt6-svg, qt6-virtualkeyboard, qt6-multimedia-ffmpeg
+**Display Manager**: `sddm`, `qt6-svg`, `qt6-virtualkeyboard`, `qt6-multimedia-ffmpeg`
 
-**Utilities**: grim, slurp, satty, imagemagick, wl-clipboard, cliphist, brightnessctl, inotify-tools, fastfetch, zenity
+**Utilities**: `grim`, `slurp`, `satty`, `imagemagick`, `wl-clipboard`, `cliphist`, `brightnessctl`, `inotify-tools`, `fastfetch`, `zenity`, `pkexec`
 
-**Applications**: firefox, dolphin, nautilus
+**Applications**: `firefox`, `dolphin`
 
 **Fonts**: JetBrains Mono, Iosevka Nerd Font, RedHat Display/Text/Mono
 
@@ -359,9 +420,26 @@ The installer handles all dependencies automatically. For reference, the core pa
 
 ## Troubleshooting
 
+### Quickshell not showing / top bar missing after login
+
+The bar is launched by Hyprland autostart via `autostart.conf`. If it fails to start:
+
+```bash
+# Restart manually
+WAYLAND_DISPLAY=wayland-1 XDG_RUNTIME_DIR=/run/user/$(id -u) \
+  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus \
+  quickshell -p ~/.config/hypr/scripts/quickshell/Shell.qml &
+```
+
+Or use the IPC manager:
+
+```bash
+~/.config/hypr/scripts/qs_manager.sh reload
+```
+
 ### Wallpaper picker shows no images
 
-Make sure your wallpapers are in `~/Pictures/Wallpapers`. The picker generates thumbnails on first launch, which may take a moment for large collections. If thumbnails are missing, press `Super + W` again to trigger regeneration.
+Make sure your wallpapers are in `~/Pictures/Wallpapers`. The picker generates thumbnails on first launch — press `Super + W` again if thumbnails are missing.
 
 ### SDDM not loading the theme
 
@@ -370,17 +448,13 @@ Verify the theme is installed and the config points to it:
 ```bash
 cat /etc/sddm.conf | grep Theme
 # Should show: Current=silent
-```
 
-If SDDM was not enabled, run:
-
-```bash
 sudo systemctl enable sddm.service -f
 ```
 
 ### Matugen colors not applying
 
-Ensure `matugen` is installed and the wallpaper path is valid. Matugen runs automatically when a new wallpaper is selected through the picker.
+Ensure `matugen` is installed and the wallpaper path is valid. Matugen runs automatically when a wallpaper is selected through the picker.
 
 ### Audio not working
 
@@ -390,19 +464,26 @@ Check that PipeWire services are running:
 systemctl --user status pipewire wireplumber
 ```
 
+### Settings panel tabs not highlighting correctly
+
+This was fixed in v1.0.1. If you see the wrong tab highlighted, pull the latest version and reload Quickshell:
+
+```bash
+git pull
+~/.config/hypr/scripts/qs_manager.sh reload
+```
+
 ---
 
 ## Acknowledgments
 
 ### Serpantinum
 
-The Quickshell desktop shell in Hydra Linux is built on [Serpantinum](https://github.com/ilyamiro/serpantinum) by [ilyamiro](https://github.com/ilyamiro). Serpantinum provides the foundational QML widget architecture, IPC system, and overall shell design for Wayland compositors. The original look and feel has been intentionally preserved because the design is already clean, functional, and well-suited for a daily-driver desktop. Rather than redesigning for the sake of it, Hydra Linux focuses on extending the shell with additional features, deeper system integration, and a unified installer experience.
+The Quickshell desktop shell in Hydra Linux is built on [Serpantinum](https://github.com/ilyamiro/serpantinum) by [ilyamiro](https://github.com/ilyamiro). Serpantinum provides the foundational QML widget architecture, IPC system, and overall shell design for Wayland compositors. Rather than redesigning for the sake of it, Hydra Linux extends the shell with additional features, deeper system integration, and a unified installer.
 
 ### Silent SDDM
 
-The login greeter included in Hydra Linux is based on [Silent SDDM](https://github.com/uiriansan/SilentSDDM) by [uiriansan](https://github.com/uiriansan). It provides the animated video wallpaper support, multiple color presets, and the modular QML architecture that powers the greeter experience.
-
-For standalone installation or more information about Silent SDDM, visit their repository:
+The login greeter is based on [Silent SDDM](https://github.com/uiriansan/SilentSDDM) by [uiriansan](https://github.com/uiriansan). It provides the animated video wallpaper support, multiple color presets, and the modular QML architecture that powers the greeter.
 
 ```bash
 git clone -b main --depth=1 https://github.com/uiriansan/SilentSDDM

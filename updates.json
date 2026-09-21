@@ -1,6 +1,11 @@
 {
   "videos": [
     {
+      "version": "1.0.1",
+      "url": "",
+      "warning_message": "Hydra Linux 1.0.1 — Performance optimizations, bug fixes, and clipboard/SDDM improvements."
+    },
+    {
       "version": "1.0.0",
       "url": "",
       "warning_message": "Hydra Linux 1.0.0 initialized."
