@@ -2120,16 +2120,60 @@ Item {
                                     }
                                 }
 
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: root.s(8)
+
                                 Rectangle {
-                                    width: root.s(140); height: root.s(36)
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: root.s(36)
                                     radius: root.s(8)
-                                    color: sddmBtnMa.containsMouse ? root.mauve : root.surface2
+                                    color: box8.isActive ? Qt.alpha(root.base, 0.15) : root.surface1
+                                    border.color: sddmPathInput.activeFocus
+                                        ? (box8.isActive ? root.base : root.mauve)
+                                        : (box8.isActive ? Qt.alpha(root.base, 0.3) : root.surface2)
+                                    border.width: 1
+                                    Behavior on border.color { ColorAnimation { duration: 200 } }
+                                    Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+
+                                    TextInput {
+                                        id: sddmPathInput
+                                        anchors.fill: parent
+                                        anchors.margins: root.s(8)
+                                        verticalAlignment: TextInput.AlignVCenter
+                                        text: "/usr/share/sddm/themes/silent/backgrounds"
+                                        font.family: "JetBrains Mono"
+                                        font.pixelSize: root.s(11)
+                                        color: box8.isActive ? root.base : root.text
+                                        clip: true
+                                        selectByMouse: true
+                                        readOnly: true
+                                        Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.preferredWidth: root.s(100)
+                                    Layout.preferredHeight: root.s(36)
+                                    radius: root.s(8)
+                                    color: sddmBtnMa.containsMouse ? (box8.isActive ? root.base : root.mauve) : (box8.isActive ? Qt.alpha(root.base, 0.2) : root.surface2)
                                     Behavior on color { ColorAnimation { duration: 150 } }
-                                    
+
                                     RowLayout {
-                                        anchors.centerIn: parent; spacing: root.s(8)
-                                        Text { text: "󰋎"; font.family: "Iosevka Nerd Font"; font.pixelSize: root.s(14); color: sddmBtnMa.containsMouse ? root.crust : root.text }
-                                        Text { text: "Change Video"; font.family: "JetBrains Mono"; font.pixelSize: root.s(13); font.weight: Font.Bold; color: sddmBtnMa.containsMouse ? root.crust : root.text }
+                                        anchors.centerIn: parent
+                                        spacing: root.s(6)
+                                        Text {
+                                            text: "󰋎"
+                                            font.family: "Iosevka Nerd Font"; font.pixelSize: root.s(12)
+                                            color: sddmBtnMa.containsMouse ? (box8.isActive ? root.mauve : root.crust) : (box8.isActive ? root.base : root.text)
+                                        }
+                                        Text {
+                                            text: "Browse..."
+                                            font.family: "JetBrains Mono"; font.pixelSize: root.s(12); font.weight: Font.Bold
+                                            color: sddmBtnMa.containsMouse ? (box8.isActive ? root.mauve : root.crust) : (box8.isActive ? root.base : root.text)
+                                        }
                                     }
 
                                     MouseArea {
@@ -3457,6 +3501,7 @@ Item {
                             property int prevTab: 0
                             property int curTab: root.currentTab
 
+                            property int visualTab: curTab === 0 ? 0 : (curTab === 2 ? 1 : (curTab === 3 ? 2 : 0))
                             onCurTabChanged: {
                                 if (curTab > prevTab) {
                                     tabRightAnim.duration = 200; tabLeftAnim.duration = 350;
@@ -3466,7 +3511,7 @@ Item {
                                 prevTab = curTab;
                                 
                                 // Graceful scrolling: center the newly selected tab
-                                let tLeft = root.s(3) + curTab * tabBarFlickable.tabItemW;
+                                let tLeft = root.s(3) + visualTab * tabBarFlickable.tabItemW;
                                 let targetX = tLeft - (tabBarFlickable.width / 2) + (tabBarFlickable.tabItemW / 2);
                                 
                                 // Clamp bounds
@@ -3476,7 +3521,7 @@ Item {
                                 smoothScrollAnim.start();
                             }
 
-                            property real targetLeft: root.s(3) + curTab * tabBarFlickable.tabItemW
+                            property real targetLeft: root.s(3) + visualTab * tabBarFlickable.tabItemW
                             property real targetRight: targetLeft + tabBarFlickable.tabItemW
 
                             property real actualLeft: targetLeft
