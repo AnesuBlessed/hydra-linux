@@ -58,10 +58,9 @@ Unlike minimal dotfile collections, Hydra Linux ships as a complete, unified sys
 
 ## Features
 
-### Hyprland with Dual-Engine Configuration
+### Modular Hyprland Configuration
 
-- Native Lua configuration (`hyprland.lua`, `config/*.lua`) providing type safety, modular design, and programmatic customization.
-- Traditional `.conf` files maintained in parallel for compatibility.
+- Clean modular configuration (`hyprland.conf`, `config/*.conf`) with parallel Lua definitions.
 - Dynamic GPU detection (NVIDIA, AMD, Intel) with automatic driver configuration.
 - Comprehensive keybinding system with workspace management, window rules, and multi-monitor support.
 
@@ -85,7 +84,6 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 - **Profile avatar manager** — set your login and desktop avatar with automatic cropping.
 - **Monitor management** and display configuration.
 - **Interactive guide/tutorial** system for new users.
-- **Hydra AI assistant** widget.
 
 ### Matugen Dynamic Theming
 
@@ -97,7 +95,7 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 
 - Animated video wallpapers (Rei, Ken, Silvia presets) with static image fallbacks.
 - **Change the login video directly from the Quickshell settings panel** — no manual config editing needed.
-- 16 built-in color presets: Catppuccin (Mocha, Latte, Frappe, Macchiato), Nord, Gruvbox, Everforest, Eldritch (Abyss, Cthulhu, Dusk), and more.
+- Built-in color presets: Catppuccin (Mocha, Latte, Frappe, Macchiato), Nord, Gruvbox, Everforest, Eldritch (Abyss, Cthulhu, Dusk), and more.
 - Circular user avatar display, virtual keyboard, session selector, and power menu.
 - Automatic Matugen accent color synchronization.
 
@@ -158,37 +156,51 @@ Run with all recommended defaults and no prompts:
 
 | Keybinding | Action |
 |------------|--------|
-| `Super + Return` / `Super + Q` | Open terminal (Kitty) |
-| `Super + C` | Close active window |
-| `Super + V` | Toggle floating mode |
-| `Super + F` | Toggle fullscreen |
-| `Super + P` | Toggle pseudo-tiling |
-| `Super + J` | Toggle split direction |
-| `Super + Arrow Keys` | Move focus between windows |
+| `Super + Q` | Close active window |
+| `Super + Shift + F` | Toggle floating mode |
+| `Super + Shift + Arrows` | Resize active window |
+| `Super + Ctrl + Arrows` | Move window directionally |
+| `Super + Arrows` | Move focus between windows |
 | `Super + 1-9` | Switch to workspace 1-9 |
 | `Super + Shift + 1-9` | Move active window to workspace 1-9 |
-| `Super + Mouse Drag` | Move/resize windows |
+| `Super + Mouse Left Drag` | Move window |
+| `Super + Mouse Right Drag` | Resize window |
 
-### Applications
+### Applications & Shell Panels
 
 | Keybinding | Action |
 |------------|--------|
-| `Super + Space` / `Super + D` | Application launcher |
-| `Super + E` | File manager |
-| `Super + B` | Web browser (Firefox) |
+| `Super + T` | Open terminal (Kitty) |
+| `Super + F` | Web browser (Firefox) |
+| `Super + E` | File manager (Dolphin) |
+| `Super + A` | Application launcher |
 | `Super + W` | Wallpaper picker |
-| `Print` | Screenshot tool (Satty) |
-| `Super + L` | Lock screen |
-| `Super + M` | Logout / power menu |
+| `Super + C` | Clipboard manager |
+| `Super + S` | Calendar & weather popup |
+| `Super + Shift + S` | Settings panel (General, Keybinds, Startup) |
+| `Super + N` | Network manager (WiFi, Ethernet, Bluetooth) |
+| `Super + M` | Music player panel |
+| `Super + B` | Battery & power profile popup |
+| `Super + V` | Audio device & volume panel |
+| `Super + P` | Movies / pocket dimension panel |
+| `Super + H` | Interactive user guide |
+| `Super + Shift + T` | Focus time productivity tracker |
+| `Super + R` | Reload shell & desktop scripts |
+| `Super + L` / `Power` | Lock screen |
 
-### Media and System
+### Media & System Controls
 
 | Keybinding | Action |
 |------------|--------|
-| `Volume Up/Down` | Adjust volume (SwayOSD) |
-| `Volume Mute` | Toggle mute |
-| `Brightness Up/Down` | Adjust screen brightness |
-| `Media Play/Next/Prev` | Music player controls |
+| `Print` | Interactive screenshot (Satty) |
+| `Shift + Print` | Interactive screenshot with editor |
+| `Super + Print` | Fullscreen screenshot |
+| `Volume Up/Down` | Adjust output volume (SwayOSD) |
+| `Volume Mute` | Toggle output mute (SwayOSD) |
+| `Mic Mute` | Toggle microphone mute |
+| `Brightness Up/Down` | Adjust screen brightness (SwayOSD) |
+| `Super + Space` / `Media Play` | Music play / pause toggle |
+| `Caps Lock` | Caps lock status indicator (SwayOSD) |
 
 ---
 
@@ -210,7 +222,6 @@ All widgets are built with Qt6/QML and managed through the Quickshell shell runt
 | **Notifications** | System notification popup handler with inline action buttons |
 | **Quick Actions** | Drawing tools, system usage monitor, and timer |
 | **Settings** | Full settings panel: general, keybinds, startup, avatar, SDDM video |
-| **Hydra AI** | AI assistant integration widget |
 | **Updater** | System update checker and notification panel |
 | **Volume** | Audio device control with per-app volume and OSD |
 | **Wallpaper** | Visual wallpaper picker with thumbnail carousel and web search |
@@ -223,7 +234,7 @@ All widgets are built with Qt6/QML and managed through the Quickshell shell runt
 
 The easiest way is through the Quickshell settings panel:
 
-1. Open Settings (gear icon in the top bar or `Super + S`).
+1. Open Settings (gear icon in the top bar or `Super + Shift + S`).
 2. Go to the **General** tab.
 3. Scroll to **SDDM Login Video**.
 4. Click **Browse…** to pick any video file, or drop a video into `/usr/share/sddm/themes/silent/backgrounds/`.
@@ -351,12 +362,11 @@ hydra-linux/
 │   ├── themes/silent/           # Silent SDDM theme
 │   │   ├── Main.qml             # Theme entry point
 │   │   ├── components/          # QML UI components
-│   │   ├── configs/             # 16 color preset configs
+│   │   ├── configs/             # Built-in color preset configs
 │   │   ├── backgrounds/         # Video and static backgrounds
 │   │   ├── fonts/               # RedHat font family
 │   │   └── icons/               # UI and session icons
 │   └── sddm.conf                # Display manager configuration
-├── .local/share/fonts/          # Bundled fonts (JetBrains Mono, Iosevka Nerd Font)
 ├── assets/                      # Default profile avatar and branding
 ├── wallpapers/                  # Starter wallpaper collection
 ├── utils/                       # Utility wrappers
@@ -433,9 +443,9 @@ The installer handles all dependencies automatically. For reference, the core pa
 The bar is launched by Hyprland autostart via `autostart.conf`. If it fails to start:
 
 ```bash
-# Restart manually
-WAYLAND_DISPLAY=wayland-1 XDG_RUNTIME_DIR=/run/user/$(id -u) \
-  DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus \
+# Restart manually with dynamic socket detection
+WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" XDG_RUNTIME_DIR="/run/user/$(id -u)" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
   quickshell -p ~/.config/hypr/scripts/quickshell/Shell.qml &
 ```
 
