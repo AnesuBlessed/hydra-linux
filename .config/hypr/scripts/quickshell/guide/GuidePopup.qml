@@ -156,7 +156,7 @@ Item {
 
     Process {
         id: versionReader
-        command: ["bash", "-c", "source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION || echo '1.0.0'"]
+        command: ["bash", "-c", "~/.config/hypr/scripts/hydra_version.sh 2>/dev/null || echo '1.0.2'"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -168,7 +168,7 @@ Item {
 
     Process {
         id: updateChecker
-        command: ["bash", "-c", "curl -m 5 -s https://raw.githubusercontent.com/hydra-linux/hydra-linux/main/version.txt 2>/dev/null | tr -d '\\r\\n'"]
+        command: ["bash", "-c", "curl -m 5 -s https://raw.githubusercontent.com/AnesuBlessed/hydra-linux/main/version.txt 2>/dev/null | tr -d '\\r\\n'"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
@@ -980,7 +980,7 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: Quickshell.execDetached(["xdg-open", "https://github.com/hydra-linux/hydra-linux"]) 
+                            onClicked: Quickshell.execDetached(["xdg-open", "https://github.com/AnesuBlessed/hydra-linux"]) 
                         }
                     }
 
@@ -1543,9 +1543,9 @@ Item {
 
                     Repeater {
                         model: [
-                            { name: "Hydra Linux", icon: "󰣇", color: "blue", url: "https://github.com/hydra-linux/hydra-linux" },
-                            { name: "Documentation", icon: "", color: "mauve", url: "https://github.com/hydra-linux/hydra-linux#readme" },
-                            { name: "Issues & Wiki", icon: "", color: "peach", url: "https://github.com/hydra-linux/hydra-linux/issues" }
+                            { name: "Hydra Linux", icon: "󰣇", color: "blue", url: "https://github.com/AnesuBlessed/hydra-linux" },
+                            { name: "Documentation", icon: "", color: "mauve", url: "https://github.com/AnesuBlessed/hydra-linux#readme" },
+                            { name: "Issues & Wiki", icon: "", color: "peach", url: "https://github.com/AnesuBlessed/hydra-linux/issues" }
                         ]
 
                         Rectangle {
