@@ -3,7 +3,7 @@
 # ◈ Hydra Anime Launcher
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Launches ani-cli inside a themed floating Kitty window
-# with a sub/dub selector, quality picker, and more.
+# with sub/dub memory, quality picker, download progress, and history management.
 
 ANICLI_BIN="$(command -v ani-cli 2>/dev/null || echo "$HOME/.local/bin/ani-cli")"
 
@@ -69,32 +69,80 @@ exec kitty --class hydra-anime --title "Hydra Anime" \
     --config "$ANIME_CONF" \
     bash -c '
     ANICLI="'"$ANICLI_BIN"'"
-    SKIP_FLAG=""
-    command -v ani-skip &>/dev/null && SKIP_FLAG="--skip"
+    HYDRA_ANIME_DIR="$HOME/.local/state/hydra-anime"
+    HYDRA_PREF="$HYDRA_ANIME_DIR/last_mode"
+    HIST_FILE="$HOME/.local/state/ani-cli/ani-hsts"
+    DOWNLOAD_DIR="$HOME/Videos/Anime"
+    MAX_HISTORY=50
 
-    # ── Main menu ──
-    MODE=$(printf "🔍 Search Anime (Sub)\n🔍 Search Anime (Dub)\n▶  Continue Watching\n⬇  Download Episode (Sub)\n⬇  Download Episode (Dub)" \
-        | fzf --prompt="  Hydra Anime ▸ " --pointer="▶" --border=rounded --margin=1 --height=50% \
-              --color="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5c,header:#6c9bff")
+    mkdir -p "$HYDRA_ANIME_DIR" "$DOWNLOAD_DIR"
+
+    # ── Read last sub/dub preference ──
+    LAST_MODE="Sub"
+    [ -f "$HYDRA_PREF" ] && LAST_MODE="$(cat "$HYDRA_PREF")"
+
+    # ── Trim history to last N entries for snappiness ──
+    if [ -f "$HIST_FILE" ] && [ "$(wc -l < "$HIST_FILE")" -gt "$MAX_HISTORY" ]; then
+        tail -n "$MAX_HISTORY" "$HIST_FILE" > "${HIST_FILE}.tmp" && mv "${HIST_FILE}.tmp" "$HIST_FILE"
+    fi
+
+    # ── Skip flag (auto-detect ani-skip) ──
+    SKIP_FLAG=""
+    if command -v ani-skip &>/dev/null; then
+        SKIP_FLAG="--skip"
+        printf "\033[38;2;130;255;181m✓ ani-skip detected – intros will be skipped automatically\033[0m\n\n"
+    else
+        printf "\033[38;2;255;107;107m✗ ani-skip not installed – intros will play normally\033[0m\n"
+        printf "  \033[2mInstall: yay -S ani-skip-git\033[0m\n\n"
+    fi
+
+    # ── Build menu with last preference highlighted ──
+    if [ "$LAST_MODE" = "Dub" ]; then
+        MENU=$(printf "🔍 Search Anime (Dub) ★\n🔍 Search Anime (Sub)\n▶  Continue Watching (Dub) ★\n▶  Continue Watching (Sub)\n⬇  Download Episode (Dub) ★\n⬇  Download Episode (Sub)")
+    else
+        MENU=$(printf "🔍 Search Anime (Sub) ★\n🔍 Search Anime (Dub)\n▶  Continue Watching (Sub) ★\n▶  Continue Watching (Dub)\n⬇  Download Episode (Sub)\n⬇  Download Episode (Dub)")
+    fi
+
+    MODE=$(printf "%s" "$MENU" \
+        | fzf --prompt="  Hydra Anime ▸ " --pointer="▶" --border=rounded --margin=1 --height=60% \
+              --color="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5c,header:#6c9bff" \
+              --header="  Last: ${LAST_MODE}bed  │  History: $(wc -l < "$HIST_FILE" 2>/dev/null || echo 0) entries")
 
     [[ -z "$MODE" ]] && exit 0
+
+    # ── Save preference ──
+    if [[ "$MODE" == *"Dub"* ]]; then
+        echo "Dub" > "$HYDRA_PREF"
+    else
+        echo "Sub" > "$HYDRA_PREF"
+    fi
 
     # ── Quality picker ──
     QUALITY=$(printf "1080p (Best)\n720p\n480p" \
         | fzf --prompt="  Quality ▸ " --pointer="▶" --border=rounded --margin=1 --height=40% \
-              --color="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5c,header:#6c9bff")
+              --color="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5c")
 
     [[ -z "$QUALITY" ]] && exit 0
     QUALITY=$(echo "$QUALITY" | grep -oP "^\d+p")
 
     # ── Build flags ──
-    FLAGS="-q $QUALITY $SKIP_FLAG"
+    DUB_FLAG=""
+    [[ "$MODE" == *"Dub"* ]] && DUB_FLAG="--dub"
 
+    # ── Execute ──
     case "$MODE" in
-        *"Continue"*)      exec "$ANICLI" $FLAGS -c ;;
-        *"Sub"*"Download"*|*"Download"*"Sub"*) exec "$ANICLI" $FLAGS -d ;;
-        *"Dub"*"Download"*|*"Download"*"Dub"*) exec "$ANICLI" $FLAGS -d --dub ;;
-        *"Dub"*)           exec "$ANICLI" $FLAGS --dub ;;
-        *)                 exec "$ANICLI" $FLAGS ;;
+        *"Continue"*)
+            printf "\n\033[38;2;108;155;255m⟳ Loading watch history...\033[0m\n"
+            exec "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG -c
+            ;;
+        *"Download"*)
+            printf "\n\033[38;2;255;217;61m⬇ Downloads will be saved to: %s\033[0m\n" "$DOWNLOAD_DIR"
+            printf "\033[38;2;130;255;181m  Using yt-dlp with 16 parallel fragments for fast downloads\033[0m\n\n"
+            export ANI_CLI_DOWNLOAD_DIR="$DOWNLOAD_DIR"
+            exec "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG -d --no-detach
+            ;;
+        *)
+            exec "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG --no-detach
+            ;;
     esac
 '
