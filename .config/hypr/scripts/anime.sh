@@ -14,4 +14,11 @@ if [ ! -x "$ANICLI_BIN" ]; then
     ANICLI_BIN="$HOME/.local/bin/ani-cli"
 fi
 
-exec kitty --class hydra-anime --title "Hydra Anime" "$ANICLI_BIN" "$@"
+# Run an fzf menu inside kitty to choose Sub or Dub
+CHOICE=$(printf "1. Subbed\n2. Dubbed" | fzf --prompt="📺 Select Anime Version: " --pointer="▶" --border=rounded --margin=2 --height=40%)
+
+if [[ "$CHOICE" == *"Dubbed"* ]]; then
+    exec "$ANICLI_BIN" --dub "$@"
+elif [[ "$CHOICE" == *"Subbed"* ]]; then
+    exec "$ANICLI_BIN" "$@"
+fi
