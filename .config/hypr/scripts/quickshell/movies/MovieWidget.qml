@@ -17,6 +17,7 @@ Item {
     Scaler {
         id: scaler
         currentWidth: Screen.width
+        currentHeight: Screen.height
     }
 
     function s(val) { 
@@ -1099,8 +1100,7 @@ Item {
     // --- UI LAYOUT ---
     Rectangle {
         id: mainBg
-        width: parent.width; height: parent.height
-        anchors.bottom: parent.bottom; anchors.horizontalCenter: parent.horizontalCenter
+        anchors.fill: parent
         radius: window.s(14)
         color: Qt.rgba(window.base.r, window.base.g, window.base.b, 0.95)
         border.color: Qt.rgba(window.text.r, window.text.g, window.text.b, 0.08)
@@ -1353,7 +1353,8 @@ Item {
                     GridView {
                         id: searchGrid
                         anchors.fill: parent; visible: window.isSearchMode
-                        model: searchResults; cellWidth: Math.floor(width / 5); cellHeight: cellWidth * 1.5 + window.s(60)
+                        readonly property int numCols: Math.max(3, Math.floor(width / Math.max(1, window.s(160))))
+                        model: searchResults; cellWidth: Math.floor(width / numCols); cellHeight: cellWidth * 1.5 + window.s(60)
                         boundsBehavior: Flickable.StopAtBounds; highlightFollowsCurrentItem: false; clip: true
                         ScrollBar.vertical: ScrollBar { active: true; contentItem: Rectangle { radius: window.s(2); color: window.surface2 } }
                         Behavior on contentY { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }
@@ -1363,7 +1364,8 @@ Item {
                     GridView {
                         id: movieGrid
                         anchors.fill: parent; visible: !window.isSearchMode && window.mediaType === "movie"
-                        model: cachedTrendingMovies; cellWidth: Math.floor(width / 10); cellHeight: cellWidth * 1.5 + window.s(60)
+                        readonly property int numCols: Math.max(4, Math.floor(width / Math.max(1, window.s(135))))
+                        model: cachedTrendingMovies; cellWidth: Math.floor(width / numCols); cellHeight: cellWidth * 1.5 + window.s(60)
                         header: dashboardHeaderComp; boundsBehavior: Flickable.StopAtBounds; highlightFollowsCurrentItem: false; clip: true
                         ScrollBar.vertical: ScrollBar { active: true; contentItem: Rectangle { radius: window.s(2); color: window.surface2 } }
                         Behavior on contentY { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }
@@ -1372,7 +1374,8 @@ Item {
                     GridView {
                         id: tvGrid
                         anchors.fill: parent; visible: !window.isSearchMode && window.mediaType === "tv"
-                        model: cachedTrendingTv; cellWidth: Math.floor(width / 10); cellHeight: cellWidth * 1.5 + window.s(60)
+                        readonly property int numCols: Math.max(4, Math.floor(width / Math.max(1, window.s(135))))
+                        model: cachedTrendingTv; cellWidth: Math.floor(width / numCols); cellHeight: cellWidth * 1.5 + window.s(60)
                         header: dashboardHeaderComp; boundsBehavior: Flickable.StopAtBounds; highlightFollowsCurrentItem: false; clip: true
                         ScrollBar.vertical: ScrollBar { active: true; contentItem: Rectangle { radius: window.s(2); color: window.surface2 } }
                         Behavior on contentY { NumberAnimation { duration: 300; easing.type: Easing.OutQuart } }

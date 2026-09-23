@@ -60,7 +60,7 @@ Unlike minimal dotfile collections, Hydra Linux ships as a complete, unified sys
 
 ### Modular Hyprland Configuration
 
-- Clean modular configuration (`hyprland.conf`, `config/*.conf`) with parallel Lua definitions.
+- Clean modular configuration (`hyprland.conf`, `config/*.conf`) auto-generated from `settings.json`.
 - Dynamic GPU detection (NVIDIA, AMD, Intel) with automatic driver configuration.
 - Comprehensive keybinding system with workspace management, window rules, and multi-monitor support.
 
@@ -101,7 +101,7 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 
 ### Automated Installer
 
-- Interactive TUI with `gum` for a beautiful modern installer experience.
+- Interactive TUI with `gum` (with automatic graceful fallback to plain ANSI) for a smooth installer experience.
 - Safe backup of existing configurations before deployment.
 - NVIDIA proprietary driver installation with kernel modesetting setup.
 - Optional Neovim (with Lua LSP) and Zsh installation.
@@ -163,6 +163,8 @@ Run with all recommended defaults and no prompts:
 | `Super + Arrows` | Move focus between windows |
 | `Super + 1-9` | Switch to workspace 1-9 |
 | `Super + Shift + 1-9` | Move active window to workspace 1-9 |
+| `Super + Backspace` | Toggle Pocket Dimension (special scratchpad workspace) |
+| `Super + Shift + Backspace` | Move active window to Pocket Dimension |
 | `Super + Mouse Left Drag` | Move window |
 | `Super + Mouse Right Drag` | Resize window |
 
@@ -182,7 +184,7 @@ Run with all recommended defaults and no prompts:
 | `Super + M` | Music player panel |
 | `Super + B` | Battery & power profile popup |
 | `Super + V` | Audio device & volume panel |
-| `Super + P` | Movies / pocket dimension panel |
+| `Super + P` | Movie & TV show browser |
 | `Super + H` | Interactive user guide |
 | `Super + Shift + T` | Focus time productivity tracker |
 | `Super + R` | Reload shell & desktop scripts |
@@ -217,7 +219,8 @@ All widgets are built with Qt6/QML and managed through the Quickshell shell runt
 | **Focus Time** | Productivity timer with session tracking and statistics |
 | **Guide** | Interactive onboarding tutorial with visual previews |
 | **Monitors** | Display configuration and multi-monitor management |
-| **Music** | MPRIS music player with album art and Cava equalizer |
+| **Movies** | Movie and TV show browser with TMDB metadata |
+| **Music** | MPRIS music player with album art and EasyEffects equalizer |
 | **Network** | WiFi, Ethernet, and Bluetooth connection manager |
 | **Notifications** | System notification popup handler with inline action buttons |
 | **Quick Actions** | Drawing tools, system usage monitor, and timer |
