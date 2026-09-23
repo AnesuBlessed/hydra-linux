@@ -34,6 +34,8 @@ Item {
     Process {
         id: themeReader
 	command: ["cat", Quickshell.env("HOME") + "/.config/hypr/scripts/quickshell/qs_colors.json"]
+	// Load once at startup. Theme changes are handled by the file watcher below.
+	running: true
 	stdout: StdioCollector {
             onStreamFinished: {
                 let txt = this.text.trim();
@@ -69,11 +71,18 @@ Item {
         }
     }
 
-    Timer {
-        interval: 1000 
+    // A one-second poll in every MatugenColors instance creates needless
+    // processes while the desktop is idle. Watch the file instead, and also
+    // recover when an atomic rewrite replaces it.
+    Process {
+        id: themeWatcher
+        command: ["bash", "-c", "theme_file=\"$HOME/.config/hypr/scripts/quickshell/qs_colors.json\"; while [ ! -f \"$theme_file\" ]; do sleep 1; done; inotifywait -qq -e close_write,move_self,delete_self \"$theme_file\""]
         running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: themeReader.running = true
+        onExited: {
+            themeReader.running = false;
+            themeReader.running = true;
+            themeWatcher.running = false;
+            themeWatcher.running = true;
+        }
     }
 }

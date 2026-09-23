@@ -290,13 +290,13 @@ if [ "$FULL_MODE" = true ] || [ -n "$GEOMETRY" ]; then
     fi
 
     # Mode: Screenshot
-    GRIM_CMD="grim -"
-    [ -n "$GEOMETRY" ] && GRIM_CMD="grim -g \"$GEOMETRY\" -"
+    GRIM_ARGS=("-")
+    [ -n "$GEOMETRY" ] && GRIM_ARGS=("-g" "$GEOMETRY" "-")
 
     if [ "$EDIT_MODE" = true ]; then
-        eval $GRIM_CMD | GSK_RENDERER=gl satty --filename - --output-filename "$FILENAME" --init-tool brush --copy-command wl-copy
+        grim "${GRIM_ARGS[@]}" | GSK_RENDERER=gl satty --filename - --output-filename "$FILENAME" --init-tool brush --copy-command wl-copy
     else
-        eval $GRIM_CMD | tee "$FILENAME" | wl-copy
+        grim "${GRIM_ARGS[@]}" | tee "$FILENAME" | wl-copy
     fi
 
     if [ -s "$FILENAME" ]; then

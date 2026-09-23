@@ -58,7 +58,7 @@ MANIFEST="$THUMB_DIR/.manifest"
 # Only runs on slow path — not on every workspace switch
 # -----------------------------------------------------------------------------
 
-if ! pgrep -f "quickshell.*Shell.qml" >/dev/null; then
+if ! pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null; then
     quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 &
     disown
 fi
@@ -167,18 +167,19 @@ handle_network_prep() {
 # IPC ROUTING
 # -----------------------------------------------------------------------------
 if [[ "$ACTION" == "reload" ]]; then
-    # Kill QS and all its watcher children cleanly
-    QS_PID=$(pgrep -f "quickshell.*Shell.qml" | head -n1)
+    # Kill QS and all its watcher children cleanly for current user
+    QS_PID=$(pgrep -u "$UID" -f "quickshell.*Shell.qml" | head -n1)
     if [[ -n "$QS_PID" ]]; then
-        pkill -P "$QS_PID" 2>/dev/null  # kill children first
+        pkill -u "$UID" -P "$QS_PID" 2>/dev/null  # kill children first
         kill "$QS_PID" 2>/dev/null
     fi
-    # Clean up any lingering watcher scripts
-    pkill -f "qs_battery_wait\|qs_network_wait\|inotifywait.*quickshell\|bt_wait\.sh\|audio_wait\.sh\|kb_wait\.sh\|network_wait\.sh\|battery_wait\.sh" 2>/dev/null
+    # Clean up any lingering watcher scripts for this user
+    pkill -u "$UID" -f "qs_battery_wait|qs_network_wait|inotifywait.*quickshell|bt_wait\.sh|audio_wait\.sh|kb_wait\.sh|network_wait\.sh|battery_wait\.sh" 2>/dev/null
     sleep 0.5
-    WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" \
-    XDG_RUNTIME_DIR="/run/user/$(id -u)" \
-    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
+    DETECTED_WAYLAND="${WAYLAND_DISPLAY:-$(ls -1 "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 | xargs -r basename)}"
+    WAYLAND_DISPLAY="${DETECTED_WAYLAND:-wayland-1}" \
+    XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
+    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}" \
     quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
     disown
     exit 0

@@ -394,9 +394,17 @@ All live data (audio, battery, network, Bluetooth, keyboard layout) uses an even
 
 This means **zero polling overhead** when nothing is changing.
 
+### Security & Hardening Architecture
+
+Hydra Linux enforces strict defense-in-depth principles across its glue scripts:
+- **No Arbitrary State Sourcing**: Version information is parsed safely via `hydra_version.sh` rather than sourcing shell files.
+- **Isolated User Runtimes**: All transient files, locks, FIFOs, and logs reside under `$XDG_RUNTIME_DIR/quickshell` (permissions `0700`) via `caching.sh`, preventing `/tmp` shared symlink attacks.
+- **User-Scoped Process Management**: All background watcher signals and checks (`pgrep`, `pkill`) are strictly scoped to the active `$UID`.
+- **Parameterization Over Interpolation**: Privileged operations (`pkexec`) avoid arbitrary string evaluation (`eval`), utilizing strict argument passing and `install` commands.
+
 ### CPU/RAM/Temperature
 
-`SysData.qml` is a singleton that reads CPU, RAM, and temperature every 2 seconds only when at least one widget has subscribed (called `subscribe()`). When all widgets close it stops automatically.
+`SysData.qml` is a singleton that reads CPU, RAM, and temperature every 2 seconds only when at least one widget has subscribed (called `subscribe()`). When all widgets close it stops automatically. Theme colors are monitored using direct `inotifywait` kernel notifications on `qs_colors.json`, keeping background idle CPU utilization close to 0%.
 
 ---
 

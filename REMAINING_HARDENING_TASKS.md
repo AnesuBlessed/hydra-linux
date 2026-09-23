@@ -57,6 +57,21 @@ This file tracks the remaining work to apply based on the hardening changes disc
 - This file is already aligned with the requested hardening pattern and should remain untouched unless a bug is found
 
 ## Status
-Pending final repo application.
+Completed. All 9 hardening tasks have been implemented, verified, and secured:
 
-This is the list of changes still to be applied according to the hardening plan discussed, without touching Lua or media files.
+1. `hydra_version.sh`: Implemented safe parser avoiding `source` execution.
+2. `lock.sh`: Scoped process checking to `pgrep -u "$UID"`.
+3. `pocket_watcher.sh`: Integrated `caching.sh`, switched state to `QS_RUN_DIR`, and fixed bash associative array unsetting syntax.
+4. `get_ddg_links.py`: User-scoped runtime directory under `$XDG_RUNTIME_DIR/quickshell` in place.
+5. `weather.sh`: Replaced unsafe `export $(grep ...)` with robust line-by-line key parser.
+6. `audio_fetch.sh` & `battery_fetch.sh`: Avoided unsafe combined local declarations and command substitutions.
+7. `hdmi_watcher.sh`: Replaced global `pidof` with user-scoped `pgrep -u "$UID"`.
+8. `qs_manager.sh`: Scoped process signals to `$UID` and added dynamic Wayland socket detection.
+9. `caching.sh`: Maintained secure mode 0700 runtime cache hierarchy.
+
+Additional security holes closed:
+- `set_sddm_video.sh`: Closed command injection by replacing raw string interpolations in `pkexec bash -c` with `install -m 644` and parameterized `sed`.
+- `SettingsPopup.qml`: Removed `eval ls -dp ...` directory suggestion injection.
+- `screenshot.sh`: Removed `eval $GRIM_CMD` parameter injection.
+- `set_avatar.sh`: Migrated temporary image files out of `/tmp` into user runtime directory.
+- `MatugenColors.qml`: Replaced 1000ms polling Timer with `inotifywait` event watcher.

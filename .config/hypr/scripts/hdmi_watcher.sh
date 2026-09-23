@@ -3,8 +3,8 @@
 # 📺 AUTOMATIC HDMI HOTPLUG, AUDIO & WALLPAPER SWITCHER FOR HYPRLAND
 # ==============================================================================
 
-# Ensure only one instance of hdmi_watcher.sh runs
-for pid in $(pidof -x hdmi_watcher.sh 2>/dev/null); do
+# Ensure only one instance of hdmi_watcher.sh runs for the current user
+for pid in $(pgrep -u "$UID" -f "hdmi_watcher\.sh" 2>/dev/null); do
     if [ "$pid" != "$$" ]; then
         kill "$pid" 2>/dev/null || true
     fi

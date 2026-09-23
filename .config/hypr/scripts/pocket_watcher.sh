@@ -1,21 +1,26 @@
 #!/usr/bin/env bash
 
-# File to store banishment times
-STATE_FILE="/tmp/pocket_dimension_state"
+source "$(dirname "${BASH_SOURCE[0]}")/caching.sh"
+qs_ensure_cache "pocket"
+
+# File to store banishment times in secure user runtime directory
+STATE_FILE="${QS_RUN_POCKET:-$QS_RUN_DIR/pocket}/dimension_state"
 touch "$STATE_FILE"
 
 while true; do
     # Get all windows on the special workspace
-    BANISHED=$(hyprctl clients -j | jq -r '.[] | select(.workspace.name == "special:magic") | .address + "|" + .class')
+    BANISHED=$(hyprctl clients -j 2>/dev/null | jq -r '.[] | select(.workspace.name == "special:magic") | .address + "|" + .class' 2>/dev/null)
 
     # Read current state
-    declare -A current_state
-    while IFS=, read -r addr timestamp; do
-        if [ -n "$addr" ]; then current_state["$addr"]="$timestamp"; fi
-    done < "$STATE_FILE"
+    declare -A current_state=()
+    if [[ -r "$STATE_FILE" ]]; then
+        while IFS=, read -r addr timestamp; do
+            if [ -n "$addr" ]; then current_state["$addr"]="$timestamp"; fi
+        done < "$STATE_FILE"
+    fi
 
     # Create new state
-    declare -A new_state
+    declare -A new_state=()
     current_time=$(date +%s)
 
     for entry in $BANISHED; do
@@ -38,7 +43,7 @@ while true; do
                 if [ "$ACTION" == "restore" ]; then
                     hyprctl dispatch movetoworkspace +0,address:${addr} >/dev/null 2>&1
                     # Remove from state since it's restored
-                    unset new_state["$addr"]
+                    unset "new_state[$addr]"
                 fi
             fi
         else

@@ -860,7 +860,16 @@ Item {
     Process {
         id: pathSuggestProc
         property string query: ""
-        command: ["bash", "-c", "eval ls -dp " + query + "* 2>/dev/null | grep '/$' | head -n 5 || true"]
+        command: ["bash", "-c", '
+            q="$1"
+            [[ -z "$q" ]] && exit 0
+            # Expand tilde safely
+            [[ "$q" =~ ^~ ]] && q="${HOME}${q:1}"
+            dir=$(dirname "$q")
+            base=$(basename "$q")
+            [[ -d "$dir" ]] || exit 0
+            find "$dir" -maxdepth 1 -mindepth 1 -type d -name "${base}*" 2>/dev/null | head -n 5
+        ', "_", query]
         stdout: StdioCollector {
             onStreamFinished: {
                 pathSuggestModel.clear();

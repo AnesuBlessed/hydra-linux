@@ -7,11 +7,19 @@ CACHE_FILE="$QS_CACHE_UPDATER/notified_version"
 PENDING_FILE="$QS_CACHE_UPDATER/update_pending"
 
 read_local_version() {
+    local script="$HOME/.config/hypr/scripts/hydra_version.sh"
+    if [[ -x "$script" ]]; then
+        "$script"
+        return 0
+    elif [[ -f "$script" ]]; then
+        bash "$script"
+        return 0
+    fi
     local state_file
     for state_file in "$HOME/.local/state/hydra-linux-version" \
         "$HOME/.local/state/imperative-dots-version"; do
         if [[ -r "$state_file" ]]; then
-            head -n 1 -- "$state_file" | tr -d '\r\n'
+            awk -F= '/^LOCAL_VERSION=/ { gsub(/["'\'']/, "", $2); print $2; exit }' "$state_file" 2>/dev/null
             return 0
         fi
     done

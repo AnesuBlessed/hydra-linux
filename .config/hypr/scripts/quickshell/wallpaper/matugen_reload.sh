@@ -106,7 +106,10 @@ hyprctl reload >/dev/null 2>&1 || true
 # ------------------------------------------------------------------------------
 # 4. Sync Matugen Colors to Silent SDDM (if writable)
 # ------------------------------------------------------------------------------
-SDDM_CONF="/usr/share/sddm/themes/silent/configs/rei.conf"
+THEME_METADATA="/usr/share/sddm/themes/silent/metadata.desktop"
+ACTIVE_PRESET=$(awk -F= '/^ConfigFile=/ { print $2; exit }' "$THEME_METADATA" 2>/dev/null)
+SDDM_CONF="/usr/share/sddm/themes/silent/${ACTIVE_PRESET:-configs/rei.conf}"
+
 if [ -f "$SDDM_CONF" ] && [ -w "$SDDM_CONF" ]; then
     PRIMARY_HEX=$(jq -r '.primary // empty' "$QS_JSON" 2>/dev/null)
     if [ -n "$PRIMARY_HEX" ]; then

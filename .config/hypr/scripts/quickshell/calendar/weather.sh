@@ -18,9 +18,20 @@ next_day_cache_file="${cache_dir}/next_day_precache.json"
 ENV_FILE="$(dirname "$0")/.env"
 
 # API Settings
-# Load environment variables silently
-if [ -f "$ENV_FILE" ]; then
-    export $(grep -v '^#' "$ENV_FILE" | xargs)
+# Load environment variables safely without eval/xargs injection
+if [[ -f "$ENV_FILE" ]]; then
+    while IFS='=' read -r key val || [[ -n "$key" ]]; do
+        # Trim leading/trailing whitespace
+        key=$(echo "$key" | tr -d '[:space:]')
+        [[ -z "$key" || "$key" =~ ^# ]] && continue
+        # Strip wrapping quotes if any
+        val=$(echo "$val" | sed -e 's/^[[:space:]]*["'"'"']//' -e 's/["'"'"'][[:space:]]*$//')
+        case "$key" in
+            OPENWEATHER_KEY)     OPENWEATHER_KEY="$val" ;;
+            OPENWEATHER_CITY_ID) OPENWEATHER_CITY_ID="$val" ;;
+            OPENWEATHER_UNIT)    OPENWEATHER_UNIT="$val" ;;
+        esac
+    done < "$ENV_FILE"
 fi
 
 # API Settings from .env

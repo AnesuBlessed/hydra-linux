@@ -18,7 +18,10 @@ if [ -z "$TARGET_IMG" ] || [ ! -f "$TARGET_IMG" ]; then
     exit 0
 fi
 
-TMP_AVATAR="/tmp/hydra_avatar_${USER}.png"
+source "$(dirname "${BASH_SOURCE[0]}")/caching.sh" 2>/dev/null || true
+TMP_DIR="${QS_RUN_DIR:-/run/user/$(id -u)/quickshell}"
+mkdir -p "$TMP_DIR"
+TMP_AVATAR="$TMP_DIR/avatar_${USER}.png"
 
 # Center crop 1:1 square and upscale/resize to 1024x1024 with Lanczos filtering
 if command -v magick &>/dev/null; then
@@ -32,6 +35,7 @@ fi
 # Deploy to user home
 cp -f "$TMP_AVATAR" "$HOME/.face.icon"
 cp -f "$TMP_AVATAR" "$HOME/.face"
+rm -f "$TMP_AVATAR"
 
 # Deploy to SDDM faces if writable
 SDDM_FACE="/usr/share/sddm/faces/${USER}.face.icon"

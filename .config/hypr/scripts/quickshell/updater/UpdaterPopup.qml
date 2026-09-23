@@ -99,7 +99,7 @@ Item {
     Process {
         id: localVerProcess
         running: false
-        command: ["bash", "-c", "source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && [ -n \"$LOCAL_VERSION\" ] && echo $LOCAL_VERSION || echo '1.0.0'"]
+        command: ["bash", "-c", "~/.config/hypr/scripts/hydra_version.sh 2>/dev/null || echo '1.0.2'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text ? this.text.trim() : "";
@@ -125,7 +125,7 @@ Item {
     property string videoResolveScript: `
 import urllib.request, json, subprocess, sys
 try:
-    local_str = subprocess.check_output("source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION", shell=True).decode('utf-8').strip()
+    local_str = subprocess.check_output("bash ~/.config/hypr/scripts/hydra_version.sh 2>/dev/null", shell=True).decode('utf-8').strip()
     if not local_str: local_str = '0.0.0'
     
     # Safe Semantic Version Parsing
@@ -197,7 +197,7 @@ import urllib.request, json, subprocess
 repo = 'AnesuBlessed/hydra-linux'
 
 try:
-    local = subprocess.check_output("source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION", shell=True).decode('utf-8').strip()
+    local = subprocess.check_output("bash ~/.config/hypr/scripts/hydra_version.sh 2>/dev/null", shell=True).decode('utf-8').strip()
 except:
     local = ''
 
