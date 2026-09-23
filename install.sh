@@ -259,7 +259,7 @@ CORE_PKGS=(
     "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays" "zenity"
     "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl"
     "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git"
-    "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon" "fzf" "mpv" "ani-cli"
+    "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon" "fzf" "mpv" "ani-cli" "ani-skip-git"
     "ttf-jetbrains-mono-nerd" "ttf-iosevka-nerd"
     "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects"
     "qt6-wayland" "qt5ct" "qt6ct" "adw-gtk-theme"
