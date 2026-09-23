@@ -130,19 +130,38 @@ exec kitty --class hydra-anime --title "Hydra Anime" \
     [[ "$MODE" == *"Dub"* ]] && DUB_FLAG="--dub"
 
     # ── Execute ──
+    run_ani() {
+        "$@"
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -ne 0 ]; then
+            printf "\n\033[38;2;255;107;107m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n"
+            printf "\033[38;2;255;107;107m  ✗ ani-cli exited with error (code %d)\033[0m\n" "$EXIT_CODE"
+            printf "\033[38;2;255;107;107m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m\n\n"
+            printf "\033[2m  This can happen when:\033[0m\n"
+            printf "\033[2m  • The anime source is temporarily unavailable\033[0m\n"
+            printf "\033[2m  • The selected quality is not available for this title\033[0m\n"
+            printf "\033[2m  • Your network connection dropped\033[0m\n\n"
+            printf "\033[38;2;199;146;234m  Press Enter to close, or type \"r\" to retry ▸ \033[0m"
+            read -r RETRY
+            if [[ "$RETRY" == "r" || "$RETRY" == "R" ]]; then
+                run_ani "$@"
+            fi
+        fi
+    }
+
     case "$MODE" in
         *"Continue"*)
             printf "\n\033[38;2;108;155;255m⟳ Loading watch history...\033[0m\n"
-            exec "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG -c
+            run_ani "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG -c
             ;;
         *"Download"*)
             printf "\n\033[38;2;255;217;61m⬇ Downloads will be saved to: %s\033[0m\n" "$DOWNLOAD_DIR"
             printf "\033[38;2;130;255;181m  Using yt-dlp with 16 parallel fragments for fast downloads\033[0m\n\n"
             export ANI_CLI_DOWNLOAD_DIR="$DOWNLOAD_DIR"
-            exec "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG -d --no-detach
+            run_ani "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG -d --no-detach
             ;;
         *)
-            exec "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG --no-detach
+            run_ani "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG --no-detach
             ;;
     esac
 '
