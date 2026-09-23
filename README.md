@@ -60,7 +60,7 @@ Unlike minimal dotfile collections, Hydra Linux ships as a complete, unified sys
 
 ### Modular Hyprland Configuration
 
-- Clean modular configuration (`hyprland.conf`, `config/*.conf`) auto-generated from `settings.json`.
+- Dual configuration architecture: Standard (`hyprland.conf`, `config/*.conf`) and Lua-native (`hyprland.lua`, `config/*.lua`) for CachyOS and Lua-enabled Hyprland builds.
 - Dynamic GPU detection (NVIDIA, AMD, Intel) with automatic driver configuration.
 - Comprehensive keybinding system with workspace management, window rules, and multi-monitor support.
 
@@ -326,14 +326,15 @@ Hyprland configs live in `~/.config/hypr/`. The modular config files in `config/
 hydra-linux/
 ├── .config/
 │   ├── hypr/                    # Hyprland configuration
-│   │   ├── hyprland.conf        # Main entry point
-│   │   ├── config/              # Modular configs (auto-generated from settings.json)
-│   │   │   ├── keybindings.conf
-│   │   │   ├── rules.conf
-│   │   │   ├── monitors.conf
-│   │   │   ├── autostart.conf
-│   │   │   ├── variables.conf
-│   │   │   └── env.conf
+│   │   ├── hyprland.conf        # Main entry point (standard Hyprland)
+│   │   ├── hyprland.lua         # Lua entry point (CachyOS / Lua-enabled Hyprland)
+│   │   ├── config/              # Modular configs (.conf and .lua)
+│   │   │   ├── keybindings.conf / keybindings.lua
+│   │   │   ├── rules.conf / rules.lua
+│   │   │   ├── monitors.conf / monitors.lua
+│   │   │   ├── autostart.conf / autostart.lua
+│   │   │   ├── variables.conf / variables.lua
+│   │   │   └── env.conf / env.lua
 │   │   ├── scripts/             # Shell scripts and Quickshell widgets
 │   │   │   ├── quickshell/      # All QML widget source code
 │   │   │   │   ├── Shell.qml    # Quickshell entry point
