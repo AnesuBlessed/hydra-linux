@@ -184,7 +184,7 @@ Run with all recommended defaults and no prompts:
 | `Super + M` | Music player panel |
 | `Super + B` | Battery & power profile popup |
 | `Super + V` | Audio device & volume panel |
-| `Super + P` | Anime Player (stream anime with `ani-cli` in `mpv`) |
+| `Super + P` | Anime Player — sub/dub selector, quality picker (1080p/720p/480p), continue watching, download mode, auto skip intros via `ani-skip`, themed `kitty` + `mpv` |
 | `Super + H` | Interactive user guide |
 | `Super + Shift + T` | Focus time productivity tracker |
 | `Super + R` | Reload shell & desktop scripts |

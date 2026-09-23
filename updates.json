@@ -1,9 +1,14 @@
 {
   "videos": [
     {
+      "version": "1.0.3",
+      "url": "",
+      "warning_message": "Hydra Linux 1.0.3 — Anime Player: sub/dub selector, quality picker, auto skip intros, continue watching, download mode, themed kitty window, crash recovery."
+    },
+    {
       "version": "1.0.2",
       "url": "",
-      "warning_message": "Hydra Linux 1.0.2 — Purged gum dependency, native ANSI installer, restored Lua configs, improved scratchpad & Movie scaling."
+      "warning_message": "Hydra Linux 1.0.2 — Purged gum dependency, native ANSI installer, restored Lua configs, improved scratchpad."
     },
     {
       "version": "1.0.1",
