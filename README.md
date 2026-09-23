@@ -101,7 +101,7 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 
 ### Automated Installer
 
-- Interactive TUI with `gum` (with automatic graceful fallback to plain ANSI) for a smooth installer experience.
+- Clean, zero-dependency interactive installer with native ANSI styling and unattended `-y` mode.
 - Safe backup of existing configurations before deployment.
 - NVIDIA proprietary driver installation with kernel modesetting setup.
 - Optional Neovim (with Lua LSP) and Zsh installation.

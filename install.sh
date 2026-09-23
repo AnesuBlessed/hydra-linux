@@ -5,66 +5,40 @@ SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 HYDRA_VERSION="$(cat "$SCRIPT_DIR/version.txt" 2>/dev/null || echo "1.0.1")"
 VERSION_FILE="$HOME/.local/state/hydra-linux-version"
 
-# ─────────────────────────────────────────────────────────────────────────────
-# 0. BOOTSTRAP UI (gum with graceful fallback to plain ANSI)
-# ─────────────────────────────────────────────────────────────────────────────
-USE_GUM=false
-if ! command -v gum &>/dev/null; then
-    echo -e "\e[36m::\e[0m Bootstrapping modern installer UI (gum)..."
-    sudo pacman -Sy --noconfirm --needed gum >/dev/null 2>&1 || true
-fi
-command -v gum &>/dev/null && USE_GUM=true
-
 clear
 
 # ─── Helpers ─────────────────────────────────────────────────────────────────
 print_header() {
-    if [ "$USE_GUM" = true ]; then
-        gum style \
-            --foreground 212 --border-foreground 212 --border double \
-            --align center --width 80 --margin "1 2" --padding "1 2" \
-            "HYDRA LINUX" \
-            "Unified Hyprland, Quickshell & Silent SDDM Environment" \
-            "Version ${HYDRA_VERSION}"
-        gum style --foreground 240 --italic "Press Ctrl+C at any time to abort installation."
-    else
-        echo -e "\e[35m\e[1m══════════════════════════════════════════════════════════════════════\e[0m"
-        echo -e "\e[35m\e[1m                          HYDRA LINUX                                \e[0m"
-        echo -e "\e[35m\e[1m══════════════════════════════════════════════════════════════════════\e[0m"
-        echo -e "  Version ${HYDRA_VERSION}\n"
-        echo -e "  Press Ctrl+C at any time to abort.\n"
-    fi
+    echo -e "\e[38;2;180;120;255m\e[1m╔══════════════════════════════════════════════════════════════════════╗\e[0m"
+    echo -e "\e[38;2;180;120;255m\e[1m║                             HYDRA LINUX                              ║\e[0m"
+    echo -e "\e[38;2;180;120;255m\e[1m║        Unified Hyprland, Quickshell & Silent SDDM Environment        ║\e[0m"
+    echo -e "\e[38;2;180;120;255m\e[1m║                           Version ${HYDRA_VERSION}                              ║\e[0m"
+    echo -e "\e[38;2;180;120;255m\e[1m╚══════════════════════════════════════════════════════════════════════╝\e[0m"
+    echo -e "  \e[90mPress Ctrl+C at any time to abort installation.\e[0m\n"
 }
 
 print_step() {
-    if [ "$USE_GUM" = true ]; then gum style --foreground 212 --bold ":: $1"
-    else echo -e "\n\e[35m\e[1m:: $1\e[0m"; fi
+    echo -e "\n\e[38;2;180;120;255m\e[1m:: $1\e[0m"
 }
 print_success() {
-    if [ "$USE_GUM" = true ]; then gum style --foreground 46 "✓ $1"
-    else echo -e "\e[32m✓ $1\e[0m"; fi
+    echo -e "  \e[32m\e[1m✓\e[0m $1"
 }
 print_error() {
-    if [ "$USE_GUM" = true ]; then gum style --foreground 196 "✗ $1"
-    else echo -e "\e[31m✗ $1\e[0m"; fi
+    echo -e "  \e[31m\e[1m✗\e[0m $1"
 }
 print_info() {
-    if [ "$USE_GUM" = true ]; then gum style --foreground 214 "  $1"
-    else echo -e "\e[33m  $1\e[0m"; fi
+    echo -e "  \e[33m\e[1mℹ\e[0m $1"
 }
 do_spin() {
     local title="$1"; shift
-    if [ "$USE_GUM" = true ]; then
-        gum spin --spinner dot --title "$title" -- bash -c "$*"
-    else
-        echo -e "\e[36m ->\e[0m $title"
-        bash -c "$*"
-    fi
+    echo -e "  \e[36m\e[1m->\e[0m $title"
+    bash -c "$*"
 }
 ask_confirm() {
     local prompt="$1"
-    if [ "$USE_GUM" = true ]; then gum confirm "$prompt"
-    else read -p "$prompt [y/N]: " _ans && [[ "$_ans" =~ ^[Yy]$ ]]; fi
+    local ans
+    read -rp "  $prompt [y/N]: " ans
+    [[ "$ans" =~ ^[Yy]$ ]]
 }
 
 print_header
@@ -172,58 +146,31 @@ DRIVER_PKGS=()
 # 4. INTERACTIVE MENU
 # ─────────────────────────────────────────────────────────────────────────────
 if [ "$UNATTENDED" = false ]; then
-    if [ "$USE_GUM" = true ]; then
-        gum style --foreground 99 "System:  $(gum style --bold "$OS_PRETTY")"
-        gum style --foreground 99 "GPU:     $(gum style --bold "$GPU_VENDOR")"
-        echo ""
-        gum style --foreground 240 "  Controls:  Arrow keys to move   Space to toggle on/off   Enter to confirm"
-        echo ""
-        gum style --bold "Select installation components:"
-        CHOICES=$(gum choose --no-limit --cursor="> " \
-            --selected="Silent SDDM & Animated Wallpapers,Bundled Wallpapers" \
-            "Silent SDDM & Animated Wallpapers" \
-            "Bundled Wallpapers" \
-            "Neovim with Lua Support" \
-            "Zsh Shell" \
-            "Skip Package Installation")
+    echo -e "  \e[1mSystem:\e[0m \e[36m$OS_PRETTY\e[0m"
+    echo -e "  \e[1mGPU:   \e[0m \e[36m$GPU_VENDOR\e[0m"
+    echo ""
+    echo -e "  \e[90mConfigure your installation components:\e[0m"
+    echo -e "  \e[90mPress Enter to accept the default option (shown in CAPS).\e[0m"
+    echo ""
 
-        echo "$CHOICES" | grep -q "Silent SDDM"        && INSTALL_SDDM=true      || INSTALL_SDDM=false
-        echo "$CHOICES" | grep -q "Bundled Wallpapers"  && INSTALL_WALLPAPERS=true || INSTALL_WALLPAPERS=false
-        echo "$CHOICES" | grep -q "Neovim"              && INSTALL_NVIM=true
-        echo "$CHOICES" | grep -q "Zsh"                 && INSTALL_ZSH=true
-        echo "$CHOICES" | grep -q "Skip Package"        && SKIP_PKGS=true
+    read -rp "  Install Silent SDDM Greeter & Animated Wallpapers? [Y/n]: " ans_sddm
+    [[ "$ans_sddm" =~ ^[Nn]$ ]] && INSTALL_SDDM=false
 
-        if [ "$GPU_VENDOR" == "NVIDIA" ]; then
-            if gum confirm "Install NVIDIA proprietary drivers and configure kernel modesetting?"; then
-                DRIVER_PKGS+=("nvidia-dkms" "nvidia-utils" "lib32-nvidia-utils" "linux-headers" "egl-wayland")
-            fi
-        fi
-    else
-        echo -e "\e[1mSystem:\e[0m $OS_PRETTY"
-        echo -e "\e[1mGPU:   \e[0m $GPU_VENDOR"
-        echo ""
-        echo -e "\e[2m  Answer Y (yes) or N (no). Press Enter to accept the default (shown in CAPS).\e[0m"
-        echo ""
+    read -rp "  Install bundled wallpapers collection?             [Y/n]: " ans_wp
+    [[ "$ans_wp" =~ ^[Nn]$ ]] && INSTALL_WALLPAPERS=false
 
-        read -p "  Install Silent SDDM Greeter & Animated Wallpapers? [Y/n]: " ans_sddm
-        [[ "$ans_sddm" =~ ^[Nn]$ ]] && INSTALL_SDDM=false
+    read -rp "  Install Neovim with Lua IDE support?               [y/N]: " ans_nvim
+    [[ "$ans_nvim" =~ ^[Yy]$ ]] && INSTALL_NVIM=true
 
-        read -p "  Install bundled wallpapers?                          [Y/n]: " ans_wp
-        [[ "$ans_wp" =~ ^[Nn]$ ]] && INSTALL_WALLPAPERS=false
+    read -rp "  Install Zsh shell?                                 [y/N]: " ans_zsh
+    [[ "$ans_zsh" =~ ^[Yy]$ ]] && INSTALL_ZSH=true
 
-        read -p "  Install Neovim with Lua support?                     [y/N]: " ans_nvim
-        [[ "$ans_nvim" =~ ^[Yy]$ ]] && INSTALL_NVIM=true
+    read -rp "  Skip package installation (deploy configs only)?   [y/N]: " ans_skip
+    [[ "$ans_skip" =~ ^[Yy]$ ]] && SKIP_PKGS=true
 
-        read -p "  Install Zsh shell?                                   [y/N]: " ans_zsh
-        [[ "$ans_zsh" =~ ^[Yy]$ ]] && INSTALL_ZSH=true
-
-        read -p "  Skip package installation (deploy configs only)?     [y/N]: " ans_skip
-        [[ "$ans_skip" =~ ^[Yy]$ ]] && SKIP_PKGS=true
-
-        if [ "$GPU_VENDOR" == "NVIDIA" ]; then
-            read -p "  Install NVIDIA proprietary drivers?                  [y/N]: " ans_gpu
-            [[ "$ans_gpu" =~ ^[Yy]$ ]] && DRIVER_PKGS+=("nvidia-dkms" "nvidia-utils" "lib32-nvidia-utils" "linux-headers" "egl-wayland")
-        fi
+    if [ "$GPU_VENDOR" == "NVIDIA" ]; then
+        read -rp "  Install NVIDIA proprietary drivers & modesetting?  [y/N]: " ans_gpu
+        [[ "$ans_gpu" =~ ^[Yy]$ ]] && DRIVER_PKGS+=("nvidia-dkms" "nvidia-utils" "lib32-nvidia-utils" "linux-headers" "egl-wayland")
     fi
 fi
 
@@ -389,24 +336,12 @@ EOF
 # DONE
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
-if [ "$USE_GUM" = true ]; then
-    gum style \
-        --foreground 46 --border-foreground 46 --border rounded \
-        --align left --width 80 --margin "1 2" --padding "1 2" \
-        "INSTALLATION COMPLETE!" "" \
-        "Hydra Linux ${HYDRA_VERSION} has been deployed." \
-        " - Compositor:  Hyprland" \
-        " - Shell:       Quickshell + Matugen dynamic theming" \
-        " - Greeter:     Silent SDDM" \
-        " - Backups:     $BACKUP_DIR"
-    gum style --foreground 214 "Log out or reboot to start Hyprland."
-else
-    echo -e "\e[32m\e[1mINSTALLATION COMPLETE!\e[0m\n"
-    echo -e "Hydra Linux ${HYDRA_VERSION} has been deployed."
-    echo -e " - Compositor:  Hyprland"
-    echo -e " - Shell:       Quickshell + Matugen dynamic theming"
-    echo -e " - Greeter:     Silent SDDM"
-    echo -e " - Backups:     $BACKUP_DIR\n"
-    echo -e "\e[33mLog out or reboot to start Hyprland.\e[0m"
-fi
-echo ""
+echo -e "\e[32m\e[1m╔══════════════════════════════════════════════════════════════════════╗\e[0m"
+echo -e "\e[32m\e[1m║                        INSTALLATION COMPLETE!                        ║\e[0m"
+echo -e "\e[32m\e[1m╚══════════════════════════════════════════════════════════════════════╝\e[0m\n"
+echo -e "  Hydra Linux \e[1m${HYDRA_VERSION}\e[0m has been deployed successfully."
+echo -e "  • \e[1mCompositor:\e[0m  Hyprland"
+echo -e "  • \e[1mShell:\e[0m       Quickshell + Matugen dynamic theming"
+echo -e "  • \e[1mGreeter:\e[0m     Silent SDDM"
+echo -e "  • \e[1mBackups:\e[0m     $BACKUP_DIR\n"
+echo -e "  \e[33m\e[1m:: Log out or reboot to start Hyprland.\e[0m\n"
