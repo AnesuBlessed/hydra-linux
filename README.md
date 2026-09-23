@@ -103,8 +103,9 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 
 ### Automated Installer
 
-- Interactive TUI with `gum` for a beautiful modern installer experience.
-- Safe backup of existing configurations before deployment.
+- Interactive TUI written in pure Bash — no `gum`, no extra dependencies, and it degrades gracefully on dumb terminals, in pipes, and with `NO_COLOR`.
+- Safe backup of existing configurations before deployment; the install aborts rather than overwriting a config it could not back up.
+- Full output captured to a log file, with an automatic per-package retry if a batch install fails.
 - NVIDIA proprietary driver installation with kernel modesetting setup.
 - Optional Neovim (with Lua LSP) and Zsh installation.
 - Bundled wallpaper collection deployment.
@@ -146,8 +147,11 @@ Run with all recommended defaults and no prompts:
 | `-y`, `--yes` | Non-interactive mode with recommended defaults |
 | `--skip-pkgs` | Deploy configs only, skip package installation |
 | `--no-sddm` | Skip Silent SDDM greeter setup |
+| `--no-wallpapers` | Skip the bundled wallpaper collection |
 | `--with-nvim` | Include Neovim with Lua language server |
 | `--with-zsh` | Include Zsh shell |
+| `--nvidia` / `--no-nvidia` | Force or suppress NVIDIA proprietary driver installation |
+| `--no-color` | Disable colored output (`NO_COLOR` is honoured too) |
 | `-h`, `--help` | Display usage information |
 
 ---
