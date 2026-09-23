@@ -259,7 +259,7 @@ CORE_PKGS=(
     "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays" "zenity"
     "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl"
     "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git"
-    "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon"
+    "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon" "fzf" "mpv" "ani-cli"
     "ttf-jetbrains-mono-nerd" "ttf-iosevka-nerd"
     "qt5-wayland" "qt5-quickcontrols" "qt5-quickcontrols2" "qt5-graphicaleffects"
     "qt6-wayland" "qt5ct" "qt6ct" "adw-gtk-theme"
@@ -381,6 +381,10 @@ deploy_configs() {
     if [ -f "$SCRIPT_DIR/utils/bin/cava" ]; then
         cp -f "$SCRIPT_DIR/utils/bin/cava" "$HOME/.local/bin/cava"
         chmod +x "$HOME/.local/bin/cava"
+    fi
+    if [ -f "$SCRIPT_DIR/utils/bin/ani-cli" ]; then
+        cp -f "$SCRIPT_DIR/utils/bin/ani-cli" "$HOME/.local/bin/ani-cli"
+        chmod +x "$HOME/.local/bin/ani-cli"
     fi
     if [ -d "$HOME/.config/hypr/scripts" ]; then
         find "$HOME/.config/hypr/scripts" -type f -name '*.sh' -exec chmod +x {} +

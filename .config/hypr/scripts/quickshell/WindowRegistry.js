@@ -53,13 +53,6 @@ function getLayout(name, mx, my, mw, mh, userScale) {
         // --- Top Left Edge ---
         "music":     { w: s(700, scale), h: s(650, scale), rx: s(5, scale), ry: s(60, scale), comp: "music/MusicPopup.qml" },
 
-        "movies": {
-            w: Math.min(mw - s(40, scale), s(1370, scale)),
-            h: Math.min(mh - s(80, scale), s(850, scale)),
-            rx: Math.floor((mw - Math.min(mw - s(40, scale), s(1370, scale))) / 2),
-            ry: Math.max(s(54, scale), Math.floor((mh - Math.min(mh - s(80, scale), s(850, scale))) / 2)),
-            comp: "movies/MovieWidget.qml"
-        },
         
         // --- Screen Spanning Panels ---
         "settings":  { w: s(450, scale), h: mh - s(0, scale), rx: s(0, scale), ry: s(0, scale), comp: "settings/SettingsPopup.qml" },

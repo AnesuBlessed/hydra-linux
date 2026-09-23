@@ -146,7 +146,7 @@
       "mods": "$mainMod",
       "key": "P",
       "dispatcher": "exec",
-      "command": "~/.config/hypr/scripts/qs_manager.sh toggle movies"
+      "command": "~/.config/hypr/scripts/anime.sh"
     },
     {
       "type": "bind",

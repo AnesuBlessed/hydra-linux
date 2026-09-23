@@ -184,7 +184,7 @@ Run with all recommended defaults and no prompts:
 | `Super + M` | Music player panel |
 | `Super + B` | Battery & power profile popup |
 | `Super + V` | Audio device & volume panel |
-| `Super + P` | Movie & TV show browser |
+| `Super + P` | Anime Player (stream anime with `ani-cli` in `mpv`) |
 | `Super + H` | Interactive user guide |
 | `Super + Shift + T` | Focus time productivity tracker |
 | `Super + R` | Reload shell & desktop scripts |
@@ -219,7 +219,6 @@ All widgets are built with Qt6/QML and managed through the Quickshell shell runt
 | **Focus Time** | Productivity timer with session tracking and statistics |
 | **Guide** | Interactive onboarding tutorial with visual previews |
 | **Monitors** | Display configuration and multi-monitor management |
-| **Movies** | Movie and TV show browser with TMDB metadata |
 | **Music** | MPRIS music player with album art and EasyEffects equalizer |
 | **Network** | WiFi, Ethernet, and Bluetooth connection manager |
 | **Notifications** | System notification popup handler with inline action buttons |
