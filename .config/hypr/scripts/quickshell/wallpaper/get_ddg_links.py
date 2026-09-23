@@ -3,8 +3,9 @@ import sys, json, time, re, os
 import urllib.request, urllib.parse, http.cookiejar
 
 # Tap into QS dynamic cache variables
-QS_LOG_DIR = os.environ.get("QS_LOG_DIR", "/tmp/quickshell/logs")
-QS_RUN_WP = os.environ.get("QS_RUN_WALLPAPER_PICKER", "/tmp/quickshell/wallpaper_picker")
+_RUN_ROOT = os.path.join(os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}", "quickshell")
+QS_LOG_DIR = os.environ.get("QS_LOG_DIR", os.path.join(_RUN_ROOT, "logs"))
+QS_RUN_WP = os.environ.get("QS_RUN_WALLPAPER_PICKER", os.path.join(_RUN_ROOT, "wallpaper_picker"))
 
 LOG_FILE = os.path.join(QS_LOG_DIR, "ddg_python_scraper.log")
 CONTROL_FILE = os.path.join(QS_RUN_WP, "ddg_search_control")

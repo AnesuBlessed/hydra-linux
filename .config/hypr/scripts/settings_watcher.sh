@@ -36,6 +36,7 @@ compile_settings() {
     WP_DIR=$(jq -r '.wallpaperDir // empty' "$SETTINGS_FILE")
 
     # Safely parse booleans so "false" doesn't trigger a fallback
+    # shellcheck disable=SC2034  # consumed by the settings template below
     GUIDE_STARTUP=$(jq -r 'if has("openGuideAtStartup") then .openGuideAtStartup else true end' "$SETTINGS_FILE")
 
     PIC_DIR="$(xdg-user-dir PICTURES 2>/dev/null)"

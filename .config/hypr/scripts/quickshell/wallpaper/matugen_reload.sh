@@ -69,19 +69,21 @@ done
 # ------------------------------------------------------------------------------
 
 # Reload Kitty instances
-killall -USR1 kitty
+if pgrep -x -u "$(id -u)" "kitty" > /dev/null; then
+    killall -u "$(id -un)" -USR1 kitty
+fi
 
 # Reload CAVA
 # ALWAYS rebuild the final config file from the base and newly generated colors
 cat ~/.config/cava/config_base ~/.config/cava/colors > ~/.config/cava/config 2>/dev/null
 
 # Tell CAVA to reload the config ONLY if it is currently running
-if pgrep -x "cava" > /dev/null; then
-    killall -USR1 cava
+if pgrep -x -u "$(id -u)" "cava" > /dev/null; then
+    killall -u "$(id -un)" -USR1 cava
 fi
 
 # Restart swayosd-server in the background and disown it so the script doesn't hang
-killall swayosd-server 2>/dev/null
+killall -u "$(id -un)" swayosd-server 2>/dev/null
 swayosd-server --top-margin 0.9 --style "$HOME/.config/swayosd/style.css" > /dev/null 2>&1 &
 disown
 
@@ -106,10 +108,13 @@ hyprctl reload >/dev/null 2>&1 || true
 # ------------------------------------------------------------------------------
 # 4. Sync Matugen Colors to Silent SDDM (if writable)
 # ------------------------------------------------------------------------------
-SDDM_CONF="/usr/share/sddm/themes/silent/configs/rei.conf"
+# Follow the preset the theme is actually using, not a hardcoded one.
+SDDM_THEME_DIR="/usr/share/sddm/themes/silent"
+SDDM_ACTIVE_CONF=$(grep -m1 "^ConfigFile=" "$SDDM_THEME_DIR/metadata.desktop" 2>/dev/null | cut -d'=' -f2)
+SDDM_CONF="$SDDM_THEME_DIR/${SDDM_ACTIVE_CONF:-configs/default.conf}"
 if [ -f "$SDDM_CONF" ] && [ -w "$SDDM_CONF" ]; then
     PRIMARY_HEX=$(jq -r '.primary // empty' "$QS_JSON" 2>/dev/null)
-    if [ -n "$PRIMARY_HEX" ]; then
+    if [ -n "$PRIMARY_HEX" ] && [[ "$PRIMARY_HEX" =~ ^#[A-Fa-f0-9]{6}$ ]]; then
         sed -i -E "s/color = \"#[A-Fa-f0-9]{6}\"/color = \"$PRIMARY_HEX\"/g" "$SDDM_CONF"
         sed -i -E "s/active-border-color = \"#[A-Fa-f0-9]{6}\"/active-border-color = \"$PRIMARY_HEX\"/g" "$SDDM_CONF"
         sed -i -E "s/content-color = \"#[A-Fa-f0-9]{6}\"/content-color = \"$PRIMARY_HEX\"/g" "$SDDM_CONF"

@@ -58,7 +58,7 @@ MANIFEST="$THUMB_DIR/.manifest"
 # Only runs on slow path — not on every workspace switch
 # -----------------------------------------------------------------------------
 
-if ! pgrep -f "quickshell.*Shell.qml" >/dev/null; then
+if ! pgrep -u "$(id -u)" -f "quickshell.*Shell.qml" >/dev/null; then
     quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 &
     disown
 fi
@@ -91,11 +91,11 @@ handle_wallpaper_prep() {
                 find "$THUMB_DIR" -maxdepth 1 -type f \
                     ! -name '.source_dir' ! -name '.manifest' -delete
                 echo "$SRC_DIR" > "$THUMB_SOURCE_FILE"
-                > "$MANIFEST"
+                : > "$MANIFEST"
             fi
         else
             echo "$SRC_DIR" > "$THUMB_SOURCE_FILE"
-            > "$MANIFEST"
+            : > "$MANIFEST"
         fi
 
         [ ! -f "$MANIFEST" ] && build_manifest
@@ -139,7 +139,7 @@ handle_wallpaper_prep() {
                 thumb="$THUMB_DIR/000_$filename"
                 [ -f "$THUMB_DIR/$filename" ] && rm -f "$THUMB_DIR/$filename"
                 if [ ! -f "$thumb" ]; then
-                    ffmpeg -y -ss 00:00:05 -i "$img" -vframes 1 \
+                    ffmpeg -nostdin -y -ss 00:00:05 -i "$img" -vframes 1 \
                         -threads 1 -f image2 -q:v 2 "$thumb" >/dev/null 2>&1
                     echo "000_$filename" >> "$MANIFEST"
                 fi
@@ -168,17 +168,26 @@ handle_network_prep() {
 # -----------------------------------------------------------------------------
 if [[ "$ACTION" == "reload" ]]; then
     # Kill QS and all its watcher children cleanly
-    QS_PID=$(pgrep -f "quickshell.*Shell.qml" | head -n1)
+    QS_PID=$(pgrep -u "$(id -u)" -f "quickshell.*Shell.qml" | head -n1)
     if [[ -n "$QS_PID" ]]; then
         pkill -P "$QS_PID" 2>/dev/null  # kill children first
         kill "$QS_PID" 2>/dev/null
     fi
     # Clean up any lingering watcher scripts
-    pkill -f "qs_battery_wait\|qs_network_wait\|inotifywait.*quickshell\|bt_wait\.sh\|audio_wait\.sh\|kb_wait\.sh\|network_wait\.sh\|battery_wait\.sh" 2>/dev/null
+    pkill -u "$(id -u)" -f "qs_battery_wait\|qs_network_wait\|inotifywait.*quickshell\|bt_wait\.sh\|audio_wait\.sh\|kb_wait\.sh\|network_wait\.sh\|battery_wait\.sh" 2>/dev/null
     sleep 0.5
+    QS_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+    # Fall back to whichever wayland socket this session actually exposes.
+    if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+        for sock in "$QS_RUNTIME_DIR"/wayland-[0-9]*; do
+            [[ -S "$sock" ]] || continue
+            WAYLAND_DISPLAY="$(basename "$sock")"
+            break
+        done
+    fi
     WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-1}" \
-    XDG_RUNTIME_DIR="/run/user/$(id -u)" \
-    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
+    XDG_RUNTIME_DIR="$QS_RUNTIME_DIR" \
+    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=$QS_RUNTIME_DIR/bus}" \
     quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
     disown
     exit 0
@@ -188,7 +197,7 @@ if [[ "$ACTION" == "close" ]]; then
     quickshell -p "$SHELL_QML_PATH" ipc call main handleCommand "close" "" "" >/dev/null 2>&1
     if [[ "$TARGET" == "network" || "$TARGET" == "all" || -z "$TARGET" ]]; then
         if [ -f "$BT_PID_FILE" ]; then
-            kill $(cat "$BT_PID_FILE") 2>/dev/null
+            kill "$(cat "$BT_PID_FILE")" 2>/dev/null
             rm -f "$BT_PID_FILE"
         fi
         (bluetoothctl scan off > /dev/null 2>&1) &
@@ -207,8 +216,8 @@ if [[ "$ACTION" == "open" || "$ACTION" == "toggle" ]]; then
     if [[ "$TARGET" == "wallpaper" ]]; then
         handle_wallpaper_prep
         CURRENT_SRC=""
-        if pgrep -a "mpvpaper" > /dev/null; then
-            CURRENT_SRC=$(pgrep -a mpvpaper | grep -o "$SRC_DIR/[^' ]*" | head -n1)
+        if pgrep -u "$(id -u)" -a "mpvpaper" > /dev/null; then
+            CURRENT_SRC=$(pgrep -u "$(id -u)" -a mpvpaper | grep -o "$SRC_DIR/[^' ]*" | head -n1)
         elif command -v awww >/dev/null; then
             CURRENT_SRC=$(awww query 2>/dev/null | grep -o "$SRC_DIR/[^ ]*" | head -n1)
         fi

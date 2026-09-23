@@ -99,7 +99,7 @@ Item {
     Process {
         id: localVerProcess
         running: false
-        command: ["bash", "-c", "source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && [ -n \"$LOCAL_VERSION\" ] && echo $LOCAL_VERSION || echo '1.0.0'"]
+        command: ["bash", "-c", "\"$HOME\"/.config/hypr/scripts/hydra_version.sh 1.0.0"]
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text ? this.text.trim() : "";
@@ -123,9 +123,9 @@ Item {
 
     // --- 3. DYNAMIC VIDEO RESOLUTION ---
     property string videoResolveScript: `
-import urllib.request, json, subprocess, sys
+import urllib.request, json, os, subprocess, sys
 try:
-    local_str = subprocess.check_output("source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION", shell=True).decode('utf-8').strip()
+    local_str = subprocess.check_output([os.path.expanduser('~/.config/hypr/scripts/hydra_version.sh')]).decode('utf-8').strip()
     if not local_str: local_str = '0.0.0'
     
     # Safe Semantic Version Parsing
@@ -192,12 +192,12 @@ except Exception:
 
     // --- 5. COMMIT LOG FETCH ---
     property string fetchScript: `
-import urllib.request, json, subprocess
+import urllib.request, json, os, subprocess
 
 repo = 'AnesuBlessed/hydra-linux'
 
 try:
-    local = subprocess.check_output("source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION", shell=True).decode('utf-8').strip()
+    local = subprocess.check_output([os.path.expanduser('~/.config/hypr/scripts/hydra_version.sh')]).decode('utf-8').strip()
 except:
     local = ''
 

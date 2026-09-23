@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 
 # 1. Read initial values for time-sensitive metrics (CPU and Network)
-read -r _ u1 n1 s1 i1 io1 ir1 so1 st1 g1 gn1 <<< "$(grep '^cpu ' /proc/stat)"
+read -r _ u1 n1 s1 i1 io1 ir1 so1 st1 _ _ <<< "$(grep '^cpu ' /proc/stat)"
 read rx1 tx1 <<< "$(awk -v IGNORECASE=1 '/^ *[ew]/{rx+=$2; tx+=$10} END{print rx, tx}' /proc/net/dev)"
 
 # 2. Small delay to calculate precise usage deltas
 sleep 0.5
 
 # 3. Read final values
-read -r _ u2 n2 s2 i2 io2 ir2 so2 st2 g2 gn2 <<< "$(grep '^cpu ' /proc/stat)"
+read -r _ u2 n2 s2 i2 io2 ir2 so2 st2 _ _ <<< "$(grep '^cpu ' /proc/stat)"
 read rx2 tx2 <<< "$(awk -v IGNORECASE=1 '/^ *[ew]/{rx+=$2; tx+=$10} END{print rx, tx}' /proc/net/dev)"
 
 # --- CPU Calculation ---

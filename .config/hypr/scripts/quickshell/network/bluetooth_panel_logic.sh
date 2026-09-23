@@ -29,7 +29,8 @@ get_audio_profile() {
     local cards_data="$2"
     local mac_us="${mac//:/_}"
     
-    local active=$(echo "$cards_data" | awk -v mac="$mac_us" '
+    local active
+    active=$(echo "$cards_data" | awk -v mac="$mac_us" '
         tolower($0) ~ "name:.*"tolower(mac) { found=1 }
         found && tolower($0) ~ "active profile:" { 
             sub(/.*Active Profile: /, ""); print; exit 
@@ -94,6 +95,7 @@ get_status() {
             CACHE_FILE="$CACHE_DIR/bt_stat_${mac//:/_}"
 
             if [ -f "$CACHE_FILE" ]; then
+                # shellcheck source=/dev/null
                 source "$CACHE_FILE"
             else
                 info=$(bluetoothctl info "$mac")
@@ -170,10 +172,10 @@ toggle_power() {
 
 connect_dev() {
     local mac="$1"
-    if [ -f "$PID_FILE" ]; then kill -STOP $(cat "$PID_FILE") 2>/dev/null; fi
+    if [ -f "$PID_FILE" ]; then kill -STOP "$(cat "$PID_FILE")" 2>/dev/null; fi
     bluetoothctl trust "$mac" > /dev/null 2>&1
     bluetoothctl connect "$mac"
-    if [ -f "$PID_FILE" ]; then kill -CONT $(cat "$PID_FILE") 2>/dev/null; fi
+    if [ -f "$PID_FILE" ]; then kill -CONT "$(cat "$PID_FILE")" 2>/dev/null; fi
 }
 
 disconnect_dev() {

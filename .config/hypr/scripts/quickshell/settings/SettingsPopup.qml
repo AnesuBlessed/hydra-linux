@@ -860,7 +860,7 @@ Item {
     Process {
         id: pathSuggestProc
         property string query: ""
-        command: ["bash", "-c", "eval ls -dp " + query + "* 2>/dev/null | grep '/$' | head -n 5 || true"]
+        command: ["bash", "-c", "\"$HOME\"/.config/hypr/scripts/path_suggest.sh \"$1\" 2>/dev/null || true", "hydra-path-suggest", query]
         stdout: StdioCollector {
             onStreamFinished: {
                 pathSuggestModel.clear();
@@ -1021,8 +1021,8 @@ Item {
                 id: avatarChooserProc
                 property string targetPath: ""
                 command: targetPath !== ""
-                    ? ["bash", "-c", "bash ~/.config/hypr/scripts/set_avatar.sh \"" + targetPath.replace(/"/g, '\\"') + "\""]
-                    : ["bash", "-c", "bash ~/.config/hypr/scripts/set_avatar.sh"]
+                    ? ["bash", "-c", "bash \"$HOME\"/.config/hypr/scripts/set_avatar.sh \"$1\"", "hydra-set-avatar", targetPath]
+                    : ["bash", "-c", "bash \"$HOME\"/.config/hypr/scripts/set_avatar.sh"]
                 stdout: StdioCollector {
                     onStreamFinished: {
                         if (this.text && this.text.trim() !== "") {

@@ -24,7 +24,7 @@ sync_wallpaper() {
 
 switch_audio_to_hdmi() {
     # Retry up to 5 times (with 300ms backoff) to ensure ALSA DRM endpoint is ready
-    for i in {1..5}; do
+    for _ in {1..5}; do
         if pactl set-card-profile "$CARD" output:hdmi-stereo+input:analog-stereo >/dev/null 2>&1; then
             return 0
         fi

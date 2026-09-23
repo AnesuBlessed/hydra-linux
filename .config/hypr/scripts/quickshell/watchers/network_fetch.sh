@@ -16,13 +16,15 @@ get_wifi_ssid() {
 }
 
 get_wifi_strength() {
-    local signal=$(LC_ALL=C awk 'NR==3 {gsub(/\./,"",$3); print int($3 * 100 / 70)}' /proc/net/wireless 2>/dev/null)
+    local signal
+    signal=$(LC_ALL=C awk 'NR==3 {gsub(/\./,"",$3); print int($3 * 100 / 70)}' /proc/net/wireless 2>/dev/null)
     echo "${signal:-0}"
 }
 
 get_network_data() {
     # Find the active interface routing internet traffic
-    local active_iface=$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')
+    local active_iface
+    active_iface=$(ip route show default 2>/dev/null | awk '/default/ {print $5; exit}')
     local iface_type=""
     
     if [ -n "$active_iface" ]; then
@@ -45,20 +47,24 @@ get_network_data() {
     elif [ "$iface_type" = "wifi" ]; then
         status="enabled"
         ssid=$(get_wifi_ssid)
-        local signal=$(get_wifi_strength)
+        local signal
+        signal=$(get_wifi_strength)
         if [ "$signal" -ge 75 ]; then icon="󰤨"
         elif [ "$signal" -ge 50 ]; then icon="󰤥"
         elif [ "$signal" -ge 25 ]; then icon="󰤢"
         else icon="󰤟"; fi
         
         # Still check if an ethernet cable is plugged in silently in the background
-        local eth_dev=$(LC_ALL=C nmcli -t -f DEVICE,TYPE,STATE d 2>/dev/null | awk -F: '$2=="ethernet" && $3=="connected" && $1 != "lo" {print $1; exit}')
+        local eth_dev
+        eth_dev=$(LC_ALL=C nmcli -t -f DEVICE,TYPE,STATE d 2>/dev/null | awk -F: '$2=="ethernet" && $3=="connected" && $1 != "lo" {print $1; exit}')
         if [ -n "$eth_dev" ]; then eth_status="Connected"; fi
         
     # Scenario 3: No active internet connection
     else
-        local radio=$(get_wifi_radio)
-        local wifi_dev=$(LC_ALL=C nmcli -t -f DEVICE,TYPE d 2>/dev/null | awk -F: '$2=="wifi" {print $1; exit}')
+        local radio
+        radio=$(get_wifi_radio)
+        local wifi_dev
+        wifi_dev=$(LC_ALL=C nmcli -t -f DEVICE,TYPE d 2>/dev/null | awk -F: '$2=="wifi" {print $1; exit}')
         
         if [ -z "$wifi_dev" ]; then
             # No Wi-Fi hardware exists, and Ethernet is unplugged

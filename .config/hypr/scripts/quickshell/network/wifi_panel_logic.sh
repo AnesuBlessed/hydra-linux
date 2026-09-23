@@ -32,13 +32,14 @@ mkdir -p "$CACHE_DIR"
 CURRENT_RAW=$(LC_ALL=C nmcli -t -f active,ssid,signal,security device wifi | awk -F: '$1=="yes"{print; exit}')
 
 if [[ -n "$CURRENT_RAW" ]]; then
-    IFS=':' read -r active ssid signal security <<< "$CURRENT_RAW"
+    IFS=':' read -r _ ssid signal security <<< "$CURRENT_RAW"
     icon=$(get_icon "$signal")
     
     SAFE_SSID="${ssid//[^a-zA-Z0-9]/_}"
     CACHE_FILE="$CACHE_DIR/wifi_$SAFE_SSID"
     
     if [ -f "$CACHE_FILE" ]; then
+        # shellcheck source=/dev/null
         source "$CACHE_FILE"
     fi
     

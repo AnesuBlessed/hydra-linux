@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # Ensure pactl can connect to PipeWire/PulseAudio regardless of launch context
-export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export XDG_RUNTIME_DIR
 export PULSE_RUNTIME_PATH="$XDG_RUNTIME_DIR/pulse"
 
 # ---------------------------------------------------------
@@ -88,14 +89,15 @@ if [ "$SCAN_QR_MODE" = true ]; then
     TMP_IMG="$QS_RUN_SCREENSHOT/qr_temp_$$.png"
     grim -g "$GEOMETRY" "$TMP_IMG"
     
-    export XML_OUT=$(zbarimg --xml -q "$TMP_IMG" 2>>"$DEBUG_LOG")
+    XML_OUT=$(zbarimg --xml -q "$TMP_IMG" 2>>"$DEBUG_LOG")
+    export XML_OUT
     
     if [ -n "$XML_OUT" ]; then
         python3 << 'EOF' > "$RES_FILE"
 import os, sys, logging, re
 import xml.etree.ElementTree as ET
 
-debug_log = os.environ.get("DEBUG_LOG", "/tmp/qs_qr_debug.log")
+debug_log = os.environ.get("DEBUG_LOG") or os.devnull
 logging.basicConfig(filename=debug_log, level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
 raw_xml = os.environ.get("XML_OUT", "")
@@ -173,7 +175,7 @@ if [ -f "$CACHE_DIR/rec_pid" ]; then
     done
 
     # FORCE KILL IF STUCK
-    [ "$REC_PID" != "0" ] && kill -9 $REC_PID 2>/dev/null
+    [ "$REC_PID" != "0" ] && kill "$REC_PID" 2>/dev/null
 
     # 3. DESTROY PIPEWIRE VIRTUAL AUDIO CABLES
     if [ -f "$CACHE_DIR/pw_modules" ]; then
@@ -290,13 +292,14 @@ if [ "$FULL_MODE" = true ] || [ -n "$GEOMETRY" ]; then
     fi
 
     # Mode: Screenshot
-    GRIM_CMD="grim -"
-    [ -n "$GEOMETRY" ] && GRIM_CMD="grim -g \"$GEOMETRY\" -"
+    GRIM_CMD=(grim)
+    [ -n "$GEOMETRY" ] && GRIM_CMD+=(-g "$GEOMETRY")
+    GRIM_CMD+=(-)
 
     if [ "$EDIT_MODE" = true ]; then
-        eval $GRIM_CMD | GSK_RENDERER=gl satty --filename - --output-filename "$FILENAME" --init-tool brush --copy-command wl-copy
+        "${GRIM_CMD[@]}" | GSK_RENDERER=gl satty --filename - --output-filename "$FILENAME" --init-tool brush --copy-command wl-copy
     else
-        eval $GRIM_CMD | tee "$FILENAME" | wl-copy
+        "${GRIM_CMD[@]}" | tee "$FILENAME" | wl-copy
     fi
 
     if [ -s "$FILENAME" ]; then
@@ -319,19 +322,20 @@ fi
 # ---------------------------------------------------------
 QML_PATH="$HOME/.config/hypr/scripts/quickshell/ScreenshotOverlay.qml"
 
-if pgrep -f "quickshell -p $QML_PATH" > /dev/null; then
-    pkill -f "quickshell -p $QML_PATH"
+if pgrep -u "$(id -u)" -f "quickshell -p $QML_PATH" > /dev/null; then
+    pkill -u "$(id -u)" -f "quickshell -p $QML_PATH"
     exit 0
 fi
 
 if command -v pactl &> /dev/null; then
-    export QS_MIC_LIST=$(pactl list sources short 2>/dev/null | awk '{print $2}' | grep -v '\.monitor$' | while IFS= read -r name; do
+    QS_MIC_LIST=$(pactl list sources short 2>/dev/null | awk '{print $2}' | grep -v '\.monitor$' | while IFS= read -r name; do
         desc=$(pactl list sources 2>/dev/null | awk -v n="$name" '/Name:/ { found = ($2 == n) } found && /Description:/ { sub(/^[[:space:]]*Description:[[:space:]]*/, ""); print; exit }')
         echo "$name|${desc:-$name}"
     done)
 else
-    export QS_MIC_LIST=""
+    QS_MIC_LIST=""
 fi
+export QS_MIC_LIST
 
 PREFS="$QS_STATE_SCREENSHOT/audio_prefs"
 if [ -f "$PREFS" ]; then
@@ -340,7 +344,10 @@ if [ -f "$PREFS" ]; then
 fi
 
 [ "$EDIT_MODE" = true ] && export QS_SCREENSHOT_EDIT="true" || export QS_SCREENSHOT_EDIT="false"
-[ -f "$CACHE_FILE" ] && export QS_CACHED_GEOM=$(cat "$CACHE_FILE") || export QS_CACHED_GEOM=""
-[ -f "$MODE_CACHE_FILE" ] && export QS_CACHED_MODE=$(cat "$MODE_CACHE_FILE") || export QS_CACHED_MODE="false"
+QS_CACHED_GEOM=""
+[ -f "$CACHE_FILE" ] && QS_CACHED_GEOM=$(cat "$CACHE_FILE")
+QS_CACHED_MODE="false"
+[ -f "$MODE_CACHE_FILE" ] && QS_CACHED_MODE=$(cat "$MODE_CACHE_FILE")
+export QS_CACHED_GEOM QS_CACHED_MODE
 
 quickshell -p "$QML_PATH"

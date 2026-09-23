@@ -11,9 +11,9 @@ qs_ensure_cache "workspaces"
 # Kills any older instances of this script. When Quickshell reloads, 
 # it can leave the old listener pipelines running in the background infinitely.
 # ============================================================================
-for pid in $(pgrep -f "workspaces.sh"); do
+for pid in $(pgrep -u "$(id -u)" -f "workspaces\.sh"); do
     if [ "$pid" != "$$" ] && [ "$pid" != "$PPID" ]; then
-        kill -9 "$pid" 2>/dev/null
+        kill "$pid" 2>/dev/null
     fi
 done
 
@@ -28,7 +28,7 @@ trap cleanup EXIT SIGTERM SIGINT
 BT_PID_FILE="$QS_RUN_WORKSPACES/bt_scan_pid"
 
 if [ -f "$BT_PID_FILE" ]; then
-    kill $(cat "$BT_PID_FILE") 2>/dev/null
+    kill "$(cat "$BT_PID_FILE")" 2>/dev/null
     rm -f "$BT_PID_FILE"
 fi
 
@@ -95,7 +95,7 @@ while true; do
                 # Hyprland emits HUNDREDS of events a second when you move/resize windows.
                 # This reads and discards all subsequent events arriving within a 50ms window.
                 # It bundles the storm into a single UI update, completely preventing CPU clogging!
-                while read -t 0.05 -r extra_line; do
+                while read -t 0.05 -r _; do
                     continue
                 done
 

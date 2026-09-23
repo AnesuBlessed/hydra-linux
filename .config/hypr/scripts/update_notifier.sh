@@ -12,8 +12,7 @@ PENDING_FILE="$QS_CACHE_UPDATER/update_pending"
 
 while true; do
     # Fetch local version
-    LOCAL_VERSION=$(source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo "$LOCAL_VERSION")
-    LOCAL_VERSION=${LOCAL_VERSION:-"Unknown"}
+    LOCAL_VERSION=$("$(dirname "${BASH_SOURCE[0]}")/hydra_version.sh" "Unknown" 2>/dev/null || echo "Unknown")
     
     # Fetch remote version (Hydra Linux)
     REMOTE_VERSION=$(curl -m 5 -s https://raw.githubusercontent.com/AnesuBlessed/hydra-linux/main/version.txt 2>/dev/null | tr -d '\r\n')

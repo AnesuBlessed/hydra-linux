@@ -18,7 +18,8 @@ if [ -z "$TARGET_IMG" ] || [ ! -f "$TARGET_IMG" ]; then
     exit 0
 fi
 
-TMP_AVATAR="/tmp/hydra_avatar_${USER}.png"
+TMP_AVATAR="$(mktemp -t hydra_avatar.XXXXXXXX.png)"
+trap 'rm -f "$TMP_AVATAR"' EXIT
 
 # Center crop 1:1 square and upscale/resize to 1024x1024 with Lanczos filtering
 if command -v magick &>/dev/null; then

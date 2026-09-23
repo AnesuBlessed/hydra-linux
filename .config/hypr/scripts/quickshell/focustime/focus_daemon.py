@@ -35,7 +35,10 @@ if not os.path.exists(DB_PATH) and os.path.exists(OLD_DB_BASE):
     except Exception:
         pass
 
-RUN_DIR = os.environ.get("QS_RUN_FOCUSTIME", "/tmp/quickshell/focustime")
+RUN_DIR = os.environ.get(
+    "QS_RUN_FOCUSTIME",
+    os.path.join(os.environ.get("XDG_RUNTIME_DIR") or f"/run/user/{os.getuid()}", "quickshell", "focustime"),
+)
 os.makedirs(RUN_DIR, exist_ok=True)
 STATE_FILE = os.path.join(RUN_DIR, "focustime_state.json")
 

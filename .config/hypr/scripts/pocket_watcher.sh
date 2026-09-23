@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
+source "$(dirname "${BASH_SOURCE[0]}")/caching.sh"
+
 # File to store banishment times
-STATE_FILE="/tmp/pocket_dimension_state"
+STATE_FILE="$QS_RUN_DIR/pocket_dimension_state"
 touch "$STATE_FILE"
 
 while true; do
@@ -38,7 +40,7 @@ while true; do
                 if [ "$ACTION" == "restore" ]; then
                     hyprctl dispatch movetoworkspace +0,address:${addr} >/dev/null 2>&1
                     # Remove from state since it's restored
-                    unset new_state["$addr"]
+                    unset "new_state[$addr]"
                 fi
             fi
         else
@@ -48,7 +50,7 @@ while true; do
     done
 
     # Save new state
-    > "$STATE_FILE"
+    : > "$STATE_FILE"
     for addr in "${!new_state[@]}"; do
         echo "$addr,${new_state[$addr]}" >> "$STATE_FILE"
     done

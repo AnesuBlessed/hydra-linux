@@ -21,8 +21,10 @@ is_muted() {
 }
 
 get_volume_icon() {
-    local vol=$(get_volume)
-    local muted=$(is_muted)
+    local vol
+    vol=$(get_volume)
+    local muted
+    muted=$(is_muted)
     if [ "$muted" = "true" ]; then echo "󰝟"
     elif [ "$vol" -ge 70 ]; then echo "󰕾"
     elif [ "$vol" -ge 30 ]; then echo "󰖀"

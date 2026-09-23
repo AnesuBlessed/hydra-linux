@@ -20,7 +20,10 @@ ENV_FILE="$(dirname "$0")/.env"
 # API Settings
 # Load environment variables silently
 if [ -f "$ENV_FILE" ]; then
-    export $(grep -v '^#' "$ENV_FILE" | xargs)
+    while IFS='=' read -r key value; do
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        export "$key=$value"
+    done < "$ENV_FILE"
 fi
 
 # API Settings from .env

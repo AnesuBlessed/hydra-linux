@@ -2,8 +2,10 @@
 get_battery_percent() { LC_ALL=C cat /sys/class/power_supply/BAT*/capacity 2>/dev/null | head -n1 || echo "100"; }
 get_battery_status() { LC_ALL=C cat /sys/class/power_supply/BAT*/status 2>/dev/null | head -n1 || echo "Full"; }
 get_battery_icon() {
-    local percent=$(get_battery_percent)
-    local status=$(get_battery_status)
+    local percent
+    percent=$(get_battery_percent)
+    local status
+    status=$(get_battery_status)
     if [ "$status" = "Charging" ] || [ "$status" = "Full" ]; then
         if [ "$percent" -ge 90 ]; then echo "󰂅"
         elif [ "$percent" -ge 80 ]; then echo "󰂋"

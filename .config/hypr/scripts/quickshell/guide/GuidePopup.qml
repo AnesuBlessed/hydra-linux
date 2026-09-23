@@ -156,7 +156,7 @@ Item {
 
     Process {
         id: versionReader
-        command: ["bash", "-c", "source ~/.local/state/hydra-linux-version 2>/dev/null || source ~/.local/state/imperative-dots-version 2>/dev/null && echo $LOCAL_VERSION || echo '1.0.0'"]
+        command: ["bash", "-c", "\"$HOME\"/.config/hypr/scripts/hydra_version.sh 1.0.0"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
