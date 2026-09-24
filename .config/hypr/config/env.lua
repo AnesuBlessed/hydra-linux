@@ -11,6 +11,11 @@ hl.env("WALLPAPER_DIR", os.getenv("HOME") .. "/Pictures/Wallpapers")
 hl.env("SCRIPT_DIR", os.getenv("HOME") .. "/.config/hypr/scripts")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
+hl.env("MOZ_ENABLE_WAYLAND", "1")
+hl.env("MOZ_WEBRENDER", "1")
+hl.env("GDK_BACKEND", "wayland,x11")
+hl.env("CLUTTER_BACKEND", "wayland")
+hl.env("SDL_VIDEODRIVER", "wayland")
 
 -- Hardware Injections
 local handle = io.popen("lspci -nn 2>/dev/null | grep -iE 'vga|3d|display'")
