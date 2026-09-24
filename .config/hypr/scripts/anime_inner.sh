@@ -103,7 +103,7 @@ Quit"
     fi
 
     # ════════════════════════════════
-    # Interactive Watchlist (Stream directly!)
+    # Interactive Watchlist
     # ════════════════════════════════
     if [[ "$MODE" == *"Watchlist"* ]]; then
         while true; do
@@ -234,7 +234,7 @@ Quit"
     fi
 
     # ════════════════════════════════
-    # Download
+    # Download (Organized Folders & Season Support)
     # ════════════════════════════════
     if [[ "$MODE" == "Download" ]]; then
         DL_TYPE=$(printf "Download (Sub)\nDownload (Dub)" | fzf \
@@ -251,6 +251,7 @@ Quit"
 
         DL_QUALITY=$(printf "1080p\n720p\n480p" | fzf \
             --prompt="  Quality ▸ " \
+            --prompt="  Quality ▸ " \
             --pointer="▶" \
             --border=rounded \
             --margin=1 \
@@ -258,24 +259,43 @@ Quit"
             --color="$FZF_COLORS")
         [[ -z "$DL_QUALITY" ]] && continue
 
-        printf "\n${BLUE}  Anime name (folder name): ${R}"
+        printf "\n${BLUE}  Anime name (Main Folder): ${R}"
         read -r ANIME_NAME
         [[ -z "$ANIME_NAME" ]] && continue
 
         FOLDER_NAME=$(printf "%s" "$ANIME_NAME" | tr '<>:"/\|?*' '_' | sed 's/  */ /g; s/^ //; s/ $//')
-        DL_DIR="$ANIME_BASE/$FOLDER_NAME"
+
+        printf "${BLUE}  Season / Subfolder (Press Enter for main folder, or e.g. Season 2): ${R}"
+        read -r SEASON_NAME
+
+        if [ -n "$SEASON_NAME" ];  then
+            SEASON_FOLDER=$(printf "%s" "$SEASON_NAME" | tr '<>:"/\|?*' '_' | sed 's/  */ /g; s/^ //; s/ $//')
+            DL_DIR="$ANIME_BASE/$FOLDER_NAME/$SEASON_FOLDER"
+            DISPLAY_PATH="~/Videos/Anime/$FOLDER_NAME/$SEASON_FOLDER"
+        else
+            DL_DIR="$ANIME_BASE/$FOLDER_NAME"
+            DISPLAY_PATH="~/Videos/Anime/$FOLDER_NAME"
+        fi
+
         mkdir -p "$DL_DIR"
+
+        # Check existing downloads in target folder
+        EXISTING_FILES=$(find "$DL_DIR" -maxdepth 1 -name "*.mp4" 2>/dev/null | wc -l)
+        if [ "$EXISTING_FILES" -gt 0 ]; then
+            printf "${YELLOW}  ℹ Found ${EXISTING_FILES} existing episode(s) in destination folder.${R}\n"
+            printf "${DIM}    yt-dlp will automatically skip already completed downloads.${R}\n\n"
+        fi
 
         printf "${BLUE}  Episodes (e.g. 1  or  1-12  or  1 2 5): ${R}"
         read -r EP_RANGE
         [[ -z "$EP_RANGE" ]] && continue
 
-        printf "\n${GREEN}  ┌─────────────────────────────────────────┐${R}\n"
-        printf "${GREEN}  │  Saving to: ~/Videos/Anime/%-13s│${R}\n" "$FOLDER_NAME"
-        printf "${GREEN}  │  Episodes: %-29s│${R}\n" "$EP_RANGE"
-        printf "${GREEN}  │  Quality:  %-29s│${R}\n" "$DL_QUALITY"
-        printf "${GREEN}  │  Audio:    %-29s│${R}\n" "$([ -n "$DL_DUB" ] && echo "Dubbed" || echo "Subbed")"
-        printf "${GREEN}  └─────────────────────────────────────────┘${R}\n\n"
+        printf "\n${GREEN}  ┌────────────────────────────────────────────────────────┐${R}\n"
+        printf "${GREEN}  │  Destination: %-40s │${R}\n" "$DISPLAY_PATH"
+        printf "${GREEN}  │  Episodes:    %-40s │${R}\n" "$EP_RANGE"
+        printf "${GREEN}  │  Quality:     %-40s │${R}\n" "$DL_QUALITY"
+        printf "${GREEN}  │  Audio:       %-40s │${R}\n" "$([ -n "$DL_DUB" ] && echo "Dubbed" || echo "Subbed")"
+        printf "${GREEN}  └────────────────────────────────────────────────────────┘${R}\n\n"
 
         export ANI_CLI_DOWNLOAD_DIR="$DL_DIR"
         "$ANICLI" -q "$DL_QUALITY" $DL_DUB -d -e "$EP_RANGE" --no-detach "$ANIME_NAME"
@@ -283,7 +303,7 @@ Quit"
 
         if [ $EXIT_CODE -eq 0 ]; then
             FILE_COUNT=$(find "$DL_DIR" -name "*.mp4" 2>/dev/null | wc -l)
-            printf "\n${GREEN}  ✓ Done – ${FILE_COUNT} file(s) in:${R}\n"
+            printf "\n${GREEN}  ✓ Done – ${FILE_COUNT} file(s) total in:${R}\n"
             printf "${DIM}    $DL_DIR${R}\n"
         else
             printf "\n${RED}  ✗ Download failed (code %d)${R}\n" "$EXIT_CODE"
@@ -325,7 +345,6 @@ Quit"
     if [[ "$MODE" == *"Continue"* ]]; then
         CONTINUE_FLAG="-c"
     else
-        # Optional episode jump prompt for standard search
         printf "\n${BLUE}  Episode # (Press Enter for list, or type e.g. 12): ${R}"
         read -r EP_INPUT
         if [ -n "$EP_INPUT" ]; then
