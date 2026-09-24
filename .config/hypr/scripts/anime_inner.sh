@@ -44,7 +44,7 @@ while true; do
     [ -f "$HYDRA_PREF" ] && LAST_MODE="$(cat "$HYDRA_PREF")"
 
     HIST_COUNT=$(wc -l < "$HIST_FILE" 2>/dev/null || echo 0)
-    WL_COUNT=$(wc -l < "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
+    WL_COUNT=$(grep -c . "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
 
     STATUS="  ${DIM}${LAST_MODE}bed"
     [ -n "$SKIP_FLAG" ] && STATUS="${STATUS}  ${GREEN}✓${DIM} skip"
@@ -61,8 +61,8 @@ while true; do
         MENU="Stream (Dub) *
 Stream (Sub)
 Continue Watching
+Watchlist (${WL_COUNT})
 Download
-Watchlist
 Next Episode
 Clear History
 Quit"
@@ -70,8 +70,8 @@ Quit"
         MENU="Stream (Sub) *
 Stream (Dub)
 Continue Watching
+Watchlist (${WL_COUNT})
 Download
-Watchlist
 Next Episode
 Clear History
 Quit"
@@ -103,15 +103,15 @@ Quit"
     fi
 
     # ════════════════════════════════
-    # Watchlist
+    # Interactive Watchlist (Stream directly!)
     # ════════════════════════════════
-    if [[ "$MODE" == "Watchlist" ]]; then
+    if [[ "$MODE" == *"Watchlist"* ]]; then
         while true; do
             clear
-            printf "${PURPLE}${BOLD}  ◈ Watchlist${R}\n"
+            printf "${PURPLE}${BOLD}  ◈ Watchlist (${WL_COUNT} Saved)${R}\n"
             printf "${DIM}  ─────────────────────────────${R}\n\n"
 
-            WL_ACTION=$(printf "View watchlist\nAdd to watchlist\nRemove from watchlist\nBack" | fzf \
+            WL_ACTION=$(printf "▶ Play from Watchlist\n✚ Add to Watchlist\n🗑 Remove from Watchlist\nBack" | fzf \
                 --prompt="  ▸ " \
                 --pointer="▶" \
                 --border=rounded \
@@ -120,7 +120,7 @@ Quit"
                 --color="$FZF_COLORS")
 
             case "$WL_ACTION" in
-                "Add to watchlist")
+                "✚ Add to Watchlist")
                     printf "\n${BLUE}  Anime name: ${R}"
                     read -r WL_NAME
                     if [ -n "$WL_NAME" ]; then
@@ -129,25 +129,77 @@ Quit"
                         sleep 1
                     fi
                     ;;
-                "View watchlist")
-                    if [ -s "$HYDRA_WATCHLIST" ]; then
-                        printf "\n"
-                        nl -w3 -s"  " "$HYDRA_WATCHLIST"
-                        printf "\n${PURPLE}  [Enter] Back ▸ ${R}"
-                        read -r
-                    else
-                        printf "\n${DIM}  Watchlist is empty${R}\n"
-                        sleep 1
+
+                "▶ Play from Watchlist")
+                    if [ ! -s "$HYDRA_WATCHLIST" ]; then
+                        printf "\n${DIM}  Watchlist is empty. Add an anime first!${R}\n"
+                        sleep 1.5
+                        continue
                     fi
+
+                    SELECTED_ANIME=$(cat "$HYDRA_WATCHLIST" | fzf \
+                        --prompt="  Select Anime ▸ " \
+                        --pointer="▶" \
+                        --border=rounded \
+                        --margin=1 \
+                        --height=45% \
+                        --color="$FZF_COLORS")
+
+                    [[ -z "$SELECTED_ANIME" ]] && continue
+
+                    # Select Sub / Dub
+                    WL_AUDIO=$(printf "Subbed\nDubbed" | fzf \
+                        --prompt="  Audio ▸ " \
+                        --pointer="▶" \
+                        --border=rounded \
+                        --margin=1 \
+                        --height=30% \
+                        --color="$FZF_COLORS")
+
+                    [[ -z "$WL_AUDIO" ]] && continue
+                    WL_DUB_FLAG=""
+                    [[ "$WL_AUDIO" == "Dubbed" ]] && WL_DUB_FLAG="--dub"
+
+                    # Quality
+                    WL_QUALITY=$(printf "1080p\n720p\n480p" | fzf \
+                        --prompt="  Quality ▸ " \
+                        --pointer="▶" \
+                        --border=rounded \
+                        --margin=1 \
+                        --height=30% \
+                        --color="$FZF_COLORS")
+
+                    [[ -z "$WL_QUALITY" ]] && continue
+
+                    # Episode Jump Prompt
+                    printf "\n${BLUE}  Episode # (Press Enter for list, or type e.g. 12): ${R}"
+                    read -r WL_EP
+                    WL_EP_FLAG=""
+                    if [ -n "$WL_EP" ]; then
+                        WL_EP_FLAG="-e $WL_EP"
+                    fi
+
+                    printf "\n${DIM}  Streaming ${SELECTED_ANIME}...${R}\n\n"
+                    "$ANICLI" -q "$WL_QUALITY" $SKIP_FLAG $WL_DUB_FLAG $WL_EP_FLAG --no-detach "$SELECTED_ANIME"
+                    EXIT_CODE=$?
+
+                    if [ $EXIT_CODE -ne 0 ]; then
+                        printf "\n${RED}  ✗ Stream ended with code %d${R}\n" "$EXIT_CODE"
+                    fi
+
+                    printf "\n${PURPLE}  [Enter] Watchlist menu  [q] Quit ▸ ${R}"
+                    read -r CHOICE
+                    [[ "$CHOICE" == "q" || "$CHOICE" == "Q" ]] && exit 0
                     ;;
-                "Remove from watchlist")
+
+                "🗑 Remove from Watchlist")
                     if [ -s "$HYDRA_WATCHLIST" ]; then
                         REMOVE=$(cat "$HYDRA_WATCHLIST" | fzf \
                             --prompt="  Remove ▸ " \
                             --pointer="▶" \
                             --border=rounded \
                             --margin=1 \
-                            --height=40% \
+                            --height=45% \
                             --color="$FZF_COLORS")
                         if [ -n "$REMOVE" ]; then
                             grep -vxF "$REMOVE" "$HYDRA_WATCHLIST" > "${HYDRA_WATCHLIST}.tmp"
@@ -160,6 +212,7 @@ Quit"
                         sleep 1
                     fi
                     ;;
+
                 *) break ;;
             esac
         done
@@ -243,7 +296,7 @@ Quit"
     fi
 
     # ════════════════════════════════
-    # Stream
+    # Stream (Standard & Episode Jump)
     # ════════════════════════════════
 
     # Save sub/dub preference
@@ -267,11 +320,22 @@ Quit"
     [[ "$MODE" == *"Dub"* ]] && DUB_FLAG="--dub"
 
     CONTINUE_FLAG=""
-    [[ "$MODE" == *"Continue"* ]] && CONTINUE_FLAG="-c"
+    EP_JUMP_FLAG=""
+
+    if [[ "$MODE" == *"Continue"* ]]; then
+        CONTINUE_FLAG="-c"
+    else
+        # Optional episode jump prompt for standard search
+        printf "\n${BLUE}  Episode # (Press Enter for list, or type e.g. 12): ${R}"
+        read -r EP_INPUT
+        if [ -n "$EP_INPUT" ]; then
+            EP_JUMP_FLAG="-e $EP_INPUT"
+        fi
+    fi
 
     printf "\n${DIM}  mpv keybinds: s=skip intro  Ctrl+1=Anime4K Light  Ctrl+2=Medium  Ctrl+0=Off${R}\n\n"
 
-    "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG $CONTINUE_FLAG --no-detach
+    "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG $CONTINUE_FLAG $EP_JUMP_FLAG --no-detach
     EXIT_CODE=$?
 
     if [ $EXIT_CODE -ne 0 ]; then
