@@ -31,63 +31,6 @@ FZF_COLORS="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5
 SKIP_FLAG=""
 command -v ani-skip &>/dev/null && SKIP_FLAG="--skip"
 
-# ── Dynamic Layout Helper ──
-get_term_width() {
-    local w
-    w=$(tput cols 2>/dev/null || echo 70)
-    [ "$w" -gt 76 ] && w=76
-    [ "$w" -lt 45 ] && w=45
-    echo "$w"
-}
-
-draw_line() {
-    local w=$1
-    local char="${2:-─}"
-    printf "%*s" "$w" "" | tr ' ' "$char"
-}
-
-draw_banner() {
-    local w
-    w=$(get_term_width)
-    local inner_w=$((w - 4))
-    
-    local title="◈ HYDRA ANIME"
-    local line_str
-    line_str=$(draw_line "$inner_w" "─")
-
-    printf "${PURPLE}╭─%s─╮${R}\n" "$line_str"
-    printf "${PURPLE}│${R} ${BOLD}${CYAN}%-*s${R} ${PURPLE}│${R}\n" "$inner_w" "  $title"
-    printf "${PURPLE}├─%s─┤${R}\n" "$line_str"
-
-    local sub_info="Audio: ${LAST_MODE}bed"
-    [ -n "$SKIP_FLAG" ] && sub_info="${sub_info}  │  Auto-Skip: On"
-    sub_info="${sub_info}  │  History: ${HIST_COUNT}  │  Saved: ${WL_COUNT}"
-
-    printf "${PURPLE}│${R} ${DIM}%-*s${R} ${PURPLE}│${R}\n" "$inner_w" "  $sub_info"
-    printf "${PURPLE}╰─%s─╯${R}\n" "$line_str"
-}
-
-draw_box_message() {
-    local title="$1"
-    shift
-    local lines=("$@")
-    local w
-    w=$(get_term_width)
-    local inner_w=$((w - 4))
-    local line_str
-    line_str=$(draw_line "$inner_w" "─")
-
-    printf "${CYAN}╭─%s─╮${R}\n" "$line_str"
-    if [ -n "$title" ]; then
-        printf "${CYAN}│${R} ${BOLD}${PURPLE}%-*s${R} ${CYAN}│${R}\n" "$inner_w" "  $title"
-        printf "${CYAN}├─%s─┤${R}\n" "$line_str"
-    fi
-    for l in "${lines[@]}"; do
-        printf "${CYAN}│${R} %-*s ${CYAN}│${R}\n" "$inner_w" "  $l"
-    done
-    printf "${CYAN}╰─%s─╯${R}\n" "$line_str"
-}
-
 # ══════════════════════════════════
 # Main loop
 # ══════════════════════════════════
@@ -100,9 +43,13 @@ while true; do
     HIST_COUNT=$(wc -l < "$HIST_FILE" 2>/dev/null || echo 0)
     WL_COUNT=$(grep -c . "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
 
-    # Render Dynamic Responsive Banner
-    draw_banner
-    printf "\n"
+    # Clean Minimal Header
+    printf "${PURPLE}${BOLD}  ◈ HYDRA ANIME${R}\n"
+    
+    STATUS="${DIM}  ${LAST_MODE}bed"
+    [ -n "$SKIP_FLAG" ] && STATUS="${STATUS}  ·  ${GREEN}auto-skip${DIM}"
+    STATUS="${STATUS}  ·  ${HIST_COUNT} watched  ·  ${WL_COUNT} saved${R}"
+    printf "%b\n\n" "$STATUS"
 
     # Trim history
     if [ -f "$HIST_FILE" ] && [ "$HIST_COUNT" -gt "$MAX_HISTORY" ]; then
@@ -131,13 +78,12 @@ Quit"
     fi
 
     MODE=$(printf "%s" "$MENU" | fzf \
-        --prompt="  Select Option ▸ " \
+        --prompt="  ▸ " \
         --pointer="▶" \
         --border=rounded \
         --margin=0,1 \
         --height=50% \
-        --color="$FZF_COLORS" \
-        --header="  Navigation: ↑/↓ Move  │  Enter Select  │  Esc Back")
+        --color="$FZF_COLORS")
 
     [[ -z "$MODE" || "$MODE" == "Quit" ]] && exit 0
 
@@ -145,16 +91,12 @@ Quit"
     # Clear History
     # ════════════════════════════════
     if [[ "$MODE" == "Clear History" ]]; then
-        printf "\n"
-        draw_box_message "⚠ Clear Watch History" \
-            "This will delete your entire ani-cli watch history." \
-            "Saved Watchlist entries will not be affected."
-        
-        printf "\n  ${PURPLE}Confirm clearance? [y/N] ▸ ${R}"
+        printf "\n  ${YELLOW}This will delete your watch history.${R}\n"
+        printf "  ${PURPLE}Confirm? [y/N] ▸ ${R}"
         read -r CONFIRM
         if [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]]; then
             > "$HIST_FILE"
-            printf "\n  ${GREEN}✓ History successfully cleared.${R}\n"
+            printf "\n  ${GREEN}✓ History cleared.${R}\n"
             sleep 1
         fi
         continue
@@ -167,11 +109,9 @@ Quit"
         while true; do
             clear
             WL_COUNT=$(grep -c . "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
-            draw_box_message "◈ MY WATCHLIST (${WL_COUNT} Saved)" \
-                "Select an option to stream, add, or manage saved titles."
-            printf "\n"
+            printf "${PURPLE}${BOLD}  ◈ WATCHLIST${R} ${DIM}(${WL_COUNT} saved)${R}\n\n"
 
-            WL_ACTION=$(printf "▶ Stream from Watchlist\n✚ Add Anime to Watchlist\n🗑 Remove Anime from Watchlist\nBack" | fzf \
+            WL_ACTION=$(printf "▶ Stream from Watchlist\n✚ Add Anime\n🗑 Remove Anime\nBack" | fzf \
                 --prompt="  Watchlist ▸ " \
                 --pointer="▶" \
                 --border=rounded \
@@ -180,25 +120,25 @@ Quit"
                 --color="$FZF_COLORS")
 
             case "$WL_ACTION" in
-                "✚ Add Anime to Watchlist")
-                    printf "\n  ${BLUE}Enter Anime Name to Save: ${R}"
+                "✚ Add Anime")
+                    printf "\n  ${BLUE}Anime Title: ${R}"
                     read -r WL_NAME
                     if [ -n "$WL_NAME" ]; then
                         echo "$WL_NAME" >> "$HYDRA_WATCHLIST"
-                        printf "\n  ${GREEN}✓ Saved '${WL_NAME}' to Watchlist.${R}\n"
+                        printf "  ${GREEN}✓ Added '${WL_NAME}'${R}\n"
                         sleep 1
                     fi
                     ;;
 
                 "▶ Stream from Watchlist")
                     if [ ! -s "$HYDRA_WATCHLIST" ]; then
-                        printf "\n  ${YELLOW}ℹ Watchlist is currently empty.${R}\n"
+                        printf "\n  ${YELLOW}Watchlist is empty.${R}\n"
                         sleep 1.5
                         continue
                     fi
 
                     SELECTED_ANIME=$(cat "$HYDRA_WATCHLIST" | fzf \
-                        --prompt="  Stream Title ▸ " \
+                        --prompt="  Title ▸ " \
                         --pointer="▶" \
                         --border=rounded \
                         --margin=0,1 \
@@ -209,7 +149,7 @@ Quit"
 
                     # Select Sub / Dub
                     WL_AUDIO=$(printf "Subbed\nDubbed" | fzf \
-                        --prompt="  Audio Mode ▸ " \
+                        --prompt="  Audio ▸ " \
                         --pointer="▶" \
                         --border=rounded \
                         --margin=0,1 \
@@ -222,7 +162,7 @@ Quit"
 
                     # Quality
                     WL_QUALITY=$(printf "1080p\n720p\n480p" | fzf \
-                        --prompt="  Stream Quality ▸ " \
+                        --prompt="  Quality ▸ " \
                         --pointer="▶" \
                         --border=rounded \
                         --margin=0,1 \
@@ -239,7 +179,7 @@ Quit"
                         WL_EP_FLAG="-e $WL_EP"
                     fi
 
-                    printf "\n  ${DIM}Connecting stream for ${SELECTED_ANIME}...${R}\n\n"
+                    printf "\n  ${DIM}Connecting ${SELECTED_ANIME}...${R}\n\n"
                     "$ANICLI" -q "$WL_QUALITY" $SKIP_FLAG $WL_DUB_FLAG $WL_EP_FLAG --no-detach "$SELECTED_ANIME"
                     EXIT_CODE=$?
 
@@ -247,15 +187,15 @@ Quit"
                         printf "\n  ${RED}✗ Stream finished (exit code %d)${R}\n" "$EXIT_CODE"
                     fi
 
-                    printf "\n  ${PURPLE}[Enter] Back to Watchlist  [q] Quit ▸ ${R}"
+                    printf "\n  ${PURPLE}[Enter] Back  [q] Quit ▸ ${R}"
                     read -r CHOICE
                     [[ "$CHOICE" == "q" || "$CHOICE" == "Q" ]] && exit 0
                     ;;
 
-                "🗑 Remove Anime from Watchlist")
+                "🗑 Remove Anime")
                     if [ -s "$HYDRA_WATCHLIST" ]; then
                         REMOVE=$(cat "$HYDRA_WATCHLIST" | fzf \
-                            --prompt="  Remove Entry ▸ " \
+                            --prompt="  Remove ▸ " \
                             --pointer="▶" \
                             --border=rounded \
                             --margin=0,1 \
@@ -264,11 +204,11 @@ Quit"
                         if [ -n "$REMOVE" ]; then
                             grep -vxF "$REMOVE" "$HYDRA_WATCHLIST" > "${HYDRA_WATCHLIST}.tmp"
                             mv "${HYDRA_WATCHLIST}.tmp" "$HYDRA_WATCHLIST"
-                            printf "\n  ${GREEN}✓ Removed '${REMOVE}' from Watchlist.${R}\n"
+                            printf "  ${GREEN}✓ Removed '${REMOVE}'${R}\n"
                             sleep 1
                         fi
                     else
-                        printf "\n  ${YELLOW}ℹ Watchlist is empty.${R}\n"
+                        printf "\n  ${YELLOW}Watchlist is empty.${R}\n"
                         sleep 1
                     fi
                     ;;
@@ -283,13 +223,13 @@ Quit"
     # Next Episode Countdown
     # ════════════════════════════════
     if [[ "$MODE" == "Next Episode" ]]; then
-        printf "\n  ${BLUE}Enter Anime Title for Release Schedule: ${R}"
+        printf "\n  ${BLUE}Anime Title: ${R}"
         read -r NE_NAME
         if [ -n "$NE_NAME" ]; then
             printf "\n"
             "$ANICLI" -N "$NE_NAME" --no-detach
         fi
-        printf "\n  ${PURPLE}[Enter] Back to Main Menu ▸ ${R}"
+        printf "\n  ${PURPLE}[Enter] Back ▸ ${R}"
         read -r
         continue
     fi
@@ -299,7 +239,7 @@ Quit"
     # ════════════════════════════════
     if [[ "$MODE" == "Download" ]]; then
         DL_TYPE=$(printf "Download (Sub)\nDownload (Dub)" | fzf \
-            --prompt="  Audio Mode ▸ " \
+            --prompt="  Audio ▸ " \
             --pointer="▶" \
             --border=rounded \
             --margin=0,1 \
@@ -311,7 +251,7 @@ Quit"
         [[ "$DL_TYPE" == *"Dub"* ]] && DL_DUB="--dub"
 
         DL_QUALITY=$(printf "1080p\n720p\n480p" | fzf \
-            --prompt="  Video Quality ▸ " \
+            --prompt="  Quality ▸ " \
             --pointer="▶" \
             --border=rounded \
             --margin=0,1 \
@@ -319,13 +259,13 @@ Quit"
             --color="$FZF_COLORS")
         [[ -z "$DL_QUALITY" ]] && continue
 
-        printf "\n  ${BLUE}Anime Main Title (Folder): ${R}"
+        printf "\n  ${BLUE}Anime Title (Main Folder): ${R}"
         read -r ANIME_NAME
         [[ -z "$ANIME_NAME" ]] && continue
 
         FOLDER_NAME=$(printf "%s" "$ANIME_NAME" | tr '<>:"/\|?*' '_' | sed 's/  */ /g; s/^ //; s/ $//')
 
-        printf "  ${BLUE}Season / Subfolder (Enter for main folder, or e.g. Season 2): ${R}"
+        printf "  ${BLUE}Season / Subfolder (Enter for main, or e.g. Season 2): ${R}"
         read -r SEASON_NAME
 
         if [ -n "$SEASON_NAME" ]; then
@@ -341,25 +281,17 @@ Quit"
 
         # Check existing files
         EXISTING_FILES=$(find "$DL_DIR" -maxdepth 1 -name "*.mp4" 2>/dev/null | wc -l)
-        printf "\n"
         if [ "$EXISTING_FILES" -gt 0 ]; then
-            draw_box_message "ℹ EXISTING DOWNLOADS DETECTED" \
-                "Found ${EXISTING_FILES} completed episode(s) in destination." \
-                "yt-dlp will automatically skip completed episodes."
-            printf "\n"
+            printf "\n  ${YELLOW}ℹ ${EXISTING_FILES} episode(s) already in destination.${R}\n"
+            printf "  ${DIM}yt-dlp will automatically skip completed files.${R}\n"
         fi
 
-        printf "  ${BLUE}Episodes to Download (e.g. 1  or  1-12  or  1 2 5): ${R}"
+        printf "\n  ${BLUE}Episodes (e.g. 1  or  1-12  or  1 2 5): ${R}"
         read -r EP_RANGE
         [[ -z "$EP_RANGE" ]] && continue
 
-        printf "\n"
-        draw_box_message "⬇ DOWNLOAD CONFIGURATION" \
-            "Destination : ${DISPLAY_PATH}" \
-            "Episodes    : ${EP_RANGE}" \
-            "Quality     : ${DL_QUALITY}" \
-            "Audio Track : $([ -n "$DL_DUB" ] && echo "Dubbed" || echo "Subbed")"
-        printf "\n"
+        printf "\n  ${GREEN}Saving to:${R} ${DISPLAY_PATH}\n"
+        printf "  ${GREEN}Episodes:${R} ${EP_RANGE}  ·  ${GREEN}Quality:${R} ${DL_QUALITY}  ·  ${GREEN}Audio:${R} $([ -n "$DL_DUB" ] && echo "Dubbed" || echo "Subbed")\n\n"
 
         export ANI_CLI_DOWNLOAD_DIR="$DL_DIR"
         "$ANICLI" -q "$DL_QUALITY" $DL_DUB -d -e "$EP_RANGE" --no-detach "$ANIME_NAME"
@@ -367,12 +299,12 @@ Quit"
 
         if [ $EXIT_CODE -eq 0 ]; then
             FILE_COUNT=$(find "$DL_DIR" -name "*.mp4" 2>/dev/null | wc -l)
-            printf "\n  ${GREEN}✓ Download batch finished (${FILE_COUNT} files in destination).${R}\n"
+            printf "\n  ${GREEN}✓ Download finished (${FILE_COUNT} files in folder).${R}\n"
         else
-            printf "\n  ${RED}✗ Download process exited with code %d${R}\n" "$EXIT_CODE"
+            printf "\n  ${RED}✗ Download exited with code %d${R}\n" "$EXIT_CODE"
         fi
 
-        printf "\n  ${PURPLE}[Enter] Back to Main Menu  [q] Quit ▸ ${R}"
+        printf "\n  ${PURPLE}[Enter] Back  [q] Quit ▸ ${R}"
         read -r CHOICE
         [[ "$CHOICE" == "q" || "$CHOICE" == "Q" ]] && exit 0
         continue
@@ -415,7 +347,7 @@ Quit"
         fi
     fi
 
-    printf "\n  ${DIM}mpv Hotkeys: s=Skip Intro (85s)  Ctrl+1=Anime4K Light  Ctrl+2=Medium  Ctrl+0=Off${R}\n\n"
+    printf "\n  ${DIM}mpv hotkeys: s=skip intro  Ctrl+1=Anime4K Light  Ctrl+2=Medium  Ctrl+0=Off${R}\n\n"
 
     "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG $CONTINUE_FLAG $EP_JUMP_FLAG --no-detach
     EXIT_CODE=$?
@@ -425,7 +357,7 @@ Quit"
         printf "  ${DIM}Source may be down or requested quality unavailable.${R}\n"
     fi
 
-    printf "\n  ${PURPLE}[Enter] Back to Main Menu  [q] Quit ▸ ${R}"
+    printf "\n  ${PURPLE}[Enter] Back  [q] Quit ▸ ${R}"
     read -r CHOICE
     [[ "$CHOICE" == "q" || "$CHOICE" == "Q" ]] && exit 0
 
