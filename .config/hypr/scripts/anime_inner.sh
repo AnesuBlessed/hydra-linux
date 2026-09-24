@@ -6,11 +6,13 @@
 ANICLI="$(command -v ani-cli 2>/dev/null || echo "$HOME/.local/bin/ani-cli")"
 HYDRA_ANIME_DIR="$HOME/.local/state/hydra-anime"
 HYDRA_PREF="$HYDRA_ANIME_DIR/last_mode"
+HYDRA_WATCHLIST="$HYDRA_ANIME_DIR/watchlist"
 HIST_FILE="$HOME/.local/state/ani-cli/ani-hsts"
 ANIME_BASE="$HOME/Videos/Anime"
 MAX_HISTORY=50
 
 mkdir -p "$HYDRA_ANIME_DIR" "$ANIME_BASE"
+touch "$HYDRA_WATCHLIST"
 
 # ── Colors ──
 R='\033[0m'
@@ -24,7 +26,7 @@ BOLD='\033[1m'
 
 FZF_COLORS="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5c,header:#6c9bff"
 
-# ── Skip intros detection (once) ──
+# ── Skip intros detection ──
 SKIP_FLAG=""
 command -v ani-skip &>/dev/null && SKIP_FLAG="--skip"
 
@@ -38,16 +40,16 @@ while true; do
     printf "${PURPLE}${BOLD}  ◈ Hydra Anime${R}\n"
     printf "${DIM}  ─────────────────────────────${R}\n"
 
-    if [ -n "$SKIP_FLAG" ]; then
-        printf "  ${GREEN}✓${R} ${DIM}ani-skip active${R}"
-    fi
-
-    # Read preference
     LAST_MODE="Sub"
     [ -f "$HYDRA_PREF" ] && LAST_MODE="$(cat "$HYDRA_PREF")"
 
     HIST_COUNT=$(wc -l < "$HIST_FILE" 2>/dev/null || echo 0)
-    printf "  ${DIM}│  ${LAST_MODE}bed  │  ${HIST_COUNT} in history${R}\n\n"
+    WL_COUNT=$(wc -l < "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
+
+    STATUS="  ${DIM}${LAST_MODE}bed"
+    [ -n "$SKIP_FLAG" ] && STATUS="${STATUS}  ${GREEN}✓${DIM} skip"
+    STATUS="${STATUS}  ${DIM}${HIST_COUNT} watched  ${WL_COUNT} saved${R}"
+    printf "%b\n\n" "$STATUS"
 
     # Trim history
     if [ -f "$HIST_FILE" ] && [ "$HIST_COUNT" -gt "$MAX_HISTORY" ]; then
@@ -56,17 +58,21 @@ while true; do
 
     # ── Main menu ──
     if [ "$LAST_MODE" = "Dub" ]; then
-        MENU="Stream (Dub) ★
+        MENU="Stream (Dub) *
 Stream (Sub)
 Continue Watching
-Download Anime
+Download
+Watchlist
+Next Episode
 Clear History
 Quit"
     else
-        MENU="Stream (Sub) ★
+        MENU="Stream (Sub) *
 Stream (Dub)
 Continue Watching
-Download Anime
+Download
+Watchlist
+Next Episode
 Clear History
 Quit"
     fi
@@ -76,14 +82,16 @@ Quit"
         --pointer="▶" \
         --border=rounded \
         --margin=1 \
-        --height=50% \
+        --height=55% \
         --color="$FZF_COLORS")
 
     [[ -z "$MODE" || "$MODE" == "Quit" ]] && exit 0
 
-    # ── Clear History ──
+    # ════════════════════════════════
+    # Clear History
+    # ════════════════════════════════
     if [[ "$MODE" == "Clear History" ]]; then
-        printf "\n${YELLOW}  ⚠ This will clear your entire watch history.${R}\n"
+        printf "\n${YELLOW}  This will clear your entire watch history.${R}\n"
         printf "${PURPLE}  [y] Confirm  [n] Cancel ▸ ${R}"
         read -r CONFIRM
         if [[ "$CONFIRM" == "y" || "$CONFIRM" == "Y" ]]; then
@@ -94,9 +102,88 @@ Quit"
         continue
     fi
 
-    # ── Download Anime ──
-    if [[ "$MODE" == "Download Anime" ]]; then
-        # Sub or Dub for download
+    # ════════════════════════════════
+    # Watchlist
+    # ════════════════════════════════
+    if [[ "$MODE" == "Watchlist" ]]; then
+        while true; do
+            clear
+            printf "${PURPLE}${BOLD}  ◈ Watchlist${R}\n"
+            printf "${DIM}  ─────────────────────────────${R}\n\n"
+
+            WL_ACTION=$(printf "View watchlist\nAdd to watchlist\nRemove from watchlist\nBack" | fzf \
+                --prompt="  ▸ " \
+                --pointer="▶" \
+                --border=rounded \
+                --margin=1 \
+                --height=40% \
+                --color="$FZF_COLORS")
+
+            case "$WL_ACTION" in
+                "Add to watchlist")
+                    printf "\n${BLUE}  Anime name: ${R}"
+                    read -r WL_NAME
+                    if [ -n "$WL_NAME" ]; then
+                        echo "$WL_NAME" >> "$HYDRA_WATCHLIST"
+                        printf "${GREEN}  ✓ Added: ${WL_NAME}${R}\n"
+                        sleep 1
+                    fi
+                    ;;
+                "View watchlist")
+                    if [ -s "$HYDRA_WATCHLIST" ]; then
+                        printf "\n"
+                        nl -w3 -s"  " "$HYDRA_WATCHLIST"
+                        printf "\n${PURPLE}  [Enter] Back ▸ ${R}"
+                        read -r
+                    else
+                        printf "\n${DIM}  Watchlist is empty${R}\n"
+                        sleep 1
+                    fi
+                    ;;
+                "Remove from watchlist")
+                    if [ -s "$HYDRA_WATCHLIST" ]; then
+                        REMOVE=$(cat "$HYDRA_WATCHLIST" | fzf \
+                            --prompt="  Remove ▸ " \
+                            --pointer="▶" \
+                            --border=rounded \
+                            --margin=1 \
+                            --height=40% \
+                            --color="$FZF_COLORS")
+                        if [ -n "$REMOVE" ]; then
+                            grep -vxF "$REMOVE" "$HYDRA_WATCHLIST" > "${HYDRA_WATCHLIST}.tmp"
+                            mv "${HYDRA_WATCHLIST}.tmp" "$HYDRA_WATCHLIST"
+                            printf "${GREEN}  ✓ Removed: ${REMOVE}${R}\n"
+                            sleep 1
+                        fi
+                    else
+                        printf "\n${DIM}  Watchlist is empty${R}\n"
+                        sleep 1
+                    fi
+                    ;;
+                *) break ;;
+            esac
+        done
+        continue
+    fi
+
+    # ════════════════════════════════
+    # Next Episode Countdown
+    # ════════════════════════════════
+    if [[ "$MODE" == "Next Episode" ]]; then
+        printf "\n${BLUE}  Anime name: ${R}"
+        read -r NE_NAME
+        if [ -n "$NE_NAME" ]; then
+            "$ANICLI" -N "$NE_NAME" --no-detach
+        fi
+        printf "\n${PURPLE}  [Enter] Back to menu ▸ ${R}"
+        read -r
+        continue
+    fi
+
+    # ════════════════════════════════
+    # Download
+    # ════════════════════════════════
+    if [[ "$MODE" == "Download" ]]; then
         DL_TYPE=$(printf "Download (Sub)\nDownload (Dub)" | fzf \
             --prompt="  Audio ▸ " \
             --pointer="▶" \
@@ -109,7 +196,6 @@ Quit"
         DL_DUB=""
         [[ "$DL_TYPE" == *"Dub"* ]] && DL_DUB="--dub"
 
-        # Quality
         DL_QUALITY=$(printf "1080p\n720p\n480p" | fzf \
             --prompt="  Quality ▸ " \
             --pointer="▶" \
@@ -119,27 +205,23 @@ Quit"
             --color="$FZF_COLORS")
         [[ -z "$DL_QUALITY" ]] && continue
 
-        # Anime name for folder
-        printf "\n${BLUE}  Enter anime name (for folder): ${R}"
+        printf "\n${BLUE}  Anime name (folder name): ${R}"
         read -r ANIME_NAME
         [[ -z "$ANIME_NAME" ]] && continue
 
-        # Sanitize folder name
         FOLDER_NAME=$(printf "%s" "$ANIME_NAME" | tr '<>:"/\|?*' '_' | sed 's/  */ /g; s/^ //; s/ $//')
         DL_DIR="$ANIME_BASE/$FOLDER_NAME"
         mkdir -p "$DL_DIR"
 
-        # Episode range
-        printf "${BLUE}  Episode range (e.g. 1  or  1-12  or  1 2 5): ${R}"
+        printf "${BLUE}  Episodes (e.g. 1  or  1-12  or  1 2 5): ${R}"
         read -r EP_RANGE
         [[ -z "$EP_RANGE" ]] && continue
 
         printf "\n${GREEN}  ┌─────────────────────────────────────────┐${R}\n"
-        printf "${GREEN}  │  Downloading to:                        │${R}\n"
-        printf "${GREEN}  │  ~/Videos/Anime/%-24s│${R}\n" "$FOLDER_NAME"
+        printf "${GREEN}  │  Saving to: ~/Videos/Anime/%-13s│${R}\n" "$FOLDER_NAME"
         printf "${GREEN}  │  Episodes: %-29s│${R}\n" "$EP_RANGE"
-        printf "${GREEN}  │  Quality: %-30s│${R}\n" "$DL_QUALITY"
-        printf "${GREEN}  │  Audio: %-32s│${R}\n" "$([ -n "$DL_DUB" ] && echo "Dubbed" || echo "Subbed")"
+        printf "${GREEN}  │  Quality:  %-29s│${R}\n" "$DL_QUALITY"
+        printf "${GREEN}  │  Audio:    %-29s│${R}\n" "$([ -n "$DL_DUB" ] && echo "Dubbed" || echo "Subbed")"
         printf "${GREEN}  └─────────────────────────────────────────┘${R}\n\n"
 
         export ANI_CLI_DOWNLOAD_DIR="$DL_DIR"
@@ -148,7 +230,7 @@ Quit"
 
         if [ $EXIT_CODE -eq 0 ]; then
             FILE_COUNT=$(find "$DL_DIR" -name "*.mp4" 2>/dev/null | wc -l)
-            printf "\n${GREEN}  ✓ Download complete – ${FILE_COUNT} file(s) in:${R}\n"
+            printf "\n${GREEN}  ✓ Done – ${FILE_COUNT} file(s) in:${R}\n"
             printf "${DIM}    $DL_DIR${R}\n"
         else
             printf "\n${RED}  ✗ Download failed (code %d)${R}\n" "$EXIT_CODE"
@@ -160,14 +242,17 @@ Quit"
         continue
     fi
 
-    # ── Save sub/dub preference ──
+    # ════════════════════════════════
+    # Stream
+    # ════════════════════════════════
+
+    # Save sub/dub preference
     if [[ "$MODE" == *"Dub"* ]]; then
         echo "Dub" > "$HYDRA_PREF"
     elif [[ "$MODE" == *"Sub"* ]]; then
         echo "Sub" > "$HYDRA_PREF"
     fi
 
-    # ── Quality ──
     QUALITY=$(printf "1080p\n720p\n480p" | fzf \
         --prompt="  Quality ▸ " \
         --pointer="▶" \
@@ -178,16 +263,14 @@ Quit"
 
     [[ -z "$QUALITY" ]] && continue
 
-    # ── Build flags ──
     DUB_FLAG=""
     [[ "$MODE" == *"Dub"* ]] && DUB_FLAG="--dub"
 
     CONTINUE_FLAG=""
     [[ "$MODE" == *"Continue"* ]] && CONTINUE_FLAG="-c"
 
-    printf "\n"
+    printf "\n${DIM}  mpv keybinds: s=skip intro  Ctrl+1=Anime4K Light  Ctrl+2=Medium  Ctrl+0=Off${R}\n\n"
 
-    # ── Run ani-cli ──
     "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG $CONTINUE_FLAG --no-detach
     EXIT_CODE=$?
 
