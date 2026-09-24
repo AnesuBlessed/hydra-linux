@@ -40,8 +40,6 @@ while true; do
 
     if [ -n "$SKIP_FLAG" ]; then
         printf "  ${GREEN}✓${R} ${DIM}ani-skip active${R}"
-    else
-        printf "  ${DIM}tip: yay -S ani-skip-git${R}"
     fi
 
     # Read preference
