@@ -93,13 +93,3 @@ hl.window_rule({
     no_initial_focus = true,
 })
 
--- ───────── HYDRA ANIME PLAYER ─────────
-hl.window_rule({
-    name = "\"hydra_anime\"",
-    match = {
-        class = "^(hydra-anime)$",
-    },
-    float = true,
-    center = true,
-    size = "960 620",
-})
