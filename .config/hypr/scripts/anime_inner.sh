@@ -43,7 +43,7 @@ while true; do
     HIST_COUNT=$(wc -l < "$HIST_FILE" 2>/dev/null || echo 0)
     WL_COUNT=$(grep -c . "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
 
-    # Clean Minimal Header
+    # Clean Header
     printf "${PURPLE}${BOLD}  ◈ HYDRA ANIME${R}\n"
     
     STATUS="${DIM}  ${LAST_MODE}bed"
@@ -56,26 +56,15 @@ while true; do
         tail -n "$MAX_HISTORY" "$HIST_FILE" > "${HIST_FILE}.tmp" && mv "${HIST_FILE}.tmp" "$HIST_FILE"
     fi
 
-    # ── Main menu ──
-    if [ "$LAST_MODE" = "Dub" ]; then
-        MENU="Stream (Dub) ★
-Stream (Sub)
-Continue Watching
-Watchlist (${WL_COUNT})
-Download
-Next Episode
-Clear History
-Quit"
-    else
-        MENU="Stream (Sub) ★
+    # ── Main menu (Clean, perfectly aligned entries) ──
+    MENU="Stream (Sub)
 Stream (Dub)
 Continue Watching
-Watchlist (${WL_COUNT})
+Watchlist
 Download
 Next Episode
 Clear History
 Quit"
-    fi
 
     MODE=$(printf "%s" "$MENU" | fzf \
         --prompt="  ▸ " \
@@ -105,7 +94,7 @@ Quit"
     # ════════════════════════════════
     # Interactive Watchlist
     # ════════════════════════════════
-    if [[ "$MODE" == *"Watchlist"* ]]; then
+    if [[ "$MODE" == "Watchlist" ]]; then
         while true; do
             clear
             WL_COUNT=$(grep -c . "$HYDRA_WATCHLIST" 2>/dev/null || echo 0)
