@@ -184,7 +184,7 @@ Run with all recommended defaults and no prompts:
 | `Super + M` | Music player panel |
 | `Super + B` | Battery & power profile popup |
 | `Super + V` | Audio device & volume panel |
-| `Super + P` | Anime Player — sub/dub selector, quality picker (1080p/720p/480p), continue watching, download mode, auto skip intros via `ani-skip`, themed `kitty` + `mpv` |
+| `Super + P` | Anime Player |
 | `Super + H` | Interactive user guide |
 | `Super + Shift + T` | Focus time productivity tracker |
 | `Super + R` | Reload shell & desktop scripts |
@@ -203,6 +203,51 @@ Run with all recommended defaults and no prompts:
 | `Brightness Up/Down` | Adjust screen brightness (SwayOSD) |
 | `Super + Space` / `Media Play` | Music play / pause toggle |
 | `Caps Lock` | Caps lock status indicator (SwayOSD) |
+
+---
+
+## Anime Player
+
+Stream, download, and manage anime directly from the desktop with `Super + P`. Built on [`ani-cli`](https://github.com/pystardust/ani-cli) with a custom themed interface, [Anime4K](https://github.com/bloc97/Anime4K) upscaling shaders, and an optimized `mpv` configuration.
+
+### Features
+
+| Feature | Description |
+|---------|-------------|
+| **Stream (Sub/Dub)** | Search and stream anime with audio preference memory |
+| **Continue Watching** | Resume from watch history |
+| **Download** | Downloads to `~/Videos/Anime/{anime-name}/` with episode range support |
+| **Watchlist** | Save anime to watch later, browse and remove entries |
+| **Next Episode** | Countdown to next airing episode for ongoing series |
+| **Quality Picker** | 1080p / 720p / 480p selection before every session |
+| **Auto Skip Intros** | Automatic intro/outro skipping via [`ani-skip`](https://github.com/synacktraa/ani-skip) |
+| **Resume Playback** | mpv saves your position — close mid-episode, resume later |
+| **Clear History** | Wipe watch history from the menu |
+
+### Anime4K Upscaling
+
+Real-time GPU shaders that enhance anime visuals during playback. Three profiles scaled by GPU capability:
+
+| Keybind | Profile | Recommended GPU |
+|---------|---------|----------------|
+| `Ctrl+1` | **Light** — restore detail, sharpen lines | Integrated (Intel HD, AMD Vega) |
+| `Ctrl+2` | **Medium** — restore + upscale | Mid-range (GTX 1050+, RX 570+) |
+| `Ctrl+3` | **High** — full restore + upscale + denoise | Dedicated (GTX 1060+, RX 580+) |
+| `Ctrl+0` | **Off** — disable shaders | Any |
+
+### mpv Keybinds
+
+| Key | Action |
+|-----|--------|
+| `s` | Skip intro (85s forward) |
+| `S` | Skip outro (30s forward) |
+| `Ctrl+s` | Rewind 85s |
+| `[` / `]` | Slow down / speed up playback |
+| `Backspace` | Reset speed to 1x |
+| `v` | Toggle subtitle visibility |
+| `j` / `J` | Cycle subtitle track |
+| `a` | Cycle audio track |
+| `p` | Screenshot |
 
 ---
 
