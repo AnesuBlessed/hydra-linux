@@ -18,97 +18,104 @@ GREEN='\033[38;2;130;255;181m'
 RED='\033[38;2;255;107;107m'
 BLUE='\033[38;2;108;155;255m'
 DIM='\033[2m'
+BOLD='\033[1m'
 
 FZF_COLORS="bg+:#1a1a2e,fg+:#c792ea,pointer:#c792ea,prompt:#82ffb5,border:#3a3a5c,header:#6c9bff"
 
-# ── Read last preference ──
-LAST_MODE="Sub"
-[ -f "$HYDRA_PREF" ] && LAST_MODE="$(cat "$HYDRA_PREF")"
-
-# ── Trim history ──
-if [ -f "$HIST_FILE" ] && [ "$(wc -l < "$HIST_FILE" 2>/dev/null)" -gt "$MAX_HISTORY" ]; then
-    tail -n "$MAX_HISTORY" "$HIST_FILE" > "${HIST_FILE}.tmp" && mv "${HIST_FILE}.tmp" "$HIST_FILE"
-fi
-
-# ── Skip intros detection ──
+# ── Skip intros detection (once) ──
 SKIP_FLAG=""
-if command -v ani-skip &>/dev/null; then
-    SKIP_FLAG="--skip"
-    printf "${GREEN}✓ ani-skip detected${R}\n"
-else
-    printf "${DIM}tip: yay -S ani-skip-git for auto intro skipping${R}\n"
-fi
+command -v ani-skip &>/dev/null && SKIP_FLAG="--skip"
 
-HIST_COUNT=$(wc -l < "$HIST_FILE" 2>/dev/null || echo 0)
-printf "${DIM}history: ${HIST_COUNT} entries  │  preference: ${LAST_MODE}bed${R}\n\n"
-
-# ── Main menu ──
-if [ "$LAST_MODE" = "Dub" ]; then
-    MENU="Stream (Dub) ★
-Stream (Sub)
-Continue Watching"
-else
-    MENU="Stream (Sub) ★
-Stream (Dub)
-Continue Watching"
-fi
-
-MODE=$(printf "%s" "$MENU" | fzf \
-    --prompt="  Hydra Anime ▸ " \
-    --pointer="▶" \
-    --border=rounded \
-    --margin=1 \
-    --height=40% \
-    --color="$FZF_COLORS")
-
-[[ -z "$MODE" ]] && exit 0
-
-# ── Save preference ──
-if [[ "$MODE" == *"Dub"* ]]; then
-    echo "Dub" > "$HYDRA_PREF"
-elif [[ "$MODE" == *"Sub"* ]]; then
-    echo "Sub" > "$HYDRA_PREF"
-fi
-
-# ── Quality ──
-QUALITY=$(printf "1080p\n720p\n480p" | fzf \
-    --prompt="  Quality ▸ " \
-    --pointer="▶" \
-    --border=rounded \
-    --margin=1 \
-    --height=35% \
-    --color="$FZF_COLORS")
-
-[[ -z "$QUALITY" ]] && exit 0
-
-# ── Build flags ──
-DUB_FLAG=""
-[[ "$MODE" == *"Dub"* ]] && DUB_FLAG="--dub"
-
-CONTINUE_FLAG=""
-[[ "$MODE" == *"Continue"* ]] && CONTINUE_FLAG="-c"
-
-printf "\n"
-
-# ── Run with error handling ──
+# ══════════════════════════════════
+# Main loop – keeps you in the app
+# ══════════════════════════════════
 while true; do
+    clear
+
+    # ── Header ──
+    printf "${PURPLE}${BOLD}  ◈ Hydra Anime${R}\n"
+    printf "${DIM}  ─────────────────────────────${R}\n"
+
+    if [ -n "$SKIP_FLAG" ]; then
+        printf "  ${GREEN}✓${R} ${DIM}ani-skip active${R}"
+    else
+        printf "  ${DIM}tip: yay -S ani-skip-git${R}"
+    fi
+
+    # Read preference
+    LAST_MODE="Sub"
+    [ -f "$HYDRA_PREF" ] && LAST_MODE="$(cat "$HYDRA_PREF")"
+
+    HIST_COUNT=$(wc -l < "$HIST_FILE" 2>/dev/null || echo 0)
+    printf "  ${DIM}│  ${LAST_MODE}bed  │  ${HIST_COUNT} in history${R}\n\n"
+
+    # Trim history
+    if [ -f "$HIST_FILE" ] && [ "$HIST_COUNT" -gt "$MAX_HISTORY" ]; then
+        tail -n "$MAX_HISTORY" "$HIST_FILE" > "${HIST_FILE}.tmp" && mv "${HIST_FILE}.tmp" "$HIST_FILE"
+    fi
+
+    # ── Main menu ──
+    if [ "$LAST_MODE" = "Dub" ]; then
+        MENU="Stream (Dub) ★
+Stream (Sub)
+Continue Watching
+Quit"
+    else
+        MENU="Stream (Sub) ★
+Stream (Dub)
+Continue Watching
+Quit"
+    fi
+
+    MODE=$(printf "%s" "$MENU" | fzf \
+        --prompt="  ▸ " \
+        --pointer="▶" \
+        --border=rounded \
+        --margin=1 \
+        --height=45% \
+        --color="$FZF_COLORS")
+
+    [[ -z "$MODE" || "$MODE" == "Quit" ]] && exit 0
+
+    # Save preference
+    if [[ "$MODE" == *"Dub"* ]]; then
+        echo "Dub" > "$HYDRA_PREF"
+    elif [[ "$MODE" == *"Sub"* ]]; then
+        echo "Sub" > "$HYDRA_PREF"
+    fi
+
+    # ── Quality ──
+    QUALITY=$(printf "1080p\n720p\n480p" | fzf \
+        --prompt="  Quality ▸ " \
+        --pointer="▶" \
+        --border=rounded \
+        --margin=1 \
+        --height=35% \
+        --color="$FZF_COLORS")
+
+    [[ -z "$QUALITY" ]] && continue  # back to menu if cancelled
+
+    # ── Build flags ──
+    DUB_FLAG=""
+    [[ "$MODE" == *"Dub"* ]] && DUB_FLAG="--dub"
+
+    CONTINUE_FLAG=""
+    [[ "$MODE" == *"Continue"* ]] && CONTINUE_FLAG="-c"
+
+    printf "\n"
+
+    # ── Run ani-cli ──
     "$ANICLI" -q "$QUALITY" $SKIP_FLAG $DUB_FLAG $CONTINUE_FLAG --no-detach
     EXIT_CODE=$?
 
     if [ $EXIT_CODE -ne 0 ]; then
-        printf "\n${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}\n"
-        printf "${RED}  ✗ ani-cli exited with error (code %d)${R}\n" "$EXIT_CODE"
-        printf "${RED}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${R}\n\n"
-        printf "${DIM}  • Source may be temporarily down${R}\n"
-        printf "${DIM}  • Quality might not be available${R}\n"
-        printf "${DIM}  • Network may have dropped${R}\n\n"
-        printf "${PURPLE}  [r] Retry  [q] Quit ▸ ${R}"
-        read -r CHOICE
-        case "$CHOICE" in
-            r|R) continue ;;
-            *) exit 0 ;;
-        esac
-    else
-        break
+        printf "\n${RED}  ✗ ani-cli exited with error (code %d)${R}\n" "$EXIT_CODE"
+        printf "${DIM}  Source may be down or quality unavailable${R}\n"
     fi
+
+    # After finishing or error, prompt to continue
+    printf "\n${PURPLE}  [Enter] Back to menu  [q] Quit ▸ ${R}"
+    read -r CHOICE
+    [[ "$CHOICE" == "q" || "$CHOICE" == "Q" ]] && exit 0
+
 done
