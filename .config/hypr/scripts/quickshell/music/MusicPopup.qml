@@ -577,6 +577,7 @@ Item {
                                     id: artImg
                                     anchors.fill: parent
                                     source: root.musicData.artUrl ? "file://" + root.musicData.artUrl : ""
+                                    sourceSize: Qt.size(256, 256)
                                     fillMode: Image.PreserveAspectCrop
                                     visible: false 
                                 }

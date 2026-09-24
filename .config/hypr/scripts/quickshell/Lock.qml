@@ -449,6 +449,7 @@ ShellRoot {
                                 id: avatarImg
                                 anchors.fill: parent
                                 source: screenRoot.faceIconPath !== "" ? screenRoot.faceIconPath : ""
+                                sourceSize: Qt.size(256, 256)
                                 fillMode: Image.PreserveAspectCrop
                                 visible: false 
                                 cache: false
