@@ -2,7 +2,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-QtObject {
+Item {
     id: root
     readonly property string home: Quickshell.env("HOME")
     readonly property string xdgRuntimeDir: Quickshell.env("XDG_RUNTIME_DIR")

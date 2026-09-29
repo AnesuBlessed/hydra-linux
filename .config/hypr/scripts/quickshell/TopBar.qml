@@ -1309,7 +1309,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !initAnimTrigger; interval: 0; onTriggered: initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !kbPill.initAnimTrigger; interval: 0; onTriggered: kbPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: kbPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -1354,7 +1354,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !initAnimTrigger; interval: 50; onTriggered: initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !wifiPill.initAnimTrigger; interval: 50; onTriggered: wifiPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: wifiPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -1376,7 +1376,6 @@ Variants {
                                         anchors.verticalCenter: parent.verticalCenter
                                         visible: barWindow.showLabels && text !== ""
                                         text: barWindow.showEthernet ? barWindow.ethStatus : ((barWindow.isWifiOn ? (barWindow.wifiSsid !== "" ? barWindow.wifiSsid : "On") : "Off"))
-                                        visible: text !== ""
                                         font.family: "JetBrains Mono"; font.pixelSize: barWindow.s(13); font.weight: Font.Black;
                                         color: barWindow.showEthernet ? (barWindow.ethStatus === "Connected" ? mocha.base : mocha.text) : (barWindow.isWifiOn ? mocha.base : mocha.text);
                                         width: Math.min(implicitWidth, barWindow.s(100)); elide: Text.ElideRight 
@@ -1414,7 +1413,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !initAnimTrigger; interval: 100; onTriggered: initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !btPill.initAnimTrigger; interval: 100; onTriggered: btPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: btPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -1467,7 +1466,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !initAnimTrigger; interval: 150; onTriggered: initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !volPill.initAnimTrigger; interval: 150; onTriggered: volPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: volPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -1521,7 +1520,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !initAnimTrigger; interval: 150; onTriggered: initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !volPill.initAnimTrigger; interval: 150; onTriggered: volPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: powerPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -1576,7 +1575,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !initAnimTrigger; interval: 200; onTriggered: initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !powerPill.initAnimTrigger; interval: 200; onTriggered: powerPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: batPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
