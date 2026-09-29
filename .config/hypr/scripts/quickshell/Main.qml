@@ -370,6 +370,7 @@ PanelWindow {
 
         if (newWidget === "hidden") {
             if (currentActive !== "hidden") {
+                masterWindow.currentActive = "hidden";
                 masterWindow.morphDuration = masterWindow.exitDuration;
                 masterWindow.disableMorph = false;
 

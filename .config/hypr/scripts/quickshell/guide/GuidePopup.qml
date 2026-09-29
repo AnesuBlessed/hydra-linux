@@ -128,7 +128,7 @@ Item {
     property real colorBlend: 0.0
     SequentialAnimation on colorBlend {
         loops: Animation.Infinite
-        running: window.visible
+        running: root.visible
         NumberAnimation { to: 1.0; duration: 15000; easing.type: Easing.InOutSine }
         NumberAnimation { to: 0.0; duration: 15000; easing.type: Easing.InOutSine }
     }
@@ -158,7 +158,7 @@ Item {
     Process {
         id: versionReader
         command: ["bash", "-c", "~/.config/hypr/scripts/hydra_version.sh 2>/dev/null || echo unknown"]
-        running: window.visible
+        running: root.visible
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text ? this.text.trim() : "";
@@ -170,7 +170,7 @@ Item {
     Process {
         id: updateChecker
         command: ["bash", "-c", "curl -m 5 -s https://raw.githubusercontent.com/AnesuBlessed/hydra-linux/main/version.txt 2>/dev/null | tr -d '\\r\\n'"]
-        running: window.visible
+        running: root.visible
         stdout: StdioCollector {
             onStreamFinished: {
                 let out = this.text ? this.text.trim() : "";
@@ -193,7 +193,7 @@ Item {
 
     Process {
         id: sysInfoProc
-        running: window.visible
+        running: root.visible
         command: [
             "bash", "-c",
             "CACHE=\"" + paths.getCacheDir("guide") + "/sysinfo.txt\"; " +
@@ -336,7 +336,7 @@ Item {
                 to: Math.PI * 2
                 duration: 20000
                 loops: Animation.Infinite
-                running: window.visible 
+                running: root.visible 
             }
             
             // Orb 1
@@ -506,6 +506,7 @@ Item {
                                     Behavior on color { ColorAnimation { duration: 150 } }
 
                                     RowLayout {
+                                        id: tabContentRow
                                         anchors.fill: parent
                                         anchors.leftMargin: root.s(15)
                                         spacing: root.s(12)
@@ -513,7 +514,7 @@ Item {
                                         // The "Slide Right" text effect from snippet 2
                                         property real contentShift: parent.isActive ? root.s(6) : 0
                                         Behavior on contentShift { NumberAnimation { duration: 400; easing.type: Easing.OutExpo } }
-                                        transform: Translate { x: contentShift }
+                                        transform: Translate { x: tabContentRow.contentShift }
                                         
                                         Item {
                                             Layout.preferredWidth: root.s(24)
@@ -680,13 +681,14 @@ Item {
             // TAB 1: SYSTEM OVERVIEW
             // ------------------------------------------
             Item {
+                id: tab1Item
                 anchors.fill: parent
                 visible: root.currentTab === 1
                 opacity: visible ? 1.0 : 0.0
                 property real slideY: visible ? 0 : root.s(10)
                 
                 Behavior on slideY { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
-                transform: Translate { y: slideY }
+                transform: Translate { y: tab1Item.slideY }
                 Behavior on opacity { NumberAnimation { duration: 250 } }
 
                 ListModel {
@@ -774,7 +776,7 @@ Item {
                                         to: 360
                                         duration: 15000
                                         loops: Animation.Infinite
-                                        running: window.visible 
+                                        running: root.visible 
                                     }
                                 }
                                 
@@ -943,15 +945,16 @@ Item {
                                 Layout.alignment: Qt.AlignVCenter
                                 spacing: root.s(1)
                                 Repeater {
-                                    model: [ { l: "H", c: root.red }, { l: "y", c: root.peach }, { l: "d", c: root.yellow }, { l: "r", c: root.green }, { l: "a", c: root.sapphire }, { l: " ", c: root.text }, { l: "L", c: root.blue }, { l: "i", c: root.mauve }, { l: "n", c: root.pink }, { l: "u", c: root.teal }, { l: "x", c: root.lavender } ]
+                                    model: [ { l: "H", c: "red" }, { l: "y", c: "peach" }, { l: "d", c: "yellow" }, { l: "r", c: "green" }, { l: "a", c: "sapphire" }, { l: " ", c: "text" }, { l: "L", c: "blue" }, { l: "i", c: "mauve" }, { l: "n", c: "pink" }, { l: "u", c: "teal" }, { l: "x", c: "lavender" } ]
                                     Text { 
+                                        id: brandCharText
                                         text: modelData.l
                                         font.family: "JetBrains Mono"
                                         font.weight: Font.Black
                                         font.pixelSize: root.s(14)
-                                        color: modelData.c
+                                        color: (root[modelData.c] !== undefined) ? root[modelData.c] : root.text
                                         property real hoverOffset: authorMa.containsMouse ? root.s(-3) : 0
-                                        transform: Translate { y: hoverOffset }
+                                        transform: Translate { y: brandCharText.hoverOffset }
                                         Behavior on hoverOffset { NumberAnimation { duration: 300 + (index * 35); easing.type: Easing.OutBack } } 
                                     }
                                 }
@@ -1105,13 +1108,14 @@ Item {
             // TAB 2: MODULES
             // ------------------------------------------
             Item {
+                id: tab2Item
                 anchors.fill: parent
                 visible: root.currentTab === 2
                 opacity: visible ? 1.0 : 0.0
                 property real slideY: visible ? 0 : root.s(10)
                 
                 Behavior on slideY { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
-                transform: Translate { y: slideY }
+                transform: Translate { y: tab2Item.slideY }
                 Behavior on opacity { NumberAnimation { duration: 250 } }
 
                 ColumnLayout {
@@ -1299,13 +1303,14 @@ Item {
             // TAB 3: MATUGEN ENGINE
             // ------------------------------------------
             Item {
+                id: tab3Item
                 anchors.fill: parent
                 visible: root.currentTab === 3
                 opacity: visible ? 1.0 : 0.0
                 property real slideY: visible ? 0 : root.s(10)
                 
                 Behavior on slideY { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
-                transform: Translate { y: slideY }
+                transform: Translate { y: tab3Item.slideY }
                 Behavior on opacity { NumberAnimation { duration: 250 } }
 
                 ColumnLayout {
@@ -1528,13 +1533,14 @@ Item {
             // TAB 4: ABOUT
             // ------------------------------------------
             Item {
+                id: tab4Item
                 anchors.fill: parent
                 visible: root.currentTab === 4
                 opacity: visible ? 1.0 : 0.0
                 property real slideY: visible ? 0 : root.s(10)
                 
                 Behavior on slideY { NumberAnimation { duration: 250; easing.type: Easing.OutQuart } }
-                transform: Translate { y: slideY }
+                transform: Translate { y: tab4Item.slideY }
                 Behavior on opacity { NumberAnimation { duration: 250 } }
 
                 RowLayout {

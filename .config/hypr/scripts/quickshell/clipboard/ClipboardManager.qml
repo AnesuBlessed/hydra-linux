@@ -255,7 +255,7 @@ Item {
 
     Rectangle {
         id: mainBg
-        width: layoutWidth
+        width: layoutWidth > window.s(400) ? layoutWidth : window.s(800)
         
         property real searchHeight: window.s(65)
         property real separatorHeight: 1
@@ -520,24 +520,11 @@ Item {
             highlightFollowsCurrentItem: false
 
             populate: Transition {
-                NumberAnimation { property: "opacity"; from: 1; to: 1; duration: 0 }
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150 }
             }
             
             add: Transition {
-                id: addTrans
-                SequentialAnimation {
-                    PropertyAction { property: "opacity"; value: 0 }
-                    PropertyAction { property: "scale"; value: 0.8 }
-                    PauseAnimation { duration: 10 }
-                    ParallelAnimation {
-                        NumberAnimation { property: "opacity"; to: 1; duration: 250; easing.type: Easing.OutCubic }
-                        NumberAnimation { property: "scale"; to: 1; duration: 400; easing.type: Easing.OutBack; easing.overshoot: 1.2 }
-                    }
-                }
-            }
-            
-            displaced: Transition {
-                NumberAnimation { properties: "x,y"; duration: 400; easing.type: Easing.OutExpo }
+                NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 150 }
             }
             
             onContentYChanged: {
@@ -729,8 +716,9 @@ Item {
                             verticalAlignment: Text.AlignTop
                             maximumLineCount: 4 
                             
+                            id: clipContentText
                             property real textShift: index === clipList.currentIndex ? window.s(4) : 0
-                            transform: Translate { x: textShift }
+                            transform: Translate { x: clipContentText.textShift }
                             Behavior on textShift { NumberAnimation { duration: 500; easing.type: Easing.OutExpo } }
                             Behavior on color { ColorAnimation { duration: 300; easing.type: Easing.OutExpo } }
                         }

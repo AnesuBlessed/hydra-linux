@@ -78,7 +78,7 @@ Item {
         from: 0; to: 1.0
         duration: 8000 // Slowed down significantly for a graceful, constant flow
         loops: Animation.Infinite
-        running: window.visible
+        running: root.visible
     }
 
     property real globalOrbitAngle: 0
@@ -86,7 +86,7 @@ Item {
         from: 0; to: Math.PI * 2
         duration: 90000
         loops: Animation.Infinite
-        running: window.visible
+        running: root.visible
     }
 
     // --- CANVAS LIGHTNING ANIMATION STATE ---
@@ -139,7 +139,7 @@ Item {
     property real introPresets: 0
 
     ParallelAnimation {
-        running: window.visible
+        running: root.visible
 
         // 1. Base window fades, scales, and lifts smoothly (sped up by ~40ms)
         NumberAnimation { target: root; property: "introMain"; from: 0; to: 1.0; duration: 760; easing.type: Easing.OutQuart }
@@ -224,7 +224,7 @@ Item {
             import Quickshell.Io
             Process {
                 command: ["bash", "-c", \`${safeCmd}\`]
-                running: window.visible
+                running: root.visible
                 onExited: (exitCode) => destroy()
             }
         `, root);
@@ -273,7 +273,7 @@ Item {
 
     Timer {
         interval: 500
-        running: window.visible
+        running: root.visible
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -284,7 +284,7 @@ Item {
 
     Process {
         id: musicProc
-        running: window.visible
+        running: root.visible
         command: ["bash", "-c", "$HOME/.config/hypr/scripts/quickshell/music/music_info.sh"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -306,7 +306,7 @@ Item {
 
     Process {
         id: eqProc
-        running: window.visible
+        running: root.visible
         command: ["bash", "-c", "$HOME/.config/hypr/scripts/quickshell/music/equalizer.sh get"]
         stdout: StdioCollector {
             onStreamFinished: {
@@ -363,7 +363,7 @@ Item {
                     to: maskRectOuter.perimeter
                     duration: 1200 // The time it takes to "charge" the whole wick
                     easing.type: Easing.OutCubic
-                    running: window.visible // Ensure it starts reliably
+                    running: root.visible // Ensure it starts reliably
                 }
 
                 ShapePath {
@@ -425,7 +425,7 @@ Item {
                     NumberAnimation on rotation {
                         from: 0; to: 360; duration: 5000
                         loops: Animation.Infinite
-                        running: window.visible
+                        running: root.visible
                     }
 
                     gradient: Gradient {
@@ -617,7 +617,7 @@ Item {
                             NumberAnimation on rotation {
                                 from: 0; to: 360; duration: 8000
                                 loops: Animation.Infinite
-                                running: window.visible
+                                running: root.visible
                                 paused: root.musicData.status !== "Playing"
                             }
                         }

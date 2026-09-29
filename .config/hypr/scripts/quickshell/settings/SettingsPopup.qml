@@ -301,7 +301,8 @@ Item {
         
         if (event.key === Qt.Key_Left) {
             if (root.currentTab === 0 && root.highlightedBox === 2) {
-                Config.uiScale = Math.max(0.5, (Config.uiScale - 0.1).toFixed(1));
+                Config.uiScale = Math.max(0.5, parseFloat((Config.uiScale - 0.1).toFixed(1)));
+                GlobalSettingsWatcher.uiScale = Config.uiScale;
                 event.accepted = true;
                 return;
             } else if (root.currentTab === 0 && root.highlightedBox === 6) {
@@ -312,7 +313,8 @@ Item {
         }
         if (event.key === Qt.Key_Right) {
             if (root.currentTab === 0 && root.highlightedBox === 2) {
-                Config.uiScale = Math.min(2.0, (Config.uiScale + 0.1).toFixed(1));
+                Config.uiScale = Math.min(2.0, parseFloat((Config.uiScale + 0.1).toFixed(1)));
+                GlobalSettingsWatcher.uiScale = Config.uiScale;
                 event.accepted = true;
                 return;
             } else if (root.currentTab === 0 && root.highlightedBox === 6) {
@@ -938,6 +940,7 @@ Item {
 
     property real introContent: 0.0
     Component.onCompleted: {
+        Config.uiScale = GlobalSettingsWatcher.uiScale;
         root.tab0Loaded = true;
         startupSequence.start();
         if (Config.dataReady && dynamicKeybindsModel.count === 0) {
@@ -1289,7 +1292,16 @@ Item {
                                             color: box2.isActive ? root.base : root.sapphire
                                             Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
                                         }
-                                        MouseArea { id: sMinusMa; anchors.fill: parent; hoverEnabled: true; onClicked: Config.uiScale = Math.max(0.5, (Config.uiScale - 0.1).toFixed(1)) }
+                                        MouseArea { 
+                                            id: sMinusMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                let val = Math.max(0.5, parseFloat((Config.uiScale - 0.1).toFixed(1)));
+                                                Config.uiScale = val;
+                                                GlobalSettingsWatcher.uiScale = val;
+                                            }
+                                        }
                                     }
                                     Text { 
                                         text: Config.uiScale.toFixed(1) + "x"
@@ -1312,7 +1324,16 @@ Item {
                                             color: box2.isActive ? root.base : root.sapphire
                                             Behavior on color { ColorAnimation { duration: 220; easing.type: Easing.OutExpo } }
                                         }
-                                        MouseArea { id: sPlusMa; anchors.fill: parent; hoverEnabled: true; onClicked: Config.uiScale = Math.min(2.0, (Config.uiScale + 0.1).toFixed(1)) }
+                                        MouseArea { 
+                                            id: sPlusMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            onClicked: {
+                                                let val = Math.min(2.0, parseFloat((Config.uiScale + 0.1).toFixed(1)));
+                                                Config.uiScale = val;
+                                                GlobalSettingsWatcher.uiScale = val;
+                                            }
+                                        }
                                     }
                                 }
                             }

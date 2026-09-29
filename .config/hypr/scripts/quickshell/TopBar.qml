@@ -83,14 +83,14 @@ Variants {
             // actually overflows before it sheds a widget.
             property real logicalWidth: barWindow.width / scaler.baseScale
             property int densityTier: {
-                if (logicalWidth >= 1950) return 0;
-                if (logicalWidth >= 1650) return 1;
-                if (logicalWidth >= 1350) return 2;
+                if (logicalWidth >= 1600) return 0;
+                if (logicalWidth >= 1300) return 1;
+                if (logicalWidth >= 1050) return 2;
                 return 3;
             }
             // T0 FULL, T1 COMPACT, T2 MINIMAL, T3 TIGHT
-            property bool showFullText: densityTier < 1
-            property bool showLabels: densityTier < 2
+            property bool showFullText: densityTier < 2
+            property bool showLabels: densityTier < 3
             property bool showExtras: densityTier < 3
 
             MatugenColors {
@@ -360,7 +360,7 @@ Variants {
             Process {
                 id: wsWatcher
                 running: true
-                command: ["bash", "-c", "inotifywait -qq -e close_write,modify " + barWindow.wsFile + " 2>/dev/null || sleep 2"]
+                command: ["bash", "-c", "inotifywait -qq -e close_write,modify,moved_to,create " + paths.getRunDir("workspaces") + "/ 2>/dev/null || sleep 2"]
                 onExited: {
                     wsReader.running = false;
                     wsReader.running = true;
@@ -925,7 +925,10 @@ Variants {
                                     id: wsPillMouse
                                     hoverEnabled: true
                                     anchors.fill: parent
-                                    onClicked: Quickshell.execDetached(["bash", "-c", "~/.config/hypr/scripts/qs_manager.sh " + wsName])
+                                    onClicked: {
+                                        workspacesModel.activeIndex = index;
+                                        Quickshell.execDetached(["hyprctl", "dispatch", "workspace", wsName]);
+                                    }
                                 }
                             }
                         }
