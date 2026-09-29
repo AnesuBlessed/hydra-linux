@@ -1,0 +1,9 @@
+{
+  "videos": [
+    {
+      "version": "1.0.0",
+      "url": "",
+      "warning_message": "Hydra Linux 1.0.0 — first complete release. Output-scale aware scaling, per-monitor workspace tracking, layout cascades with visibility-gated pollers, hardened installer and config paths, and CI linting."
+    }
+  ]
+}

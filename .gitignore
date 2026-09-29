@@ -1,0 +1,32 @@
+# Caches and logs
+*.log
+*.tmp
+*.swp
+*.bak
+*.orig
+*~
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Runtime state / QS caches
+.cache/
+.env.local
+*.fifo
+
+# Editor artifacts
+.vscode/
+.idea/
+*.kate-swp
+
+# Agent tooling. The worktree copies are excluded only in
+# .git/info/exclude today, which is local and never shared, so a fresh clone
+# elsewhere would happily commit a 54MB duplicate of this repo.
+.kilo/
+.kilocode/
