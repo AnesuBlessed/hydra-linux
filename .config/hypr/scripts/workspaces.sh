@@ -17,7 +17,11 @@ MONITOR_NAME=$(printf '%s' "$RAW_MONITOR" | tr -c 'A-Za-z0-9._-' '_')
 [ -z "$MONITOR_NAME" ] && MONITOR_NAME="global"
 
 LOCK_FILE="$QS_RUN_WORKSPACES/workspaces_${MONITOR_NAME}.lock"
-exec 200>"$LOCK_FILE"
+# Append mode, NOT ">": every contender opens this path, and a truncating open
+# would wipe the PID that the current holder recorded. That left the takeover
+# path below reading an empty file, so it never killed the old holder and every
+# new daemon exited instead of replacing it.
+exec 200>>"$LOCK_FILE"
 
 # A Quickshell reload spawns the replacement while the old instance is still
 # unwinding. Retry briefly so the new daemon wins the lock instead of exiting
@@ -28,10 +32,13 @@ until flock -n 200; do
     if [ "$LOCK_TRIES" -ge 50 ]; then
         # The previous holder is alive but wedged. Take the lock over rather
         # than leaving this monitor with no writer at all.
-        OLD_PID="$(cat "$LOCK_FILE" 2>/dev/null)"
+        OLD_PID="$(head -c 16 "$LOCK_FILE" 2>/dev/null | tr -dc '0-9')"
         if [ -n "$OLD_PID" ] && [ "$OLD_PID" != "$$" ] && kill -0 "$OLD_PID" 2>/dev/null; then
             kill -TERM "$OLD_PID" 2>/dev/null
-            sleep 1
+            for _ in 1 2 3 4 5 6 7 8 9 10; do
+                kill -0 "$OLD_PID" 2>/dev/null || break
+                sleep 0.2
+            done
             kill -0 "$OLD_PID" 2>/dev/null && kill -KILL "$OLD_PID" 2>/dev/null
         fi
         # Bounded so we never spin forever on an unkillable holder.
@@ -40,7 +47,9 @@ until flock -n 200; do
     fi
     sleep 0.1
 done
-printf '%s' "$$" > "$LOCK_FILE"
+# Record the holder now that the lock is ours. A truncating write is safe at
+# this point precisely because contenders open the file in append mode.
+printf '%s\n' "$$" > "$LOCK_FILE"
 
 # Cleanly kill immediate children (like socat) when the script exits normally
 cleanup() {

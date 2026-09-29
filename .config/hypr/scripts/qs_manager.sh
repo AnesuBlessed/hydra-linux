@@ -182,8 +182,19 @@ if [[ "$ACTION" == "reload" ]]; then
         pkill -u "$UID" -P "$QS_PID" 2>/dev/null  # kill children first
         kill "$QS_PID" 2>/dev/null
     fi
-    # Clean up any lingering watcher scripts for this user
-    pkill -u "$UID" -f "qs_battery_wait|qs_network_wait|inotifywait.*quickshell|bt_wait\.sh|audio_wait\.sh|kb_wait\.sh|network_wait\.sh|battery_wait\.sh" 2>/dev/null
+    # Reap anything the old instance left behind. Children reparented to init
+    # when the parent died are no longer reachable via `pkill -P`, so they have
+    # to be matched by command line. The old pattern missed the settings.json
+    # watcher (no "quickshell" in its args), socat event pipes, and the
+    # workspaces.sh daemons, so each reload leaked processes that accumulated
+    # until the session was restarted.
+    WATCHER_RE='workspaces\.sh|socat -[uU].*socket2\.sock|inotifywait.*(settings\.json|quickshell|current_widget)|bt_wait\.sh|audio_wait\.sh|kb_wait\.sh|network_wait\.sh|battery_wait\.sh|sys_fetcher\.sh|ddg_search\.sh|get_ddg_links\.py|qs_battery_wait|qs_network_wait'
+    pkill -u "$UID" -f "$WATCHER_RE" 2>/dev/null
+    # The daemons trap TERM to reap their own socat children, so give them a
+    # moment, then make sure nothing survived.
+    sleep 0.5
+    pkill -9 -u "$UID" -f "$WATCHER_RE" 2>/dev/null
+
     sleep 0.5
     DETECTED_WAYLAND="${WAYLAND_DISPLAY:-$(ls -1 "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 | xargs -r basename)}"
     WAYLAND_DISPLAY="${DETECTED_WAYLAND:-wayland-1}" \
