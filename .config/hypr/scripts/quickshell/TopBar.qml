@@ -83,9 +83,9 @@ Variants {
             // actually overflows before it sheds a widget.
             property real logicalWidth: barWindow.width / scaler.baseScale
             property int densityTier: {
-                if (logicalWidth >= 1700) return 0;
-                if (logicalWidth >= 1620) return 1;
-                if (logicalWidth >= 1250) return 2;
+                if (logicalWidth >= 1950) return 0;
+                if (logicalWidth >= 1650) return 1;
+                if (logicalWidth >= 1350) return 2;
                 return 3;
             }
             // T0 FULL, T1 COMPACT, T2 MINIMAL, T3 TIGHT
@@ -97,14 +97,14 @@ Variants {
                 id: mocha
             }
 
-            property bool showHelpIcon: true
+            property bool showHelpIcon: GlobalSettingsWatcher.topbarHelpIcon
             property bool isRecording: false
             
             property bool updateAvailable: false
             property bool forceUpdateShow: false
             property bool isUpdateVisible: updateAvailable || forceUpdateShow
             
-            property int workspaceCount: 8
+            property int workspaceCount: GlobalSettingsWatcher.workspaceCount
             
             property string activeWidget: "" 
             property bool isSettingsOpen: activeWidget === "settings"
@@ -629,7 +629,7 @@ Variants {
                         onTriggered: leftContent.showLayout = true
                     }
 
-                    width: leftLayout.width + barWindow.s(16)
+                    width: leftLayout.implicitWidth + barWindow.s(16)
 
                     Row {
                         id: leftLayout
@@ -803,12 +803,12 @@ Variants {
                     
                     width: workspacesModel.count > 0 ? wsLayout.implicitWidth + barWindow.s(20) : 0
                     
-                    property real defaultX: leftContent.x + leftContent.width + barWindow.s(4)
+                    property real defaultX: (barWindow.isSettingsOpen ? 0 : leftContent.width) + barWindow.s(4)
                     property real settingsX: mediaBox.settingsX - width - (width > 0 ? barWindow.s(4) : 0)
                                         
                     x: defaultX + (settingsX - defaultX) * barWindow.settingsSlideProgress
 
-                    property bool limitActive: barWindow.isSettingsOpen && barWindow.isMediaActive
+                    property bool limitActive: (barWindow.isSettingsOpen && barWindow.isMediaActive) || barWindow.densityTier >= 3
 
                     visible: width > 0 || opacity > 0
                     opacity: workspacesModel.count > 0 ? 1 : 0
@@ -1484,6 +1484,7 @@ Variants {
                                     }
                                     Text { 
                                         anchors.verticalCenter: parent.verticalCenter
+                                        visible: barWindow.showLabels
                                         text: barWindow.volPercent; 
                                         font.family: "JetBrains Mono"; font.pixelSize: barWindow.s(13); font.weight: Font.Black; 
                                         color: barWindow.isSoundActive ? mocha.base : mocha.text; 

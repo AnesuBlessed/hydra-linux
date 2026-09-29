@@ -22,12 +22,18 @@ Item {
     property var _raw: ({})
     signal settingsChanged()
 
-    function readSettings() {
+    readonly property bool topbarHelpIcon: (_raw && _raw.topbarHelpIcon !== undefined) ? _raw.topbarHelpIcon : true
+    readonly property int workspaceCount: (_raw && _raw.workspaceCount !== undefined) ? _raw.workspaceCount : 8
+    readonly property bool openGuideAtStartup: (_raw && _raw.openGuideAtStartup !== undefined) ? _raw.openGuideAtStartup : true
+
+    function readSettings(content) {
         try {
-            if (scaleReader.collected && scaleReader.collected.text &&
-                    scaleReader.collected.text.trim().length > 0 &&
-                    scaleReader.collected.text.trim() !== "{}") {
-                _raw = JSON.parse(scaleReader.collected.text);
+            let str = content || (scaleCollector.text ? scaleCollector.text.trim() : "");
+            if (str && str.length > 0 && str !== "{}") {
+                _raw = JSON.parse(str);
+                if (_raw.uiScale !== undefined && !isNaN(_raw.uiScale)) {
+                    root.uiScale = _raw.uiScale;
+                }
                 settingsChanged();
             }
         } catch (e) {
@@ -42,13 +48,7 @@ Item {
         stdout: StdioCollector {
             id: scaleCollector
             onStreamFinished: {
-                root.uiScale = (function () {
-                    try {
-                        let v = JSON.parse(this.text).uiScale;
-                        return (v !== undefined && !isNaN(v)) ? v : root.uiScale;
-                    } catch (e) { return root.uiScale; }
-                })();
-                root.readSettings();
+                root.readSettings(this.text);
             }
         }
     }
@@ -57,13 +57,11 @@ Item {
         id: scaleWatcher
         command: ["bash", "-c", "while [ ! -f " + root.settingsFile + " ]; do sleep 1; done; inotifywait -qq -e modify,close_write " + root.settingsFile + " 2>/dev/null || sleep 2"]
         running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                scaleReader.running = false;
-                scaleReader.running = true;
-                scaleWatcher.running = false;
-                scaleWatcher.running = true;
-            }
+        onExited: {
+            scaleReader.running = false;
+            scaleReader.running = true;
+            running = false;
+            running = true;
         }
     }
 

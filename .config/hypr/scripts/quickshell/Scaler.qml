@@ -17,9 +17,9 @@ Item {
     property real dpiScale: GlobalSettingsWatcher.dpiScale
 
     property real rawBaseScale: {
-        // Guard against a zero/unmapped surface during the first frame.
-        let w = currentWidth > 0 ? currentWidth : 1920.0;
-        let h = currentHeight > 0 ? currentHeight : 1080.0;
+        // Guard against zero, NaN, or unmapped surface during the first frame.
+        let w = (currentWidth && !isNaN(currentWidth) && currentWidth > 0) ? currentWidth : 1920.0;
+        let h = (currentHeight && !isNaN(currentHeight) && currentHeight > 0) ? currentHeight : 1080.0;
         return LayoutMath.getScale(w, h, uiScale, dpiScale);
     }
 

@@ -18,7 +18,7 @@ Item {
         id: scaler
         // Uses the physical screen width so the popup scales synchronously with the TopBar
         currentWidth: Screen.width
-        currentHeight: root.height
+        currentHeight: window.height
     }
     
     // Helper function scoped to the root Item for easy access in deeply nested elements and Canvases
@@ -196,10 +196,10 @@ Item {
         id: audioPoller
         command: ["python3", window.scriptsDir + "/get_audio_state.py"]
         running: window.visible
-        onRunningChanged: if (running) root.audioFetchBusy = true
+        onRunningChanged: if (running) window.audioFetchBusy = true
         stdout: StdioCollector {
             onStreamFinished: {
-                root.audioFetchBusy = false;
+                window.audioFetchBusy = false;
                 let payload = this.text ? this.text.trim() : "";
                 // Persist only a payload we can actually parse, otherwise a
                 // transient failure poisons the cache that Component.onCompleted
@@ -216,7 +216,7 @@ Item {
         interval: 1000; running: window.visible; repeat: true; triggeredOnStart: true;
         // `running = true` on a live Process is a no-op, so a slow sample used
         // to swallow ticks silently. Skip rather than pile up.
-        onTriggered: if (!root.audioFetchBusy) audioPoller.running = true
+        onTriggered: if (!window.audioFetchBusy) audioPoller.running = true
     }
 
     // -------------------------------------------------------------------------

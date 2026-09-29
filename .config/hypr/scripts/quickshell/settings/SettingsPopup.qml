@@ -1016,7 +1016,7 @@ Item {
 
             Process {
                 id: avatarDetectProc
-                running: window.visible
+                running: root.visible
                 command: ["bash", "-c", "if [ -f ~/.face.icon ]; then readlink -f ~/.face.icon; elif [ -f ~/.face ]; then readlink -f ~/.face; fi"]
                 stdout: StdioCollector {
                     onStreamFinished: {

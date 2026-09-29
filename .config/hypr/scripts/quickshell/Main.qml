@@ -18,11 +18,11 @@ PanelWindow {
     IpcHandler {
         target: "main"
 
-        function forceReload(): void {
+        function forceReload() {
             Quickshell.reload(true)
         }
 
-        function handleCommand(cmd: string, targetWidget: string, arg: string): void {
+        function handleCommand(cmd: string, targetWidget: string, arg: string) {
             cmd = cmd || "";
             targetWidget = targetWidget || "";
             arg = arg || "";
@@ -448,8 +448,8 @@ PanelWindow {
     Connections {
         target: masterWindow
         function onIsVisibleChanged() {
-            if (masterWindow.widgetStack.currentItem) {
-                masterWindow.widgetStack.currentItem.visible = masterWindow.isVisible;
+            if (typeof widgetStack !== "undefined" && widgetStack.currentItem) {
+                widgetStack.currentItem.visible = masterWindow.isVisible;
             }
         }
     }
