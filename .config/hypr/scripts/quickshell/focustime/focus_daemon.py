@@ -453,7 +453,10 @@ def acquire_single_instance_lock():
     import tempfile
     lock_path = os.path.join(tempfile.gettempdir(), "hydra_focus_daemon.lock")
     try:
-        handle = open(lock_path, "w")
+        # "a+" not "w": a rejected contender must not truncate the file and
+        # erase the incumbent's recorded PID. The lock itself is what enforces
+        # single-instance, but a clobbered record misleads anyone debugging it.
+        handle = open(lock_path, "a+")
     except OSError:
         return None
     try:
