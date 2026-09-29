@@ -1520,7 +1520,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !volPill.initAnimTrigger; interval: 150; onTriggered: volPill.initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !powerPill.initAnimTrigger; interval: 200; onTriggered: powerPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: powerPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
@@ -1575,7 +1575,7 @@ Variants {
                                 Behavior on color { ColorAnimation { duration: 200 } }
 
                                 property bool initAnimTrigger: false
-                                Timer { running: rightContent.showLayout && !powerPill.initAnimTrigger; interval: 200; onTriggered: powerPill.initAnimTrigger = true }
+                                Timer { running: rightContent.showLayout && !batPill.initAnimTrigger; interval: 250; onTriggered: batPill.initAnimTrigger = true }
                                 opacity: initAnimTrigger ? 1 : 0
                                 transform: Translate { y: batPill.initAnimTrigger ? 0 : barWindow.s(15); Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutBack } } }
                                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.OutCubic } }
