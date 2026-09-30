@@ -155,7 +155,7 @@ Item {
 
     // Unified hue for Performance Profile
     readonly property color profileStart: {
-        if (powerProfile === "performance") return window.red;
+        if (powerProfile === "performance") return window.mauve;
         if (powerProfile === "power-saver") return window.green;
         return window.blue;
     }
@@ -398,6 +398,46 @@ Item {
                             }
 
                             Item { Layout.fillWidth: true } // Spacer
+
+                            // Broom / Clear All Button
+                            Rectangle {
+                                id: broomBtn
+                                property bool hasNotifs: window.notifModel && window.notifModel.count > 0
+                                Layout.preferredWidth: window.s(38)
+                                Layout.preferredHeight: window.s(38)
+                                radius: window.s(12)
+                                color: (hasNotifs && broomMa.containsMouse) ? window.surface1 : "transparent"
+                                border.color: (hasNotifs && broomMa.containsMouse) ? window.surface2 : "transparent"
+                                border.width: 1
+                                opacity: hasNotifs ? 1.0 : 0.35
+
+                                Behavior on opacity { NumberAnimation { duration: 200 } }
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on border.color { ColorAnimation { duration: 150 } }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    font.family: "Iosevka Nerd Font"
+                                    font.pixelSize: window.s(18)
+                                    color: (broomBtn.hasNotifs && broomMa.containsMouse) ? window.mauve : window.overlay0
+                                    text: "󰃢"
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Behavior on scale { NumberAnimation { duration: 150 } }
+                                    scale: (broomBtn.hasNotifs && broomMa.containsMouse) ? 1.15 : 1.0
+                                }
+
+                                MouseArea {
+                                    id: broomMa
+                                    anchors.fill: parent
+                                    enabled: broomBtn.hasNotifs
+                                    hoverEnabled: true
+                                    cursorShape: broomBtn.hasNotifs ? Qt.PointingHandCursor : Qt.ArrowCursor
+                                    onClicked: {
+                                        if (window.notifModel) window.notifModel.clear();
+                                        if (window.liveNotifs) window.liveNotifs = ({});
+                                    }
+                                }
+                            }
 
                             // DND Toggle Button
                             Rectangle {
@@ -649,8 +689,8 @@ Item {
                                         cursorShape: Qt.PointingHandCursor
                                         onClicked: {
                                             if ((model.appName === "Screenshot" || model.appName === "Screen Recorder") && model.iconPath !== "") {
-                                                let folderPath = model.iconPath.substring(0, model.iconPath.lastIndexOf('/'))
-                                                Quickshell.execDetached(["xdg-open", folderPath])
+                                                let folderPath = model.iconPath.substring(0, model.iconPath.lastIndexOf('/'));
+                                                Quickshell.execDetached(["xdg-open", folderPath]);
                                             } else {
                                                 if (delegateWrapper.realNotif && delegateWrapper.realNotif.actions) {
                                                     for (var i = 0; i < delegateWrapper.realNotif.actions.length; i++) {
@@ -660,9 +700,16 @@ Item {
                                                         }
                                                     }
                                                 }
+                                                if (model.appName && model.appName !== "" && model.appName !== "System") {
+                                                    let appClean = model.appName.replace(/[^a-zA-Z0-9_-]/g, "");
+                                                    if (appClean !== "") {
+                                                        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = 'class:^(?i)" + appClean + ".*$' })"]);
+                                                    }
+                                                }
                                             }
+                                            Quickshell.execDetached(["sh", "-c", "echo 'close' > " + paths.runDir + "/widget_state"]);
                                             if (delegateWrapper.realNotif && typeof delegateWrapper.realNotif.close === "function") {
-                                                delegateWrapper.realNotif.close()
+                                                delegateWrapper.realNotif.close();
                                             }
                                             delegateWrapper.removeThisNotif();
                                         }
@@ -1640,7 +1687,7 @@ Item {
                                             MouseArea {
                                                 id: profileMa
                                                 anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                                onClicked: { Quickshell.execDetached(["powerprofilesctl", "set", name]); sysPoller.running = true; }
+                                                onClicked: { window.powerProfile = name; Quickshell.execDetached(["powerprofilesctl", "set", name]); sysPoller.running = true; }
                                             }
                                         }
                                     }

@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+source "$(dirname "${BASH_SOURCE[0]}")/../../caching.sh"
+
+PIPE="$QS_RUN_DIR/qs_power_wait_$$.fifo"
+mkfifo "$PIPE" 2>/dev/null
+trap 'rm -f "$PIPE"; kill $(jobs -p) 2>/dev/null; exit 0' EXIT INT TERM
+
+LC_ALL=C dbus-monitor --system "type='signal',sender='net.hadess.PowerProfiles'" 2>/dev/null | grep --line-buffered "PropertiesChanged" > "$PIPE" &
+read -t 60 -r _ < "$PIPE"

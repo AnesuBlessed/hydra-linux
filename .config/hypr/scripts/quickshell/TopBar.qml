@@ -97,6 +97,8 @@ Variants {
                 id: mocha
             }
 
+            property real barAlpha: 0.45
+
             property bool showHelpIcon: GlobalSettingsWatcher.topbarHelpIcon
             property bool isRecording: false
             
@@ -550,8 +552,26 @@ Variants {
             }
             Process { id: btWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/bt_wait.sh"]; onExited: { btPoller.running = false; btPoller.running = true; } }
 
-            Timer { id: powerProfilePoller; running: true; repeat: true; interval: 30000; triggeredOnStart: true; onTriggered: powerProfileFetcher.running = true }
-            Process { id: powerProfileFetcher; command: ["bash", "-c", "powerprofilesctl get 2>/dev/null || echo \"balanced\""]; stdout: StdioCollector { onStreamFinished: { let txt = this.text.trim(); if (txt !== "") barWindow.powerProfile = txt; } } }
+            Process {
+                id: powerProfileFetcher; running: true
+                command: ["bash", "-c", "powerprofilesctl get 2>/dev/null || echo \"balanced\""]
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        let txt = this.text.trim();
+                        if (txt !== "" && barWindow.powerProfile !== txt) barWindow.powerProfile = txt;
+                        powerProfileWaiter.running = false;
+                        powerProfileWaiter.running = true;
+                    }
+                }
+            }
+            Process {
+                id: powerProfileWaiter
+                command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/power_wait.sh"]
+                onExited: {
+                    powerProfileFetcher.running = false;
+                    powerProfileFetcher.running = true;
+                }
+            }
             Process {
                 id: batteryPoller; running: true
                 command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/battery_fetch.sh"]
@@ -619,7 +639,7 @@ Variants {
                     y: (parent.height - barWindow.barHeight) / 2
                     height: barWindow.barHeight
 
-                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                     radius: barWindow.s(14)
                     border.width: 1
                     border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.08)
@@ -807,7 +827,7 @@ Variants {
                 
                 Rectangle {
                     id: workspacesBox
-                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                     radius: barWindow.s(14); border.width: 1; border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.05)
                     height: barWindow.barHeight
                     y: (parent.height - barWindow.barHeight) / 2
@@ -952,7 +972,7 @@ Variants {
 
                 Rectangle {
                     id: mediaBox
-                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                     radius: barWindow.s(14); border.width: 1; border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.05)
                     y: (parent.height - barWindow.barHeight) / 2
                     height: barWindow.barHeight
@@ -1103,7 +1123,7 @@ Variants {
                 Rectangle {
                     id: centerBox
                     property bool isHovered: centerMouse.containsMouse
-                    color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.95) : Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                    color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.95) : Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                     radius: barWindow.s(14); border.width: 1; border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, isHovered ? 0.15 : 0.05)
                     
                     y: (parent.height - barWindow.barHeight) / 2
@@ -1204,7 +1224,7 @@ Variants {
                         radius: barWindow.s(14)
                         border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.08)
                         border.width: 1
-                        color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                        color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                         
                         property real targetWidth: (barWindow.showExtras && trayRepeater.count > 0) ? trayLayout.width + barWindow.s(24) : 0
                         width: targetWidth
@@ -1299,7 +1319,7 @@ Variants {
                         radius: barWindow.s(14)
                         border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.08)
                         border.width: 1
-                        color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                        color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                         clip: true
                         
                         width: sysLayout.implicitWidth + barWindow.s(20)
@@ -1525,8 +1545,8 @@ Variants {
                                     Behavior on opacity { NumberAnimation { duration: 300 } }
                                     gradient: Gradient {
                                         orientation: Gradient.Horizontal
-                                        GradientStop { position: 0.0; color: barWindow.powerProfile === "performance" ? mocha.maroon : mocha.green; Behavior on color { ColorAnimation { duration: 300 } } }
-                                        GradientStop { position: 1.0; color: barWindow.powerProfile === "performance" ? Qt.lighter(mocha.maroon, 1.3) : Qt.lighter(mocha.green, 1.3); Behavior on color { ColorAnimation { duration: 300 } } }
+                                        GradientStop { position: 0.0; color: barWindow.powerProfile === "performance" ? mocha.mauve : mocha.green; Behavior on color { ColorAnimation { duration: 300 } } }
+                                        GradientStop { position: 1.0; color: barWindow.powerProfile === "performance" ? Qt.lighter(mocha.mauve, 1.3) : Qt.lighter(mocha.green, 1.3); Behavior on color { ColorAnimation { duration: 300 } } }
                                     }
                                 }
                                 
@@ -1564,7 +1584,14 @@ Variants {
                                         Behavior on color { ColorAnimation { duration: 300 } }
                                     }
                                 }
-                                MouseArea { id: powerMouse; hoverEnabled: true; anchors.fill: parent; onClicked: { Quickshell.execDetached(["bash", "-c", "~/.config/hypr/scripts/power_toggle.sh"]); powerProfileFetcher.running = true; } }
+                                MouseArea {
+                                    id: powerMouse; hoverEnabled: true; anchors.fill: parent;
+                                    onClicked: {
+                                        let nextProfile = (barWindow.powerProfile === "performance") ? "power-saver" : ((barWindow.powerProfile === "power-saver") ? "balanced" : "performance");
+                                        barWindow.powerProfile = nextProfile;
+                                        Quickshell.execDetached(["powerprofilesctl", "set", nextProfile]);
+                                    }
+                                }
                             }
                                                             Rectangle {
                                 id: batPill
@@ -1626,7 +1653,7 @@ Variants {
                         id: recButton
                         property bool isHovered: recMouse.containsMouse
                         
-                        color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.95) : Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, 0.75)
+                        color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.95) : Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                         radius: barWindow.s(14)
                         border.width: 1
                         border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, isHovered ? 0.15 : 0.05)

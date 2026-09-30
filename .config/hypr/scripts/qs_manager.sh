@@ -196,7 +196,7 @@ if [[ "$ACTION" == "reload" ]]; then
     # unrelated process that merely mentions one of those strings, including the
     # user's own greps and this script's caller. Instead collect the pids
     # ourselves and drop the current process tree before killing.
-    WATCHER_RE='workspaces\.sh|socat -[uU].*socket2\.sock|inotifywait.*(settings\.json|quickshell|current_widget)|bt_wait\.sh|audio_wait\.sh|kb_wait\.sh|network_wait\.sh|battery_wait\.sh|sys_fetcher\.sh|ddg_search\.sh|get_ddg_links\.py|qs_battery_wait|qs_network_wait'
+    WATCHER_RE='workspaces\.sh|socat -[uU].*socket2\.sock|inotifywait.*(settings\.json|quickshell|current_widget)|bt_wait\.sh|audio_wait\.sh|kb_wait\.sh|network_wait\.sh|battery_wait\.sh|power_wait\.sh|sys_fetcher\.sh|ddg_search\.sh|get_ddg_links\.py|qs_battery_wait|qs_network_wait|qs_power_wait'
 
     _reap_watchers() {
         local sig="$1" pid protected

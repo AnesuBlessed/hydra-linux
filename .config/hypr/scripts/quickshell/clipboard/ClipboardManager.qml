@@ -657,7 +657,7 @@ Item {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 let id = parseInt(model.id, 10);
-                                if (!isNaN(id)) Quickshell.execDetached(["bash", "-c", "cliphist list | awk -v id=" + id + " -F'\t' '$1==id {print $0}' | cliphist delete"]);
+                                if (!isNaN(id)) Quickshell.execDetached(["bash", "-c", "cliphist list | grep -P '^" + id + "\\t' | cliphist delete"]);
                                 
                                 // Proper deletion logic for QML list
                                 for(let i=0; i<window.allClips.length; i++){
