@@ -114,18 +114,25 @@ if [ "$EUID" -eq 0 ]; then
     exit 1
 fi
 
-echo -e "${C_MUTED}:: Requesting administrator privileges...${C_RESET}"
-sudo -v || { echo -e "${C_RED}Administrator privileges required to continue.${C_RESET}"; exit 1; }
-# Refresh the sudo timestamp in the background so a long package phase does
-# not time out mid-run. Killed explicitly on exit instead of being left as
-# an unreaped orphan that outlives the installer.
+NEED_SUDO=true
+if [ "$SKIP_PKGS" = true ] && [ "$INSTALL_SDDM" = false ]; then
+    NEED_SUDO=false
+fi
+
 SUDO_KEEPALIVE_PID=""
-while true; do
-    sudo -n true || true
-    sleep 60
-    kill -0 "$$" 2>/dev/null || { [ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null; exit; }
-done 2>/dev/null &
-SUDO_KEEPALIVE_PID=$!
+if [ "$NEED_SUDO" = true ]; then
+    echo -e "${C_MUTED}:: Requesting administrator privileges...${C_RESET}"
+    sudo -v || { echo -e "${C_RED}Administrator privileges required to continue.${C_RESET}"; exit 1; }
+    # Refresh the sudo timestamp in the background so a long package phase does
+    # not time out mid-run. Killed explicitly on exit instead of being left as
+    # an unreaped orphan that outlives the installer.
+    while true; do
+        sudo -n true || true
+        sleep 60
+        kill -0 "$$" 2>/dev/null || { [ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null; exit; }
+    done 2>/dev/null &
+    SUDO_KEEPALIVE_PID=$!
+fi
 
 # ─── UI Helper Functions ─────────────────────────────────────────────────────
 print_header() {
@@ -558,8 +565,10 @@ fi
 print_phase "5/5" "Enabling Core System Services"
 
 enable_services() {
-    sudo systemctl enable NetworkManager.service >/dev/null 2>&1 || true
-    sudo systemctl enable power-profiles-daemon.service >/dev/null 2>&1 || true
+    if [ "$NEED_SUDO" = true ]; then
+        sudo systemctl enable NetworkManager.service >/dev/null 2>&1 || true
+        sudo systemctl enable power-profiles-daemon.service >/dev/null 2>&1 || true
+    fi
 }
 
 do_spin "Enabling NetworkManager and power-profiles-daemon..." enable_services

@@ -35,7 +35,10 @@ git checkout main
 git pull --rebase origin main
 
 echo -e "\n\033[1;34m[*] Running Hydra Linux installer...\033[0m"
-bash ./install.sh --skip-pkgs -y
+bash ./install.sh --skip-pkgs --no-sddm -y
+
+echo -e "\n\033[1;34m[*] Reloading desktop environment...\033[0m"
+bash "$HOME/.config/hypr/scripts/qs_manager.sh" reload 2>/dev/null || true
 
 echo -e "\n\033[1;32m[✓] Hydra Linux update complete!\033[0m"
 if command -v notify-send >/dev/null 2>&1; then
