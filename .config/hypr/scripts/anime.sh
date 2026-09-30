@@ -6,14 +6,24 @@
 
 ANICLI_BIN="$(command -v ani-cli 2>/dev/null || echo "$HOME/.local/bin/ani-cli")"
 
-# Auto-fetch ani-cli if missing
+# Fallback to repo bundled ani-cli if missing
+if [ ! -x "$ANICLI_BIN" ]; then
+    SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+    for candidate in "$SCRIPT_DIR/../../../utils/bin/ani-cli" "$HOME/.local/bin/ani-cli"; do
+        if [ -f "$candidate" ]; then
+            mkdir -p "$HOME/.local/bin"
+            cp -f "$candidate" "$HOME/.local/bin/ani-cli"
+            chmod +x "$HOME/.local/bin/ani-cli"
+            ANICLI_BIN="$HOME/.local/bin/ani-cli"
+            break
+        fi
+    done
+fi
+
 if [ ! -x "$ANICLI_BIN" ]; then
     command -v notify-send &>/dev/null && \
-        notify-send "Hydra Anime" "ani-cli not found. Fetching..." -i video-player
-    mkdir -p "$HOME/.local/bin"
-    curl -sL https://raw.githubusercontent.com/pystardust/ani-cli/master/ani-cli \
-        -o "$HOME/.local/bin/ani-cli"
-    chmod +x "$HOME/.local/bin/ani-cli"
+        notify-send -u critical "Hydra Anime" "ani-cli not installed. Please install via: yay -S ani-cli" -i video-player
+    exit 1
 fi
 
 ANIME_CONF="$HOME/.config/kitty/hydra-anime.conf"

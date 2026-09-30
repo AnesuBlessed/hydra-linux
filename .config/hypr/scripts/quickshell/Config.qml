@@ -58,10 +58,10 @@ Item {
 
     function setSetting(key, value) {
         rawSettings[key] = value;
-        let safeValue = typeof value === "string" ? `"${value}"` : value;
-        if (typeof value === "object") safeValue = JSON.stringify(value).replace(/'/g, "'\\''");
-
-        sh(_jsonWriteCommand(`. + {"${key}": ${safeValue}}`));
+        let updateObj = {};
+        updateObj[key] = value;
+        let safeJson = JSON.stringify(updateObj).replace(/'/g, "'\\''");
+        sh(_jsonWriteCommand(`. + ${safeJson}`));
     }
 
     function updateJsonBulk(dataObj) {
@@ -77,15 +77,10 @@ Item {
     }
 
     function updateEnvBulk(filePath, envDict) {
-        let cmds = [`mkdir -p "$(dirname '${filePath}')"`, `touch '${filePath}'`];
-        for (let key in envDict) {
-            rawEnvs[key] = envDict[key];
-            let safeVal = envDict[key].toString().replace(/'/g, "'\\''");
-            cmds.push(`if grep -q "^${key}=" '${filePath}'; then ` +
-                      `sed -i "s|^${key}=.*|${key}='${safeVal}'|" '${filePath}'; ` +
-                      `else echo "${key}='${safeVal}'" >> '${filePath}'; fi`);
-        }
-        sh(cmds.join(" && "));
+        for (let key in envDict) rawEnvs[key] = envDict[key];
+        let jsonStr = JSON.stringify(envDict).replace(/'/g, "'\\''");
+        let script = `python3 -c 'import json, os, sys; p = sys.argv[1]; data = json.loads(sys.argv[2]); os.makedirs(os.path.dirname(p), exist_ok=True); lines = []; keys_seen = set();\nif os.path.exists(p):\n  with open(p, "r") as f:\n    for line in f:\n      k = line.split("=", 1)[0].strip() if "=" in line else ""\n      if k in data:\n        lines.append(f"{k}=\\\"{data[k]}\\\"\\n"); keys_seen.add(k)\n      else: lines.append(line)\nfor k, v in data.items():\n  if k not in keys_seen: lines.append(f"{k}=\\\"{v}\\\"\\n")\nwith open(p + ".tmp", "w") as f: f.writelines(lines)\nos.replace(p + ".tmp", p)\n' '${filePath}' '${jsonStr}'`;
+        sh(script);
     }
 
     // =========================================================================

@@ -23,14 +23,16 @@ C_YELLOW="\e[38;2;250;200;100m"
 C_RED="\e[38;2;255;110;110m"
 C_MUTED="\e[38;2;130;130;150m"
 
-# Always restore the cursor. INT/TERM run a user-facing message and then fall
-# through to the same EXIT handler, so a second `trap ... EXIT` would replace
-# this one instead of adding to it.
+HYDRA_TMP_DIR="$(mktemp -d -t hydra_install_XXXXXX)"
+
 _cleanup() {
     printf "\e[?25h"
     # Stop the backgrounded sudo keepalive so it does not outlive the installer.
     if [ -n "${SUDO_KEEPALIVE_PID:-}" ]; then
         kill "$SUDO_KEEPALIVE_PID" 2>/dev/null || true
+    fi
+    if [ -d "${HYDRA_TMP_DIR:-}" ]; then
+        rm -rf "$HYDRA_TMP_DIR" 2>/dev/null || true
     fi
 }
 trap '_cleanup' EXIT
@@ -106,20 +108,24 @@ elif echo "$GPU_RAW" | grep -qi "intel"; then GPU_VENDOR="Intel"
 fi
 
 # ─── Privilege Escalation ────────────────────────────────────────────────────
-if [ "$EUID" -ne 0 ]; then
-    echo -e "${C_MUTED}:: Requesting administrator privileges...${C_RESET}"
-    sudo -v || { echo -e "${C_RED}Administrator privileges required to continue.${C_RESET}"; exit 1; }
-    # Refresh the sudo timestamp in the background so a long package phase does
-    # not time out mid-run. Killed explicitly on exit instead of being left as
-    # an unreaped orphan that outlives the installer.
-    SUDO_KEEPALIVE_PID=""
-    while true; do
-        sudo -n true || true
-        sleep 60
-        kill -0 "$$" 2>/dev/null || { [ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null; exit; }
-    done 2>/dev/null &
-    SUDO_KEEPALIVE_PID=$!
+if [ "$EUID" -eq 0 ]; then
+    echo -e "${C_RED}Error: Do not run this installer directly as root or with sudo.${C_RESET}"
+    echo -e "${C_YELLOW}Run as your standard user: ./install.sh (sudo will be requested when needed).${C_RESET}"
+    exit 1
 fi
+
+echo -e "${C_MUTED}:: Requesting administrator privileges...${C_RESET}"
+sudo -v || { echo -e "${C_RED}Administrator privileges required to continue.${C_RESET}"; exit 1; }
+# Refresh the sudo timestamp in the background so a long package phase does
+# not time out mid-run. Killed explicitly on exit instead of being left as
+# an unreaped orphan that outlives the installer.
+SUDO_KEEPALIVE_PID=""
+while true; do
+    sudo -n true || true
+    sleep 60
+    kill -0 "$$" 2>/dev/null || { [ -n "$SUDO_KEEPALIVE_PID" ] && kill "$SUDO_KEEPALIVE_PID" 2>/dev/null; exit; }
+done 2>/dev/null &
+SUDO_KEEPALIVE_PID=$!
 
 # ─── UI Helper Functions ─────────────────────────────────────────────────────
 print_header() {
@@ -339,7 +345,7 @@ CORE_PKGS=(
     "libpulse" "pamixer" "playerctl" "pavucontrol" "alsa-utils" "easyeffects" "lsp-plugins"
     "firefox" "dolphin"
     "grim" "slurp" "satty" "awww" "mpvpaper" "gpu-screen-recorder" "nwg-displays" "zenity"
-    "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl"
+    "wl-clipboard" "cliphist" "jq" "yq" "socat" "inotify-tools" "brightnessctl" "zbar"
     "acpi" "iw" "lm_sensors" "bc" "imagemagick" "wget" "file" "git"
     "psmisc" "unzip" "fd" "ripgrep" "power-profiles-daemon" "fzf" "mpv" "yt-dlp" "ani-cli" "ani-skip-git"
     "ttf-jetbrains-mono-nerd" "ttf-iosevka-nerd"
@@ -360,7 +366,11 @@ if ! command -v jq &>/dev/null || ! command -v curl &>/dev/null; then
 fi
 
 install_aur_helper() {
-    sudo pacman -S --noconfirm --needed base-devel git >/dev/null 2>&1 &&     rm -rf /tmp/yay-bin &&     git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin >/dev/null 2>&1 &&     (cd /tmp/yay-bin && makepkg -si --noconfirm >/dev/null 2>&1) &&     rm -rf /tmp/yay-bin
+    sudo pacman -S --noconfirm --needed base-devel git >/dev/null 2>&1 && \
+    rm -rf "$HYDRA_TMP_DIR/yay-bin" && \
+    git clone https://aur.archlinux.org/yay-bin.git "$HYDRA_TMP_DIR/yay-bin" >/dev/null 2>&1 && \
+    (cd "$HYDRA_TMP_DIR/yay-bin" && makepkg -si --noconfirm >/dev/null 2>&1) && \
+    rm -rf "$HYDRA_TMP_DIR/yay-bin"
 }
 
 if ! command -v yay &>/dev/null && ! command -v paru &>/dev/null; then
@@ -376,18 +386,18 @@ fi
 # PHASE 1: PACKAGES
 # ─────────────────────────────────────────────────────────────────────────────
 check_missing_packages() {
-    rm -f /tmp/hydra_missing_pkgs
+    rm -f "$HYDRA_TMP_DIR/missing_pkgs"
     for pkg in "${ALL_PKGS[@]}"; do
         [[ -z "$pkg" ]] && continue
         if ! pacman -Q "$pkg" &>/dev/null; then
-            echo "$pkg" >> /tmp/hydra_missing_pkgs
+            echo "$pkg" >> "$HYDRA_TMP_DIR/missing_pkgs"
         fi
     done
 }
 
 install_single_pkg() {
     local pkg="$1"
-    yes 'Y' | env CARGO_BUILD_JOBS="$SAFE_JOBS" MAKEFLAGS="-j$SAFE_JOBS" "${PKG_MANAGER[@]}" "$pkg" >/tmp/hydra_pkg.log 2>&1
+    yes 'Y' | env CARGO_BUILD_JOBS="$SAFE_JOBS" MAKEFLAGS="-j$SAFE_JOBS" "${PKG_MANAGER[@]}" "$pkg" >"$HYDRA_TMP_DIR/pkg.log" 2>&1
 }
 
 if [ "$SKIP_PKGS" = false ]; then
@@ -397,9 +407,9 @@ if [ "$SKIP_PKGS" = false ]; then
 
     do_spin "Analyzing required packages against system database..." check_missing_packages
 
-    if [ -f /tmp/hydra_missing_pkgs ]; then
-        readarray -t MISSING_PKGS < /tmp/hydra_missing_pkgs
-        rm -f /tmp/hydra_missing_pkgs
+    if [ -f "$HYDRA_TMP_DIR/missing_pkgs" ]; then
+        readarray -t MISSING_PKGS < "$HYDRA_TMP_DIR/missing_pkgs"
+        rm -f "$HYDRA_TMP_DIR/missing_pkgs"
     fi
 
     if [ ${#MISSING_PKGS[@]} -eq 0 ]; then
@@ -415,7 +425,7 @@ if [ "$SKIP_PKGS" = false ]; then
         for pkg in "${MISSING_PKGS[@]}"; do
             ((count++))
             if ! do_spin "[$count/$total] Installing $pkg..." install_single_pkg "$pkg"; then
-                print_error "Failed to install $pkg — check /tmp/hydra_pkg.log"
+                print_error "Failed to install $pkg — check $HYDRA_TMP_DIR/pkg.log"
             fi
         done
         print_success "Package installation phase completed."
@@ -431,15 +441,22 @@ BACKUP_DIR="$HOME/.config/hydra_backup/backup_${BACKUP_DATE}"
 
 backup_configs() {
     mkdir -p "$BACKUP_DIR"
+    local backup_err=0
     for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch; do
         if [ -d "$HOME/.config/$cfg" ] || [ -f "$HOME/.config/$cfg" ]; then
-            cp -rf "$HOME/.config/$cfg" "$BACKUP_DIR/" 2>/dev/null || true
+            if ! cp -a "$HOME/.config/$cfg" "$BACKUP_DIR/"; then
+                backup_err=1
+            fi
         fi
     done
+    return $backup_err
 }
 
-do_spin "Creating safety backup in $BACKUP_DIR..." backup_configs
-print_success "Existing configurations safely archived."
+if ! do_spin "Creating safety backup in $BACKUP_DIR..." backup_configs; then
+    print_error "Backup failed! Aborting deployment to prevent configuration loss."
+    exit 1
+fi
+print_success "Existing configurations safely archived in $BACKUP_DIR."
 
 # ─────────────────────────────────────────────────────────────────────────────
 # PHASE 3: DEPLOYMENT

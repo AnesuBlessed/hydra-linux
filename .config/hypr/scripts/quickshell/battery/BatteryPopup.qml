@@ -703,7 +703,7 @@ Item {
                                                 if (model.appName && model.appName !== "" && model.appName !== "System") {
                                                     let appClean = model.appName.replace(/[^a-zA-Z0-9_-]/g, "");
                                                     if (appClean !== "") {
-                                                        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ window = 'class:^(?i)" + appClean + ".*$' })"]);
+                                                        Quickshell.execDetached(["sh", "-c", "hyprctl dispatch 'hl.dsp.focus({ window = \"class:^(?i)" + appClean + ".*$\" })' 2>/dev/null || hyprctl dispatch focuswindow 'class:^(?i)" + appClean + ".*$'"]);
                                                     }
                                                 }
                                             }

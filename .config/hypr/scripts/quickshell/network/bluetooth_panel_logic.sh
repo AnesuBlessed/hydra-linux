@@ -94,7 +94,9 @@ get_status() {
             CACHE_FILE="$CACHE_DIR/bt_stat_${mac//:/_}"
 
             if [ -f "$CACHE_FILE" ]; then
-                source "$CACHE_FILE"
+                CACHE_NAME=$(awk -F= '$1=="NAME"{print substr($0,6)}' "$CACHE_FILE" 2>/dev/null)
+                CACHE_ICON=$(awk -F= '$1=="ICON"{print substr($0,6)}' "$CACHE_FILE" 2>/dev/null)
+                CACHE_PROFILE=$(awk -F= '$1=="PROFILE"{print substr($0,9)}' "$CACHE_FILE" 2>/dev/null)
             else
                 info=$(bluetoothctl info "$mac")
                 icon_type=$(echo "$info" | awk -F': ' '/Icon:/ {print $2}')
@@ -103,19 +105,21 @@ get_status() {
                 # THE FIX: Pass the cached output instead of calling pactl again
                 profile=$(get_audio_profile "$mac" "$cached_cards")
                 
-                echo "CACHE_NAME=\"${name//\"/\\\"}\"" > "$CACHE_FILE"
-                echo "CACHE_ICON=\"${icon//\"/\\\"}\"" >> "$CACHE_FILE"
-                echo "CACHE_PROFILE=\"${profile//\"/\\\"}\"" >> "$CACHE_FILE"
+                printf "NAME=%s\nICON=%s\nPROFILE=%s\n" "$name" "$icon" "$profile" > "$CACHE_FILE"
                 
-                CACHE_NAME="${name//\"/\\\"}"
-                CACHE_ICON="${icon//\"/\\\"}"
-                CACHE_PROFILE="${profile//\"/\\\"}"
+                CACHE_NAME="$name"
+                CACHE_ICON="$icon"
+                CACHE_PROFILE="$profile"
             fi
             
             bat=$(bluetoothctl info "$mac" | awk -F'[(|)]' '/Battery Percentage:/ {print $2}')
             [ -z "$bat" ] && bat="0"
 
-            connected_list_objs+=("{\"id\":\"$mac\",\"name\":\"$CACHE_NAME\",\"mac\":\"$mac\",\"icon\":\"$CACHE_ICON\",\"battery\":\"$bat\",\"profile\":\"$CACHE_PROFILE\"}")
+            CACHE_NAME_ESC="${CACHE_NAME//\"/\\\"}"
+            CACHE_ICON_ESC="${CACHE_ICON//\"/\\\"}"
+            CACHE_PROF_ESC="${CACHE_PROFILE//\"/\\\"}"
+
+            connected_list_objs+=("{\"id\":\"$mac\",\"name\":\"$CACHE_NAME_ESC\",\"mac\":\"$mac\",\"icon\":\"$CACHE_ICON_ESC\",\"battery\":\"$bat\",\"profile\":\"$CACHE_PROF_ESC\"}")
         done
 
         if [ ${#connected_list_objs[@]} -gt 0 ]; then

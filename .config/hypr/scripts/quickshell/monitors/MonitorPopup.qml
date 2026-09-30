@@ -390,13 +390,9 @@ Item {
                 name: m.name, resW: m.resW, resH: m.resH, rate: parseInt(m.rate),
                 x: 0, y: 0, scale: m.sysScale, transform: m.transform
             }];
-            let safeJson = JSON.stringify(jsonMonitorsArray).replace(/'/g, "'\\''");
-            let jsonCmd = "jq '.monitors = " + safeJson + "' ~/.config/hypr/settings.json > ~/.config/hypr/settings.json.tmp && mv ~/.config/hypr/settings.json.tmp ~/.config/hypr/settings.json";
-            // No wallpaper daemon restart needed: the backend here is awww, not swww.
-            let postReloadCmd = "true";
-
             Quickshell.execDetached(["notify-send", "Display Update", "Applied & Saved: " + m.resW + "x" + m.resH + " @ " + m.rate + "Hz"]);
-            Quickshell.execDetached(["sh", "-c", "hyprctl keyword monitor " + monitorStr + " ; " + jsonCmd + " ; " + postReloadCmd]);
+            Quickshell.execDetached(["hyprctl", "keyword", "monitor", monitorStr]);
+            Config.setSetting("monitors", jsonMonitorsArray);
             
             window.debugLog("Executed single monitor apply.");
         } else {
@@ -488,13 +484,8 @@ Item {
                 });
             }
             
-            let fullHyprCmd = "hyprctl --batch '" + batchCmds.join(" ; ") + "'";
-            let safeJson = JSON.stringify(jsonMonitorsArray).replace(/'/g, "'\\''");
-            let jsonCmd = "jq '.monitors = " + safeJson + "' ~/.config/hypr/settings.json > ~/.config/hypr/settings.json.tmp && mv ~/.config/hypr/settings.json.tmp ~/.config/hypr/settings.json";
-            // No wallpaper daemon restart needed: the backend here is awww, not swww.
-            let postReloadCmd = "true";
-
-            Quickshell.execDetached(["sh", "-c", fullHyprCmd + " ; " + jsonCmd + " ; " + postReloadCmd]);
+            Quickshell.execDetached(["hyprctl", "--batch", batchCmds.join(" ; ")]);
+            Config.setSetting("monitors", jsonMonitorsArray);
             Quickshell.execDetached(["notify-send", "Display Update", "Applied & Saved layout for: " + summaryString]);
             
             window.debugLog("Executed multi monitor apply: " + fullHyprCmd);

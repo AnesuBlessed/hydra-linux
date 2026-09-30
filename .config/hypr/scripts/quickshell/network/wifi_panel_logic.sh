@@ -38,8 +38,11 @@ if [[ -n "$CURRENT_RAW" ]]; then
     SAFE_SSID="${ssid//[^a-zA-Z0-9]/_}"
     CACHE_FILE="$CACHE_DIR/wifi_$SAFE_SSID"
     
+    IP=""
+    FREQ=""
     if [ -f "$CACHE_FILE" ]; then
-        source "$CACHE_FILE"
+        IP=$(awk -F= '$1=="IP"{print substr($0,4)}' "$CACHE_FILE" 2>/dev/null)
+        FREQ=$(awk -F= '$1=="FREQ"{print substr($0,6)}' "$CACHE_FILE" 2>/dev/null)
     fi
     
     if [ -z "$IP" ] || [ "$IP" == "No IP" ] || [ -z "$FREQ" ]; then
@@ -50,8 +53,7 @@ if [[ -n "$CURRENT_RAW" ]]; then
         FREQ=$(iw dev "$IFACE" link 2>/dev/null | awk '/freq:/ {print $2}')
         [ -n "$FREQ" ] && FREQ="${FREQ} MHz" || FREQ="Unknown"
         
-        echo "IP=\"$IP\"" > "$CACHE_FILE"
-        echo "FREQ=\"$FREQ\"" >> "$CACHE_FILE"
+        printf "IP=%s\nFREQ=%s\n" "$IP" "$FREQ" > "$CACHE_FILE"
     fi
 
     # Native Bash JSON generation

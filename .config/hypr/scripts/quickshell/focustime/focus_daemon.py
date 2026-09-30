@@ -174,9 +174,10 @@ def get_active_window_hyprctl():
 
 def is_locked():
     try:
-        subprocess.check_output(['pgrep', '-x', 'hyprlock'], timeout=5)
-        return True
-    except subprocess.CalledProcessError:
+        res = subprocess.run(['pgrep', '-u', str(os.getuid()), '-f', 'hyprlock|quickshell.*Lock\\.qml'],
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=2)
+        return res.returncode == 0
+    except Exception:
         return False
 
 def listen_hyprland_ipc():
@@ -451,7 +452,11 @@ def acquire_single_instance_lock():
     the same DB concurrently with no guard at all.
     """
     import tempfile
-    lock_path = os.path.join(tempfile.gettempdir(), "hydra_focus_daemon.lock")
+    runtime_dir = os.environ.get("XDG_RUNTIME_DIR")
+    if not runtime_dir or not os.path.isdir(runtime_dir):
+        runtime_dir = os.path.join(tempfile.gettempdir(), f"hydra_run_{os.getuid()}")
+        os.makedirs(runtime_dir, exist_ok=True)
+    lock_path = os.path.join(runtime_dir, "hydra_focus_daemon.lock")
     try:
         # "a+" not "w": a rejected contender must not truncate the file and
         # erase the incumbent's recorded PID. The lock itself is what enforces
@@ -466,6 +471,8 @@ def acquire_single_instance_lock():
         # No fcntl, or another instance holds the lock.
         handle.close()
         return None
+    handle.seek(0)
+    handle.truncate()
     handle.write(str(os.getpid()))
     handle.flush()
     # Keep the handle alive for the process lifetime so the lock is held.

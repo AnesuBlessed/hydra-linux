@@ -961,8 +961,8 @@ Variants {
                                     onClicked: {
                                         workspacesModel.activeIndex = index;
                                         let num = parseInt(wsName);
-                                        let target = isNaN(num) ? ("'" + (wsName || (index + 1)) + "'") : num;
-                                        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = " + target + " })"]);
+                                        let target = isNaN(num) ? (wsName || (index + 1)) : num;
+                                        Quickshell.execDetached(["sh", "-c", "hyprctl dispatch 'hl.dsp.focus({ workspace = " + target + " })' 2>/dev/null || hyprctl dispatch workspace '" + target + "'"]);
                                     }
                                 }
                             }

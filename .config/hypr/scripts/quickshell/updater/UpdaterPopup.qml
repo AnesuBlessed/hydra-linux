@@ -207,16 +207,16 @@ if not local:
 
 def get_latest():
     try:
-        req = urllib.request.Request('https://api.github.com/repos/' + repo + '/commits/master', headers={'User-Agent': 'updater'})
+        req = urllib.request.Request('https://api.github.com/repos/' + repo + '/commits/main', headers={'User-Agent': 'updater'})
         res = urllib.request.urlopen(req, timeout=5)
         print(json.loads(res.read().decode())['commit']['message'])
     except Exception: print('No changelog available')
 
 try:
-    if local in ['0.0.0', '...', '']: 
+    if local in ['0.0.0', '...', '', 'unknown']: 
         get_latest()
     else:
-        req_commits = urllib.request.Request('https://api.github.com/repos/' + repo + '/commits?path=install.sh&per_page=15', headers={'User-Agent': 'updater'})
+        req_commits = urllib.request.Request('https://api.github.com/repos/' + repo + '/commits?path=version.txt&per_page=15', headers={'User-Agent': 'updater'})
         res_commits = urllib.request.urlopen(req_commits, timeout=5)
         file_commits = json.loads(res_commits.read().decode())
         
@@ -224,23 +224,19 @@ try:
         for c in file_commits:
             sha = c['sha']
             try:
-                raw_req = urllib.request.Request('https://raw.githubusercontent.com/' + repo + '/' + sha + '/install.sh', headers={'User-Agent': 'updater'})
+                raw_req = urllib.request.Request('https://raw.githubusercontent.com/' + repo + '/' + sha + '/version.txt', headers={'User-Agent': 'updater'})
                 raw_res = urllib.request.urlopen(raw_req, timeout=5)
-                content = raw_res.read().decode('utf-8')
-                
-                for line in content.splitlines():
-                    if line.startswith('DOTS_VERSION='):
-                        ver = line.split('=', 1)[1].strip().strip('"\\'')
-                        if ver == local:
-                            local_sha = sha
-                        break
+                ver = raw_res.read().decode('utf-8').strip()
+                if ver == local:
+                    local_sha = sha
+                    break
             except: pass
             
             if local_sha:
                 break
                 
         if local_sha:
-            compare_req = urllib.request.Request('https://api.github.com/repos/' + repo + '/compare/' + local_sha + '...master', headers={'User-Agent': 'updater'})
+            compare_req = urllib.request.Request('https://api.github.com/repos/' + repo + '/compare/' + local_sha + '...main', headers={'User-Agent': 'updater'})
             compare_res = urllib.request.urlopen(compare_req, timeout=5)
             data = json.loads(compare_res.read().decode())
             commits = data.get('commits', [])
@@ -674,7 +670,8 @@ except Exception as e:
                     easing.type: Easing.InSine
                     onFinished: {
                         updateBtn.triggered = true;
-                        let cmd = "if command -v kitty >/dev/null 2>&1; then kitty --hold bash -c 'echo \"Hydra Linux is configured and up to date!\"; sleep 2'; else ${TERM:-xterm} -hold -e bash -c 'echo \"Hydra Linux is configured and up to date!\"; sleep 2'; fi";
+                        let updateScript = Quickshell.env("HOME") + "/.config/hypr/scripts/update_hydra.sh";
+                        let cmd = "if command -v kitty >/dev/null 2>&1; then kitty --hold bash -c '" + updateScript + "'; else ${TERM:-xterm} -hold -e bash -c '" + updateScript + "'; fi";
                         Quickshell.execDetached(["bash", "-c", cmd]);
                         Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/qs_manager.sh", "close"]);
                     }

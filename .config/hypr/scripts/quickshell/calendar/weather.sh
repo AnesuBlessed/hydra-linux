@@ -122,10 +122,10 @@ get_data() {
     # ---------------------------------------------------------
     # STANDARD API FETCH LOGIC
     # ---------------------------------------------------------
-    forecast_url="http://api.openweathermap.org/data/2.5/forecast?APPID=${KEY}&id=${ID}&units=${UNIT}"
+    forecast_url="https://api.openweathermap.org/data/2.5/forecast?APPID=${KEY}&id=${ID}&units=${UNIT}"
     raw_api=$(curl -sf "$forecast_url")
     
-    weather_url="http://api.openweathermap.org/data/2.5/weather?APPID=${KEY}&id=${ID}&units=${UNIT}"
+    weather_url="https://api.openweathermap.org/data/2.5/weather?APPID=${KEY}&id=${ID}&units=${UNIT}"
     raw_weather=$(curl -sf "$weather_url")
     
     # Check if curl failed OR if OpenWeather returned an error

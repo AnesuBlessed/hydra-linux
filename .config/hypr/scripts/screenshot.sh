@@ -12,30 +12,6 @@ source "$(dirname "${BASH_SOURCE[0]}")/caching.sh"
 qs_ensure_cache "screenshot"
 qs_ensure_cache "recording"
 
-# ---------------------------------------------------------
-# DEPENDENCY CHECK
-# ---------------------------------------------------------
-# First check for notify-send so we can display errors
-if ! command -v notify-send &> /dev/null; then
-    echo "ERROR: notify-send is not installed. Cannot display missing dependencies."
-    exit 1
-fi
-
-REQUIRED_CMDS=("gpu-screen-recorder" "grim" "satty" "wl-copy" "pactl" "quickshell" "zbarimg" "python3")
-MISSING_CMDS=()
-
-for cmd in "${REQUIRED_CMDS[@]}"; do
-    if ! command -v "$cmd" &> /dev/null; then
-        MISSING_CMDS+=("$cmd")
-    fi
-done
-
-if [ ${#MISSING_CMDS[@]} -ne 0 ]; then
-    notify-send -u critical -a "Screenshot System" "Missing Dependencies" "Cannot start. Please install:\n${MISSING_CMDS[*]}"
-    exit 1
-fi
-# ---------------------------------------------------------
-
 # Directories
 SAVE_DIR="${XDG_PICTURES_DIR:-$HOME/Pictures}/Screenshots"
 RECORD_DIR="${XDG_VIDEOS_DIR:-$HOME/Videos}/Recordings"
@@ -69,6 +45,41 @@ while [[ "$#" -gt 0 ]]; do
         *) shift ;;
     esac
 done
+
+# ---------------------------------------------------------
+# DEPENDENCY CHECK (Context-aware)
+# ---------------------------------------------------------
+REQUIRED_CMDS=("grim" "wl-copy")
+if [ "$EDIT_MODE" = true ]; then
+    REQUIRED_CMDS+=("satty")
+fi
+if [ "$SCAN_QR_MODE" = true ]; then
+    REQUIRED_CMDS+=("zbarimg" "python3")
+fi
+if [ "$RECORD_MODE" = true ]; then
+    REQUIRED_CMDS+=("gpu-screen-recorder" "pactl")
+fi
+if [ "$FULL_MODE" = false ] && [ -z "$GEOMETRY" ] && [ "$SCAN_QR_MODE" = false ]; then
+    # Phase 2 UI Trigger
+    REQUIRED_CMDS+=("quickshell")
+fi
+
+MISSING_CMDS=()
+for cmd in "${REQUIRED_CMDS[@]}"; do
+    if ! command -v "$cmd" &> /dev/null; then
+        MISSING_CMDS+=("$cmd")
+    fi
+done
+
+if [ ${#MISSING_CMDS[@]} -ne 0 ]; then
+    if command -v notify-send &> /dev/null; then
+        notify-send -u critical -a "Screenshot System" "Missing Dependencies" "Cannot start. Please install:\n${MISSING_CMDS[*]}"
+    else
+        echo "ERROR: Missing dependencies: ${MISSING_CMDS[*]}" >&2
+    fi
+    exit 1
+fi
+# ---------------------------------------------------------
 
 # ---------------------------------------------------------
 # INSTANT QR SCANNING EXECUTION
@@ -163,17 +174,19 @@ if [ -f "$CACHE_DIR/rec_pid" ]; then
     FINAL_FILE=$(cat "$CACHE_DIR/final_file")
 
     # 1. SEND STOP SIGNAL TO GPU-SCREEN-RECORDER
-    [ "$REC_PID" != "0" ] && kill -SIGINT $REC_PID 2>/dev/null
+    if [ -n "$REC_PID" ] && [ "$REC_PID" != "0" ]; then
+        kill -SIGINT "$REC_PID" 2>/dev/null
 
-    # 2. WAIT FOR GSR TO CLOSE GRACEFULLY AND FINALIZE MP4
-    timeout=30
-    while kill -0 $REC_PID 2>/dev/null && [ $timeout -gt 0 ]; do
-        sleep 0.1
-        timeout=$((timeout - 1))
-    done
+        # 2. WAIT FOR GSR TO CLOSE GRACEFULLY AND FINALIZE MP4
+        timeout=30
+        while kill -0 "$REC_PID" 2>/dev/null && [ $timeout -gt 0 ]; do
+            sleep 0.1
+            timeout=$((timeout - 1))
+        done
 
-    # FORCE KILL IF STUCK
-    [ "$REC_PID" != "0" ] && kill -9 $REC_PID 2>/dev/null
+        # FORCE KILL IF STUCK
+        kill -9 "$REC_PID" 2>/dev/null
+    fi
 
     # 3. DESTROY PIPEWIRE VIRTUAL AUDIO CABLES
     if [ -f "$CACHE_DIR/pw_modules" ]; then

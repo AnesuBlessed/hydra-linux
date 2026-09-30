@@ -35,13 +35,13 @@ fi
 # Deploy to user home
 cp -f "$TMP_AVATAR" "$HOME/.face.icon"
 cp -f "$TMP_AVATAR" "$HOME/.face"
-rm -f "$TMP_AVATAR"
 
 # Deploy to SDDM faces if writable
 SDDM_FACE="/usr/share/sddm/faces/${USER}.face.icon"
 if [ -w "$SDDM_FACE" ] || [ -w "/usr/share/sddm/faces" ]; then
     cp -f "$TMP_AVATAR" "$SDDM_FACE" 2>/dev/null || true
 fi
+rm -f "$TMP_AVATAR"
 
 # Clear Quickshell info cache so the UI refreshes
 rm -f "$HOME/.cache/guide/sysinfo.txt" 2>/dev/null || true
