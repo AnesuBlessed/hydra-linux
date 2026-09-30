@@ -55,7 +55,7 @@ Item {
 
     Process {
         id: scaleWatcher
-        command: ["bash", "-c", "while [ ! -f " + root.settingsFile + " ]; do sleep 1; done; inotifywait -qq -e modify,close_write " + root.settingsFile + " 2>/dev/null || sleep 2"]
+        command: ["bash", "-c", "while [ ! -f " + root.settingsFile + " ]; do sleep 1; done; inotifywait -qq -e modify,close_write,move_self " + root.settingsFile + " 2>/dev/null || sleep 2"]
         running: true
         onExited: {
             scaleReader.running = false;

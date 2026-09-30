@@ -106,10 +106,25 @@ compile_settings() {
 
     # 5. Regenerate monitors.conf
     echo "Regenerating monitors.conf..."
-    cp "$TMPL_DIR/monitors.conf.template" "$MONITORS_CONF"
-    MONITOR_COUNT=$(jq '.monitors | length' "$SETTINGS_FILE" 2>/dev/null)
+    MONITOR_COUNT=$(jq '.monitors | length // 0' "$SETTINGS_FILE" 2>/dev/null || echo 0)
     if [[ "$MONITOR_COUNT" -gt 0 ]]; then
+        cat << 'EOF' > "$MONITORS_CONF"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+#  ◈ MONITORS & HDMI HOTPLUG CONFIGURATION (Managed by Hydra settings)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+EOF
         jq -r '.monitors[]? | "monitor = \(.name), \(.resW)x\(.resH)@\(.rate), \(.x)x\(.y), \(.scale)\(if .transform and .transform != 0 then ", transform, \(.transform)" else "" end)"' "$SETTINGS_FILE" >> "$MONITORS_CONF"
+        cat << 'EOF' >> "$MONITORS_CONF"
+
+# Fallback for unconfigured displays
+monitor = , preferred, auto, 1
+
+# Clamshell Mode
+bindl = , switch:on:Lid Switch, exec, hyprctl keyword monitor "eDP-1, disable"
+bindl = , switch:off:Lid Switch, exec, hyprctl reload
+EOF
+    elif [ ! -f "$MONITORS_CONF" ]; then
+        cp "$TMPL_DIR/monitors.conf.template" "$MONITORS_CONF"
     fi
 
     # Hash after changes

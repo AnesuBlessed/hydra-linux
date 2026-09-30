@@ -34,22 +34,36 @@ Item {
     }
 
     // --- JSON Operations ---
-    // Every writer used the same "settings.json.tmp" filename, so two saves in
-    // the same tick raced and one update was lost entirely. A unique temp name
-    // per write plus an flock on the read-modify-write makes concurrent saves
-    // serialise instead of clobbering each other.
-    property int _writeSeq: 0
-
-    function _jsonWriteCommand(assignExpr) {
-        let tmp = `${settingsJsonPath}.${Date.now()}.${_writeSeq++}.tmp`;
-        // Lock the target for the whole read-modify-write so a concurrent
-        // writer cannot read the pre-update file and overwrite the new value.
-        return `mkdir -p "$(dirname '${settingsJsonPath}')" && ` +
-               `{ flock 9; ` +
-               `[ ! -f '${settingsJsonPath}' ] && echo '{}' > '${settingsJsonPath}'; ` +
-               `jq ${assignExpr} '${settingsJsonPath}' > '${tmp}' && ` +
-               `mv '${tmp}' '${settingsJsonPath}'; ` +
-               `} 9> '${settingsJsonPath}.lock' ; rm -f '${tmp}'`;
+    function _jsonWriteCommand(dataObj) {
+        let jsonStr = JSON.stringify(dataObj).replace(/'/g, "'\\''");
+        return `python3 -c 'import json, os, sys, fcntl
+target, updates_str = sys.argv[1], sys.argv[2]
+try:
+    updates = json.loads(updates_str)
+except Exception:
+    sys.exit(1)
+os.makedirs(os.path.dirname(target), exist_ok=True)
+lock_file = target + ".lock"
+with open(lock_file, "w") as lf:
+    fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+    data = {}
+    if os.path.exists(target):
+        try:
+            with open(target, "r") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    if not isinstance(data, dict):
+        data = {}
+    data.update(updates)
+    tmp = target + f".{os.getpid()}.tmp"
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, target)
+    fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+' '${settingsJsonPath}' '${jsonStr}'`;
     }
 
     function getSetting(key, fallbackValue) {
@@ -60,15 +74,12 @@ Item {
         rawSettings[key] = value;
         let updateObj = {};
         updateObj[key] = value;
-        let safeJson = JSON.stringify(updateObj).replace(/'/g, "'\\''");
-        sh(_jsonWriteCommand(`. + ${safeJson}`));
+        sh(_jsonWriteCommand(updateObj));
     }
 
     function updateJsonBulk(dataObj) {
-        let jsonStr = JSON.stringify(dataObj).replace(/'/g, "'\\''");
-        sh(_jsonWriteCommand(`. + ${jsonStr}`));
-
         for (let key in dataObj) rawSettings[key] = dataObj[key];
+        sh(_jsonWriteCommand(dataObj));
     }
 
     // --- Env Operations ---
