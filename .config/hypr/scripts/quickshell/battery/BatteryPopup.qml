@@ -70,7 +70,7 @@ Item {
         id: scaler
         // Uses the physical screen width so the popup scales synchronously with the TopBar
         currentWidth: Screen.width
-        currentHeight: window.height
+        currentHeight: Screen.height
     }
     
     // Helper function scoped to the root Item for easy access in deeply nested elements and Canvases

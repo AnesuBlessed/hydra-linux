@@ -280,6 +280,15 @@ Variants {
                 }
             }
 
+            onDisplayArtUrlChanged: {
+                if (displayArtUrl && displayArtUrl.indexOf("placeholder_blank.png") !== -1) {
+                    artRetryTimer.retryCount = 0;
+                    artRetryTimer.running = true;
+                } else {
+                    artRetryTimer.running = false;
+                }
+            }
+
             property bool isMediaActive: barWindow.musicData.status !== "Stopped" && barWindow.musicData.title !== ""
             property bool isWifiOn: barWindow.wifiStatus.toLowerCase() === "enabled" || barWindow.wifiStatus.toLowerCase() === "on"
             property bool isBtOn: barWindow.btStatus.toLowerCase() === "enabled" || barWindow.btStatus.toLowerCase() === "on"
@@ -448,13 +457,16 @@ Variants {
                 interval: 500
                 repeat: true
                 property int retryCount: 0
-                running: barWindow.displayArtUrl && barWindow.displayArtUrl.indexOf("placeholder_blank.png") !== -1 && retryCount < 6
+                running: false
                 onTriggered: {
                     retryCount++;
-                    musicForceRefresh.running = false;
-                    musicForceRefresh.running = true;
+                    if (retryCount >= 6) {
+                        running = false;
+                    } else {
+                        musicForceRefresh.running = false;
+                        musicForceRefresh.running = true;
+                    }
                 }
-                onRunningChanged: if (!running) retryCount = 0
             }
 
             Process {
@@ -827,23 +839,23 @@ Variants {
 
                         onCurIdxChanged: {
                             if (curIdx > prevIdx) {
-                                rightAnim.duration = 200; leftAnim.duration = 350;
+                                rightAnim.duration = 140; leftAnim.duration = 200;
                             } else if (curIdx < prevIdx) {
-                                leftAnim.duration = 200; rightAnim.duration = 350;
+                                leftAnim.duration = 140; rightAnim.duration = 200;
                             }
                             prevIdx = curIdx;
                         }
 
                         property int clampedIdx: Math.max(0, Math.min(curIdx, workspacesBox.limitActive ? 5 : workspacesModel.count - 1))
-                        property var targetChild: wsLayout.children[clampedIdx]
+                        property var targetChild: (wsRepeater && wsRepeater.count > clampedIdx) ? wsRepeater.itemAt(clampedIdx) : null
                         property real targetLeft: wsLayout.x + (targetChild ? targetChild.x : (clampedIdx * (barWindow.s(32) + barWindow.s(6))))
                         property real targetRight: targetLeft + (targetChild ? targetChild.width : barWindow.s(32))
 
                         property real actualLeft: targetLeft
                         property real actualRight: targetRight
 
-                        Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 250; easing.type: Easing.OutExpo } }
-                        Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 250; easing.type: Easing.OutExpo } }
+                        Behavior on actualLeft { NumberAnimation { id: leftAnim; duration: 180; easing.type: Easing.OutExpo } }
+                        Behavior on actualRight { NumberAnimation { id: rightAnim; duration: 180; easing.type: Easing.OutExpo } }
 
                         x: actualLeft
                         width: actualRight - actualLeft
@@ -856,6 +868,7 @@ Variants {
                         spacing: barWindow.s(6)
                         
                         Repeater {
+                            id: wsRepeater
                             model: workspacesModel
                             delegate: Rectangle {
                                 id: wsPill
@@ -1149,7 +1162,7 @@ Variants {
                                 Layout.alignment: Qt.AlignVCenter;
                                 font.family: "Iosevka Nerd Font"; 
                                 font.pixelSize: barWindow.s(24); 
-                                color: Qt.tint(barWindow.weatherHex, 0.4)
+                                color: barWindow.weatherHex ? barWindow.weatherHex : mocha.peach
                             }
                             Text { 
                                 text: barWindow.weatherTemp; 

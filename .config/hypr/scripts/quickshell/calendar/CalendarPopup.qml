@@ -49,7 +49,6 @@ Item {
             
             // Re-center horizontally to keep the popup perfectly in the middle when scaling changes
             let newX = Math.floor((Screen.width / 2) - (window.targetMasterWidth / 2));
-            masterWindow.targetX = newX;
             masterWindow.animX = newX;
         }
     }
@@ -493,6 +492,7 @@ Item {
 
             // Big Parallax Weather Icon (Tied to Weather Transition)
             Text {
+                id: bgWeatherIcon
                 anchors.centerIn: parent
 
                 text: {
@@ -516,7 +516,7 @@ Item {
                 }
                 
                 transform: [
-                    Translate { y: parent.drift },
+                    Translate { y: bgWeatherIcon.drift },
                     Translate { x: window.weatherContentOffset * 2 } // Exaggerated shift for background depth
                 ]
             }
@@ -722,8 +722,10 @@ Item {
                                         font.family: "Iosevka Nerd Font"; font.pixelSize: Math.round(18 * window.sf)
                                         color: isHighlighted ? window.base : (modelData.hex || window.text)
                                         
-                                        transform: Translate { y: hrMa.containsMouse ? Math.round(-3 * window.sf) : 0 }
-                                        Behavior on transform { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                                        transform: Translate { 
+                                            y: hrMa.containsMouse ? Math.round(-3 * window.sf) : 0 
+                                            Behavior on y { NumberAnimation { duration: 200; easing.type: Easing.OutBack } }
+                                        }
                                     }
                                     
                                     Text { 
@@ -906,9 +908,11 @@ Item {
                             
                             Text { 
                                 anchors.centerIn: parent; text: ""; font.family: "Iosevka Nerd Font"; font.pixelSize: Math.round(18 * window.sf)
-                                color: parent.containsMouse ? window.textAccent : window.overlay1
-                                transform: Translate { x: parent.containsMouse ? Math.round(-5 * window.sf) : wPrevMa.pulseOffset }
-                                Behavior on transform { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
+                                color: wPrevMa.containsMouse ? window.textAccent : window.overlay1
+                                transform: Translate { 
+                                    x: wPrevMa.containsMouse ? Math.round(-5 * window.sf) : wPrevMa.pulseOffset
+                                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
+                                }
                             }
                         }
                         
@@ -937,9 +941,11 @@ Item {
                             
                             Text { 
                                 anchors.centerIn: parent; text: ""; font.family: "Iosevka Nerd Font"; font.pixelSize: Math.round(18 * window.sf)
-                                color: parent.containsMouse ? window.textAccent : window.overlay1
-                                transform: Translate { x: parent.containsMouse ? Math.round(5 * window.sf) : wNextMa.pulseOffset }
-                                Behavior on transform { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
+                                color: wNextMa.containsMouse ? window.textAccent : window.overlay1
+                                transform: Translate { 
+                                    x: wNextMa.containsMouse ? Math.round(5 * window.sf) : wNextMa.pulseOffset
+                                    Behavior on x { NumberAnimation { duration: 250; easing.type: Easing.OutBack } }
+                                }
                             }
                         }
                     }

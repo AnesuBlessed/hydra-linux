@@ -15,7 +15,7 @@ Item {
     Scaler {
         id: scaler
         currentWidth: Screen.width
-        currentHeight: root.height
+        currentHeight: Screen.height
     }
     function s(val) { 
         return scaler.s(val); 
@@ -301,8 +301,10 @@ Item {
         
         if (event.key === Qt.Key_Left) {
             if (root.currentTab === 0 && root.highlightedBox === 2) {
-                Config.uiScale = Math.max(0.5, parseFloat((Config.uiScale - 0.1).toFixed(1)));
-                GlobalSettingsWatcher.uiScale = Config.uiScale;
+                let val = Math.max(0.5, parseFloat((Config.uiScale - 0.1).toFixed(1)));
+                Config.uiScale = val;
+                GlobalSettingsWatcher.uiScale = val;
+                Config.updateJsonBulk({ "uiScale": val });
                 event.accepted = true;
                 return;
             } else if (root.currentTab === 0 && root.highlightedBox === 6) {
@@ -313,8 +315,10 @@ Item {
         }
         if (event.key === Qt.Key_Right) {
             if (root.currentTab === 0 && root.highlightedBox === 2) {
-                Config.uiScale = Math.min(2.0, parseFloat((Config.uiScale + 0.1).toFixed(1)));
-                GlobalSettingsWatcher.uiScale = Config.uiScale;
+                let val = Math.min(2.0, parseFloat((Config.uiScale + 0.1).toFixed(1)));
+                Config.uiScale = val;
+                GlobalSettingsWatcher.uiScale = val;
+                Config.updateJsonBulk({ "uiScale": val });
                 event.accepted = true;
                 return;
             } else if (root.currentTab === 0 && root.highlightedBox === 6) {
@@ -1300,6 +1304,7 @@ Item {
                                                 let val = Math.max(0.5, parseFloat((Config.uiScale - 0.1).toFixed(1)));
                                                 Config.uiScale = val;
                                                 GlobalSettingsWatcher.uiScale = val;
+                                                Config.updateJsonBulk({ "uiScale": val });
                                             }
                                         }
                                     }
@@ -1332,6 +1337,7 @@ Item {
                                                 let val = Math.min(2.0, parseFloat((Config.uiScale + 0.1).toFixed(1)));
                                                 Config.uiScale = val;
                                                 GlobalSettingsWatcher.uiScale = val;
+                                                Config.updateJsonBulk({ "uiScale": val });
                                             }
                                         }
                                     }

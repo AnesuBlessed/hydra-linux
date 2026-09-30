@@ -17,7 +17,7 @@ Item {
     Scaler {
         id: scaler
         currentWidth: Screen.width
-        currentHeight: root.height
+        currentHeight: Screen.height
     }
     
     function s(val) { 

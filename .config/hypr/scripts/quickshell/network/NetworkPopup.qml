@@ -16,7 +16,7 @@ Item {
     Scaler {
         id: scaler
         currentWidth: Screen.width
-        currentHeight: window.height
+        currentHeight: Screen.height
     }
 
     function s(val) { return scaler.s(val); }
@@ -47,6 +47,7 @@ Item {
 
     Settings {
         id: cache
+        fileName: paths.getCacheDir("network") + "/settings.ini"
         category: "QS_NetworkWidgetUnified"
         property string lastWifiSsid: ""
         property string lastWifiJson: ""
@@ -896,7 +897,7 @@ Item {
                     model: 3
                     Rectangle {
                         anchors.centerIn: parent
-                        width: window.s(280) + (index * window.s(170))
+                        width: Math.max(window.s(280) + (index * window.s(170)), 220 + (index * 130))
                         height: width
                         radius: width / 2
                         color: "transparent"
@@ -1539,7 +1540,8 @@ Item {
                         
                         delegate: Item {
                             id: floatCardDelegateContainer
-                            width: window.s(170); height: window.s(60)
+                            width: Math.max(window.s(170), 135)
+                            height: Math.max(window.s(60), 46)
 
                             property bool isLoaded: false
                             opacity: isLoaded ? 1.0 : 0.0
@@ -1890,7 +1892,7 @@ Item {
                                     
                                     Text {
                                         font.family: "Iosevka Nerd Font"
-                                        font.pixelSize: window.s(20)
+                                        font.pixelSize: Math.max(window.s(20), 16)
                                         color: floatCard.isFailed ? window.red : (floatCard.isMyBusy ? window.text : window.activeColor)
                                         text: icon
                                         Behavior on color { ColorAnimation { duration: 200 } }
@@ -1903,7 +1905,7 @@ Item {
                                         Item {
                                             id: nameContainerBase
                                             Layout.fillWidth: true
-                                            height: window.s(18)
+                                            height: Math.max(window.s(18), 16)
                                             clip: true
 
                                             Text {
@@ -1914,7 +1916,7 @@ Item {
                                                 text: floatCard.itemName
                                                 font.family: "JetBrains Mono"
                                                 font.weight: Font.Bold
-                                                font.pixelSize: window.s(13)
+                                                font.pixelSize: Math.max(window.s(13), 11)
                                                 color: floatCard.isFailed ? window.red : (floatCard.isHighlighted ? window.activeColor : window.text)
                                                 Behavior on color { ColorAnimation { duration: 200 } }
                                             }
@@ -1926,14 +1928,14 @@ Item {
                                                 text: floatCard.itemName
                                                 font.family: "JetBrains Mono"
                                                 font.weight: Font.Bold
-                                                font.pixelSize: window.s(13)
+                                                font.pixelSize: Math.max(window.s(13), 11)
                                                 color: floatCard.isFailed ? window.red : (floatCard.isHighlighted ? window.activeColor : window.text)
                                             }
                                         }
                                         
                                         Text {
                                             font.family: "JetBrains Mono"
-                                            font.pixelSize: window.s(10)
+                                            font.pixelSize: Math.max(window.s(10), 9)
                                             color: floatCard.isFailed ? window.maroon : (floatCard.isMyBusy ? window.activeColor : window.overlay0)
                                             text: floatCard.isFailed ? "Connection Failed" : (floatCard.isMyBusy ? "Connecting..." : (floatCard.renderFill > 0.1 && floatCard.renderFill < 1.0 ? floatCard.itemId === "ip_0" ? floatCard.triggered ? "Copied!" : "Hold to copy...": "Hold..." : action))
                                             Behavior on color { ColorAnimation { duration: 200 } }

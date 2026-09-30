@@ -58,8 +58,8 @@ MANIFEST="$THUMB_DIR/.manifest"
 # Only runs on slow path — not on every workspace switch
 # -----------------------------------------------------------------------------
 
-if ! pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null; then
-    quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 &
+if [[ "$ACTION" != "reload" ]] && ! pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null; then
+    systemd-run --user --unit=quickshell-desktop quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 || nohup quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 &
     disown
 fi
 
@@ -176,6 +176,9 @@ handle_network_prep() {
 # IPC ROUTING
 # -----------------------------------------------------------------------------
 if [[ "$ACTION" == "reload" ]]; then
+    # Stop any existing systemd transient unit
+    systemctl --user stop quickshell-desktop 2>/dev/null || true
+
     # Kill QS and all its watcher children cleanly for current user
     QS_PID=$(pgrep -u "$UID" -f "quickshell.*Shell.qml" | head -n1)
     if [[ -n "$QS_PID" ]]; then
@@ -223,8 +226,11 @@ if [[ "$ACTION" == "reload" ]]; then
     WAYLAND_DISPLAY="${DETECTED_WAYLAND:-wayland-1}" \
     XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
     DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}" \
-    quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
-    disown
+    systemd-run --user --unit=quickshell-desktop quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        nohup quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
+        disown
+    fi
     exit 0
 fi
 

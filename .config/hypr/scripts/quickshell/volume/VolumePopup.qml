@@ -18,7 +18,7 @@ Item {
         id: scaler
         // Uses the physical screen width so the popup scales synchronously with the TopBar
         currentWidth: Screen.width
-        currentHeight: window.height
+        currentHeight: Screen.height
     }
     
     // Helper function scoped to the root Item for easy access in deeply nested elements and Canvases
@@ -715,9 +715,11 @@ Item {
 
                             // Intro transforms
                             opacity: isLoaded ? 1.0 : 0.0
-                            transform: Translate { y: isLoaded ? 0 : window.s(15) }
+                            transform: Translate { 
+                                y: isLoaded ? 0 : window.s(15) 
+                                Behavior on y { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
+                            }
                             Behavior on opacity { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
-                            Behavior on transform { NumberAnimation { duration: 500; easing.type: Easing.OutQuint } }
 
                             // Dynamic Height: The active hero element collapses its bottom slider row
                             property bool isActiveNode: model.is_default && window.activeTab !== "apps"

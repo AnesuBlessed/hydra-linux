@@ -28,52 +28,60 @@ Item {
     property color maroon: "#eba0ac"
     property color teal: "#94e2d5"
 
+    readonly property string colorsFile: Quickshell.env("HOME") + "/.config/hypr/scripts/quickshell/qs_colors.json"
+
+    function applyColors(content) {
+        try {
+            let parsed = JSON.parse(content);
+            if (parsed.base) root.base = parsed.base;
+            if (parsed.mantle) root.mantle = parsed.mantle;
+            if (parsed.crust) root.crust = parsed.crust;
+            if (parsed.text) root.text = parsed.text;
+            if (parsed.subtext0) root.subtext0 = parsed.subtext0;
+            if (parsed.subtext1) root.subtext1 = parsed.subtext1;
+            if (parsed.surface0) root.surface0 = parsed.surface0;
+            if (parsed.surface1) root.surface1 = parsed.surface1;
+            if (parsed.surface2) root.surface2 = parsed.surface2;
+            if (parsed.overlay0) root.overlay0 = parsed.overlay0;
+            if (parsed.overlay1) root.overlay1 = parsed.overlay1;
+            if (parsed.overlay2) root.overlay2 = parsed.overlay2;
+            if (parsed.blue) root.blue = parsed.blue;
+            if (parsed.sapphire) root.sapphire = parsed.sapphire;
+            if (parsed.peach) root.peach = parsed.peach;
+            if (parsed.green) root.green = parsed.green;
+            if (parsed.red) root.red = parsed.red;
+            if (parsed.mauve) root.mauve = parsed.mauve;
+            if (parsed.pink) root.pink = parsed.pink;
+            if (parsed.yellow) root.yellow = parsed.yellow;
+            if (parsed.maroon) root.maroon = parsed.maroon;
+            if (parsed.teal) root.teal = parsed.teal;
+        } catch (e) {
+            console.warn("GlobalTheme: could not parse qs_colors.json:", e);
+        }
+    }
+
     Process {
         id: themeReader
-        command: ["cat", Quickshell.env("HOME") + "/.config/hypr/scripts/qs_colors.json"]
+        command: ["bash", "-c", "cat " + root.colorsFile + " 2>/dev/null || echo '{}'"]
         running: true
         stdout: StdioCollector {
             onStreamFinished: {
-                try {
-                    let parsed = JSON.parse(this.text);
-                    root.base = parsed.base || root.base;
-                    root.mantle = parsed.mantle || root.mantle;
-                    root.crust = parsed.crust || root.crust;
-                    root.text = parsed.text || root.text;
-                    root.subtext0 = parsed.subtext0 || root.subtext0;
-                    root.subtext1 = parsed.subtext1 || root.subtext1;
-                    root.surface0 = parsed.surface0 || root.surface0;
-                    root.surface1 = parsed.surface1 || root.surface1;
-                    root.surface2 = parsed.surface2 || root.surface2;
-                    root.overlay0 = parsed.overlay0 || root.overlay0;
-                    root.overlay1 = parsed.overlay1 || root.overlay1;
-                    root.overlay2 = parsed.overlay2 || root.overlay2;
-                    root.blue = parsed.blue || root.blue;
-                    root.sapphire = parsed.sapphire || root.sapphire;
-                    root.peach = parsed.peach || root.peach;
-                    root.green = parsed.green || root.green;
-                    root.red = parsed.red || root.red;
-                    root.mauve = parsed.mauve || root.mauve;
-                    root.pink = parsed.pink || root.pink;
-                    root.yellow = parsed.yellow || root.yellow;
-                    root.maroon = parsed.maroon || root.maroon;
-                    root.teal = parsed.teal || root.teal;
-                } catch (e) {}
+                if (this.text && this.text.trim().length > 0) {
+                    root.applyColors(this.text.trim());
+                }
             }
         }
     }
 
     Process {
         id: themeWatcher
-        command: ["bash", "-c", "inotifywait -qq -e close_write,modify ~/.config/hypr/scripts/qs_colors.json || sleep 2"]
+        command: ["bash", "-c", "while [ ! -f " + root.colorsFile + " ]; do sleep 1; done; inotifywait -qq -e close_write,modify " + root.colorsFile + " 2>/dev/null || sleep 2"]
         running: true
-        stdout: StdioCollector {
-            onStreamFinished: {
-                themeReader.running = false;
-                themeReader.running = true;
-                themeWatcher.running = false;
-                themeWatcher.running = true;
-            }
+        onExited: {
+            themeReader.running = false;
+            themeReader.running = true;
+            running = false;
+            running = true;
         }
     }
 }
