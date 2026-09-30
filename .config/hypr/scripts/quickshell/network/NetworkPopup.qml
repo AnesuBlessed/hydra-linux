@@ -47,7 +47,7 @@ Item {
 
     Settings {
         id: cache
-        fileName: paths.getCacheDir("network") + "/settings.ini"
+        location: paths.getCacheDir("network") + "/settings.ini"
         category: "QS_NetworkWidgetUnified"
         property string lastWifiSsid: ""
         property string lastWifiJson: ""

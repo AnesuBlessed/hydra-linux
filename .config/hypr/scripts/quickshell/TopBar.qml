@@ -940,7 +940,9 @@ Variants {
                                     anchors.fill: parent
                                     onClicked: {
                                         workspacesModel.activeIndex = index;
-                                        Quickshell.execDetached(["hyprctl", "dispatch", "workspace", wsName]);
+                                        let num = parseInt(wsName);
+                                        let target = isNaN(num) ? ("'" + (wsName || (index + 1)) + "'") : num;
+                                        Quickshell.execDetached(["hyprctl", "dispatch", "hl.dsp.focus({ workspace = " + target + " })"]);
                                     }
                                 }
                             }
