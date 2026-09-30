@@ -1,6 +1,19 @@
 <div align="center">
 
 ```
+        _/\_     _/\_     _/\_
+       / o  o\   / O  O\   / o  o\
+      (  \/  ) (  \  /  ) (  \/  )
+       \ \/ /   \ VV /   \ \/ /
+       /    \   /    \   /    \
+      / /\   \_/  /\  \_/   /\ \
+     ( (  \      /  \      /  ) )
+      \ \  \____/ /\ \____/  / /
+       \ \      \/  \/      / /
+        \ \_  H Y D R A  _/ /
+         \__  L I N U X  __/
+            \___/\___/
+
  _   ___   ______  ____    _       _     ___ _   _ _   ___  __
 | | | \ \ / /  _ \|  _ \  / \     | |   |_ _| \ | | | | \ \/ /
 | |_| |\ V /| | | | |_) |/ _ \    | |    | ||  \| | | | |\  /
@@ -81,7 +94,8 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 - **System settings panel** (General, Keybinds, Startup Apps).
 - **SDDM video manager** — change the login screen background video from within the settings panel.
 - **Profile avatar manager** — set your login and desktop avatar with automatic cropping.
-- **Monitor management** and display configuration.
+- **Monitor management** and display configuration with persistent scaling across reboots.
+- **System updater** with live changelog viewer, one-click updates (`update_hydra.sh`), and desktop notifications.
 - **Interactive guide/tutorial** system for new users.
 
 ### Matugen Dynamic Theming
@@ -145,6 +159,7 @@ Run with all recommended defaults and no prompts:
 | `--no-sddm` | Skip Silent SDDM greeter setup |
 | `--with-nvim` | Include Neovim with Lua language server |
 | `--with-zsh` | Include Zsh shell |
+| `-v`, `--version` | Display version information |
 | `-h`, `--help` | Display usage information |
 
 ---
