@@ -214,10 +214,10 @@ Item {
 
     Process {
         id: savedNetworksFetcher
-        command: ["bash", "-c", "nmcli -t -f NAME connection show | grep -v 'lo'"]
+        command: ["bash", "-c", "nmcli -t -f NAME,TYPE connection show | awk -F: '$2==\"802-11-wireless\"{print $1}'"]
         stdout: StdioCollector {
             onStreamFinished: {
-                let text = this.text.trim();
+                let text = this.text ? this.text.trim() : "";
                 window.savedWifiNetworks = text ? text.split('\n') : [];
             }
         }
@@ -238,16 +238,13 @@ Item {
                 window.failedId = targetId;
                 failClearTimer.restart();
                 window.playSfx("error.wav"); 
-                
+            } else {
                 if (window.activeMode === "wifi" && targetSsid !== "") {
-                    Quickshell.execDetached(["nmcli", "connection", "delete", targetSsid]);
-                    let newSaved = [];
-                    for(let i = 0; i < window.savedWifiNetworks.length; i++) {
-                        if(window.savedWifiNetworks[i] !== targetSsid) {
-                            newSaved.push(window.savedWifiNetworks[i]);
-                        }
+                    let newSaved = window.savedWifiNetworks.slice();
+                    if (newSaved.indexOf(targetSsid) === -1) {
+                        newSaved.push(targetSsid);
+                        window.savedWifiNetworks = newSaved;
                     }
-                    window.savedWifiNetworks = newSaved;
                 }
             }
             window.connectingId = "";
@@ -1540,8 +1537,8 @@ Item {
                         
                         delegate: Item {
                             id: floatCardDelegateContainer
-                            width: Math.max(window.s(170), 135)
-                            height: Math.max(window.s(60), 46)
+                            width: Math.max(window.s(132), 110)
+                            height: Math.max(window.s(38), 32)
 
                             property bool isLoaded: false
                             opacity: isLoaded ? 1.0 : 0.0
@@ -1663,7 +1660,7 @@ Item {
                             Rectangle {
                                 id: floatCard
                                 anchors.fill: parent
-                                radius: window.s(14)
+                                radius: window.s(10)
                                 
                                 property string itemId: id
                                 property string itemName: name
@@ -1751,7 +1748,7 @@ Item {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: window.s(14)
+                                    radius: window.s(10)
                                     color: "transparent"
                                     border.width: 1
                                     border.color: floatCard.isFailed ? window.red : window.surface2
@@ -1761,7 +1758,7 @@ Item {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: window.s(14)
+                                    radius: window.s(10)
                                     opacity: floatCard.locksList || floatCard.isHighlighted ? 1.0 : 0.0
                                     color: "transparent"
                                     border.width: floatCard.isHighlighted && !floatCard.locksList ? 1 : window.s(2)
@@ -1771,7 +1768,7 @@ Item {
                                     Rectangle {
                                         anchors.fill: parent
                                         anchors.margins: floatCard.isHighlighted && !floatCard.locksList ? 1 : window.s(2)
-                                        radius: window.s(12)
+                                        radius: window.s(8)
                                         color: window.base
                                         opacity: floatCard.locksList ? 0.9 : 1.0
                                     }
@@ -1786,7 +1783,7 @@ Item {
 
                                 Rectangle {
                                     anchors.fill: parent
-                                    radius: window.s(14)
+                                    radius: window.s(10)
                                     color: "#ffffff"
                                     opacity: floatCard.flashOpacity
                                     PropertyAnimation on opacity { id: cardFlashAnim; to: 0; duration: 500; easing.type: Easing.OutExpo }
@@ -1819,14 +1816,14 @@ Item {
                                         if (floatCard.renderFill <= 0.001) return;
 
                                         var currentW = width * floatCard.renderFill;
-                                        var r = s(14); 
+                                        var r = s(10); 
 
                                         ctx.save();
                                         ctx.beginPath();
                                         ctx.moveTo(0, 0);
                                         
                                         if (floatCard.renderFill < 0.99) {
-                                            var waveAmp = s(12) * Math.sin(floatCard.renderFill * Math.PI); 
+                                            var waveAmp = s(8) * Math.sin(floatCard.renderFill * Math.PI); 
                                             if (currentW - waveAmp < 0) waveAmp = currentW;
                                             var cp1x = currentW + Math.sin(wavePhase) * waveAmp;
                                             var cp2x = currentW + Math.cos(wavePhase + Math.PI) * waveAmp;
@@ -1887,12 +1884,15 @@ Item {
                                 RowLayout {
                                     id: baseTextRow
                                     anchors.fill: parent
-                                    anchors.margins: window.s(12)
-                                    spacing: window.s(10)
+                                    anchors.leftMargin: window.s(8)
+                                    anchors.rightMargin: window.s(8)
+                                    anchors.topMargin: window.s(2)
+                                    anchors.bottomMargin: window.s(2)
+                                    spacing: window.s(6)
                                     
                                     Text {
                                         font.family: "Iosevka Nerd Font"
-                                        font.pixelSize: Math.max(window.s(20), 16)
+                                        font.pixelSize: Math.max(window.s(16), 13)
                                         color: floatCard.isFailed ? window.red : (floatCard.isMyBusy ? window.text : window.activeColor)
                                         text: icon
                                         Behavior on color { ColorAnimation { duration: 200 } }
@@ -1900,12 +1900,12 @@ Item {
                                     
                                     ColumnLayout {
                                         Layout.fillWidth: true
-                                        spacing: window.s(2)
+                                        spacing: 0
                                         
                                         Item {
                                             id: nameContainerBase
                                             Layout.fillWidth: true
-                                            height: Math.max(window.s(18), 16)
+                                            height: Math.max(window.s(15), 13)
                                             clip: true
 
                                             Text {
@@ -1916,7 +1916,7 @@ Item {
                                                 text: floatCard.itemName
                                                 font.family: "JetBrains Mono"
                                                 font.weight: Font.Bold
-                                                font.pixelSize: Math.max(window.s(13), 11)
+                                                font.pixelSize: Math.max(window.s(11), 10)
                                                 color: floatCard.isFailed ? window.red : (floatCard.isHighlighted ? window.activeColor : window.text)
                                                 Behavior on color { ColorAnimation { duration: 200 } }
                                             }
@@ -1928,14 +1928,14 @@ Item {
                                                 text: floatCard.itemName
                                                 font.family: "JetBrains Mono"
                                                 font.weight: Font.Bold
-                                                font.pixelSize: Math.max(window.s(13), 11)
+                                                font.pixelSize: Math.max(window.s(11), 10)
                                                 color: floatCard.isFailed ? window.red : (floatCard.isHighlighted ? window.activeColor : window.text)
                                             }
                                         }
                                         
                                         Text {
                                             font.family: "JetBrains Mono"
-                                            font.pixelSize: Math.max(window.s(10), 9)
+                                            font.pixelSize: Math.max(window.s(9), 8)
                                             color: floatCard.isFailed ? window.maroon : (floatCard.isMyBusy ? window.activeColor : window.overlay0)
                                             text: floatCard.isFailed ? "Connection Failed" : (floatCard.isMyBusy ? "Connecting..." : (floatCard.renderFill > 0.1 && floatCard.renderFill < 1.0 ? floatCard.itemId === "ip_0" ? floatCard.triggered ? "Copied!" : "Hold to copy...": "Hold..." : action))
                                             Behavior on color { ColorAnimation { duration: 200 } }
@@ -1953,17 +1953,17 @@ Item {
                                     RowLayout {
                                         x: baseTextRow.x; y: baseTextRow.y
                                         width: baseTextRow.width; height: baseTextRow.height
-                                        spacing: window.s(10)
+                                        spacing: window.s(6)
                                         
-                                        Text { font.family: "Iosevka Nerd Font"; font.pixelSize: window.s(20); color: window.crust; text: icon }
+                                        Text { font.family: "Iosevka Nerd Font"; font.pixelSize: Math.max(window.s(16), 13); color: window.crust; text: icon }
                                         
                                         ColumnLayout {
                                             Layout.fillWidth: true
-                                            spacing: window.s(2)
+                                            spacing: 0
 
                                             Item {
                                                 Layout.fillWidth: true
-                                                height: window.s(18)
+                                                height: Math.max(window.s(15), 13)
                                                 clip: true
                                                 
                                                 Text {
@@ -1972,7 +1972,7 @@ Item {
                                                     anchors.leftMargin: floatCard.textOffset
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     text: floatCard.itemName
-                                                    font.family: "JetBrains Mono"; font.weight: Font.Bold; font.pixelSize: window.s(13); color: window.crust 
+                                                    font.family: "JetBrains Mono"; font.weight: Font.Bold; font.pixelSize: Math.max(window.s(11), 10); color: window.crust 
                                                 }
                                                 Text { 
                                                     anchors.left: filledNameText.right
@@ -1980,11 +1980,11 @@ Item {
                                                     anchors.verticalCenter: parent.verticalCenter
                                                     visible: floatCard.doMarquee
                                                     text: floatCard.itemName
-                                                    font.family: "JetBrains Mono"; font.weight: Font.Bold; font.pixelSize: window.s(13); color: window.crust 
+                                                    font.family: "JetBrains Mono"; font.weight: Font.Bold; font.pixelSize: Math.max(window.s(11), 10); color: window.crust 
                                                 }
                                             }
                                             Text {
-                                                font.family: "JetBrains Mono"; font.pixelSize: window.s(10); color: window.crust
+                                                font.family: "JetBrains Mono"; font.pixelSize: Math.max(window.s(9), 8); color: window.crust
                                                 text: floatCard.isMyBusy ? "Connecting..." : (floatCard.renderFill > 0.1 && floatCard.renderFill < 1.0 ? floatCard.itemId === "ip_0" ? floatCard.triggered ? "Copied!" : "Hold to copy..." : "Hold..." : action)
                                             }
                                         }
@@ -2050,8 +2050,9 @@ Item {
                                             let sec = typeof security !== "undefined" && security ? security.trim().toLowerCase() : "";
                                             let isSecure = sec !== "" && sec !== "open" && sec !== "--" && sec !== "none";
                                             let isSaved = false;
+                                            let cleanSsid = (ssid || "").trim();
                                             for (let i = 0; i < window.savedWifiNetworks.length; i++) {
-                                                if (window.savedWifiNetworks[i] === ssid) { isSaved = true; break; }
+                                                if (window.savedWifiNetworks[i].trim() === cleanSsid) { isSaved = true; break; }
                                             }
 
                                             if (window.activeMode === "wifi" && isSecure && !isSaved) {

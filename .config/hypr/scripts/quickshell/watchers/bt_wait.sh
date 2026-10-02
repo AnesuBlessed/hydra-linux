@@ -4,6 +4,5 @@ source "$(dirname "${BASH_SOURCE[0]}")/../../caching.sh"
 PIPE="$QS_RUN_DIR/qs_bt_wait_$$.fifo"
 mkfifo "$PIPE" 2>/dev/null
 trap 'rm -f "$PIPE"; kill $(jobs -p) 2>/dev/null; exit 0' EXIT INT TERM
-LC_ALL=C dbus-monitor --system "type='signal',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.bluez.Device1'" 2>/dev/null | grep --line-buffered 'string "Connected"' > "$PIPE" &
-LC_ALL=C dbus-monitor --system "type='signal',interface='org.freedesktop.DBus.Properties',member='PropertiesChanged',arg0='org.bluez.Adapter1'" 2>/dev/null | grep --line-buffered 'string "Powered"' > "$PIPE" &
-read -r _ < "$PIPE"
+gdbus monitor --system --dest org.bluez 2>/dev/null | grep --line-buffered -E "Connected|Powered" > "$PIPE" &
+read -t 60 -r _ < "$PIPE"

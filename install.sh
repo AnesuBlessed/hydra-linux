@@ -449,7 +449,7 @@ BACKUP_DIR="$HOME/.config/hydra_backup/backup_${BACKUP_DATE}"
 backup_configs() {
     mkdir -p "$BACKUP_DIR"
     local backup_err=0
-    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch; do
+    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch xdg-desktop-portal environment.d; do
         if [ -d "$HOME/.config/$cfg" ] || [ -f "$HOME/.config/$cfg" ]; then
             if ! cp -a "$HOME/.config/$cfg" "$BACKUP_DIR/"; then
                 backup_err=1
@@ -472,12 +472,39 @@ print_phase "3/5" "Deploying Hydra Linux Configurations"
 
 deploy_configs() {
     mkdir -p "$HOME/.config" "$HOME/.local/bin"
-    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch; do
+    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch xdg-desktop-portal environment.d; do
         if [ -d "$SCRIPT_DIR/.config/$cfg" ]; then
             rm -rf "$HOME/.config/$cfg"
             cp -r "$SCRIPT_DIR/.config/$cfg" "$HOME/.config/"
         fi
     done
+
+    # Tailor environment.d performance configuration to detected GPU
+    local env_perf="$HOME/.config/environment.d/00-performance.conf"
+    mkdir -p "$(dirname "$env_perf")"
+    cat > "$env_perf" << EOF_PERF
+# Mesa GPU Shader Cache to RAM (Zero HDD stutter during gaming)
+MESA_SHADER_CACHE_DIR=/tmp/mesa_shader_cache
+MESA_SHADER_CACHE_MAX_SIZE=256M
+
+# Enable VA-API Hardware Decoding
+EOF_PERF
+    if [ "$GPU_VENDOR" = "NVIDIA" ]; then
+        cat >> "$env_perf" << 'EOF_GPU'
+LIBVA_DRIVER_NAME=nvidia
+__GLX_VENDOR_LIBRARY_NAME=nvidia
+NVD_BACKEND=direct
+EOF_GPU
+    elif [ "$GPU_VENDOR" = "AMD" ]; then
+        cat >> "$env_perf" << 'EOF_GPU'
+LIBVA_DRIVER_NAME=radeonsi
+VDPAU_DRIVER=radeonsi
+EOF_GPU
+    elif [ "$GPU_VENDOR" = "Intel" ]; then
+        cat >> "$env_perf" << 'EOF_GPU'
+LIBVA_DRIVER_NAME=iHD
+EOF_GPU
+    fi
 
     if [ -f "$SCRIPT_DIR/assets/default_avatar.png" ] && [ ! -f "$HOME/.face.icon" ]; then
         cp -f "$SCRIPT_DIR/assets/default_avatar.png" "$HOME/.face.icon"

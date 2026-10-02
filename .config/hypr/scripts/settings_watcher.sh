@@ -54,7 +54,7 @@ compile_settings() {
         elif echo "$GPU_RAW" | grep -qi "amd\|advanced micro devices"; then
             HW_ENV=$'env = LIBVA_DRIVER_NAME,radeonsi\nenv = VDPAU_DRIVER,radeonsi'
         elif echo "$GPU_RAW" | grep -qi "intel"; then
-            HW_ENV=$'env = LIBVA_DRIVER_NAME,iHD\nenv = VDPAU_DRIVER,va_gl'
+            HW_ENV=$'env = LIBVA_DRIVER_NAME,iHD'
         fi
     fi
 

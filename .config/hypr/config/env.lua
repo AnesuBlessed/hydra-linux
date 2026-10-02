@@ -31,6 +31,5 @@ if handle then
         hl.env("VDPAU_DRIVER", "radeonsi")
     elseif gpu:lower():find("intel") then
         hl.env("LIBVA_DRIVER_NAME", "iHD")
-        hl.env("VDPAU_DRIVER", "va_gl")
     end
 end
