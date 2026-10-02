@@ -60,7 +60,12 @@ MANIFEST="$THUMB_DIR/.manifest"
 
 if [[ "$ACTION" != "reload" ]] && ! pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null; then
     mkdir -p "$QS_LOG_DIR"
-    nohup quickshell -p "$SHELL_QML_PATH" > "$QS_LOG_DIR/quickshell.log" 2>&1 &
+    systemd-run --user --unit=quickshell-desktop \
+        --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+        --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+        --setenv=DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+        bash -c "quickshell -p '$SHELL_QML_PATH' > '$QS_LOG_DIR/quickshell.log' 2>&1" >/dev/null 2>&1 || \
+    nohup quickshell -p "$SHELL_QML_PATH" </dev/null > "$QS_LOG_DIR/quickshell.log" 2>&1 &
     disown
 fi
 
@@ -211,11 +216,22 @@ if [[ "$ACTION" == "reload" ]]; then
     _reap_watchers TERM
     # The daemons trap TERM to reap their own socat children, so give them a
     # moment, then make sure nothing survived.
-    sleep 0.5
     _reap_watchers KILL
 
+    # Ensure any lingering quickshell process has fully exited to release the socket
+    for i in {1..20}; do
+        pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null || break
+        sleep 0.1
+    done
+    pkill -9 -u "$UID" -f "quickshell.*Shell.qml" 2>/dev/null || true
+
     mkdir -p "$QS_LOG_DIR"
-    nohup quickshell -p "$SHELL_QML_PATH" > "$QS_LOG_DIR/quickshell.log" 2>&1 &
+    systemd-run --user --unit=quickshell-desktop \
+        --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
+        --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
+        --setenv=DBUS_SESSION_BUS_ADDRESS="$DBUS_SESSION_BUS_ADDRESS" \
+        bash -c "quickshell -p '$SHELL_QML_PATH' > '$QS_LOG_DIR/quickshell.log' 2>&1" >/dev/null 2>&1 || \
+    nohup quickshell -p "$SHELL_QML_PATH" </dev/null > "$QS_LOG_DIR/quickshell.log" 2>&1 &
     disown
     exit 0
 fi
