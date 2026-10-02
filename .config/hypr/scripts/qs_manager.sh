@@ -59,7 +59,8 @@ MANIFEST="$THUMB_DIR/.manifest"
 # -----------------------------------------------------------------------------
 
 if [[ "$ACTION" != "reload" ]] && ! pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null; then
-    systemd-run --user --unit=quickshell-desktop quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 || nohup quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1 &
+    mkdir -p "$QS_LOG_DIR"
+    nohup quickshell -p "$SHELL_QML_PATH" > "$QS_LOG_DIR/quickshell.log" 2>&1 &
     disown
 fi
 
@@ -213,16 +214,9 @@ if [[ "$ACTION" == "reload" ]]; then
     sleep 0.5
     _reap_watchers KILL
 
-    sleep 0.5
-    DETECTED_WAYLAND="${WAYLAND_DISPLAY:-$(ls -1 "$XDG_RUNTIME_DIR"/wayland-* 2>/dev/null | head -n1 | xargs -r basename)}"
-    WAYLAND_DISPLAY="${DETECTED_WAYLAND:-wayland-1}" \
-    XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
-    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}" \
-    systemd-run --user --unit=quickshell-desktop quickshell -p "$SHELL_QML_PATH" >/dev/null 2>&1
-    if [ $? -ne 0 ]; then
-        nohup quickshell -p "$SHELL_QML_PATH" > /dev/null 2>&1 &
-        disown
-    fi
+    mkdir -p "$QS_LOG_DIR"
+    nohup quickshell -p "$SHELL_QML_PATH" > "$QS_LOG_DIR/quickshell.log" 2>&1 &
+    disown
     exit 0
 fi
 

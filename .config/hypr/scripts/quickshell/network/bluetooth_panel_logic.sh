@@ -93,11 +93,21 @@ get_status() {
             
             CACHE_FILE="$CACHE_DIR/bt_stat_${mac//:/_}"
 
+            CACHE_NAME=""
+            CACHE_ICON=""
+            CACHE_PROFILE=""
             if [ -f "$CACHE_FILE" ]; then
-                CACHE_NAME=$(awk -F= '$1=="NAME"{print substr($0,6)}' "$CACHE_FILE" 2>/dev/null)
-                CACHE_ICON=$(awk -F= '$1=="ICON"{print substr($0,6)}' "$CACHE_FILE" 2>/dev/null)
-                CACHE_PROFILE=$(awk -F= '$1=="PROFILE"{print substr($0,9)}' "$CACHE_FILE" 2>/dev/null)
-            else
+                CACHE_NAME=$(awk -F= '$1=="NAME" || $1=="CACHE_NAME"{print substr($0, index($0,"=")+1)}' "$CACHE_FILE" 2>/dev/null)
+                CACHE_ICON=$(awk -F= '$1=="ICON" || $1=="CACHE_ICON"{print substr($0, index($0,"=")+1)}' "$CACHE_FILE" 2>/dev/null)
+                CACHE_PROFILE=$(awk -F= '$1=="PROFILE" || $1=="CACHE_PROFILE"{print substr($0, index($0,"=")+1)}' "$CACHE_FILE" 2>/dev/null)
+            fi
+
+            # Clean any quotes
+            CACHE_NAME="${CACHE_NAME//\"/}"
+            CACHE_ICON="${CACHE_ICON//\"/}"
+            CACHE_PROFILE="${CACHE_PROFILE//\"/}"
+
+            if [ -z "$CACHE_NAME" ] || [ -z "$CACHE_ICON" ] || [ -z "$CACHE_PROFILE" ]; then
                 info=$(bluetoothctl info "$mac")
                 icon_type=$(echo "$info" | awk -F': ' '/Icon:/ {print $2}')
                 icon=$(get_icon "$icon_type" "$name")
@@ -105,21 +115,24 @@ get_status() {
                 # THE FIX: Pass the cached output instead of calling pactl again
                 profile=$(get_audio_profile "$mac" "$cached_cards")
                 
-                printf "NAME=%s\nICON=%s\nPROFILE=%s\n" "$name" "$icon" "$profile" > "$CACHE_FILE"
-                
-                CACHE_NAME="$name"
-                CACHE_ICON="$icon"
-                CACHE_PROFILE="$profile"
+                CACHE_NAME="${name//\"/}"
+                CACHE_ICON="${icon//\"/}"
+                CACHE_PROFILE="${profile//\"/}"
+                printf "NAME=%s\nICON=%s\nPROFILE=%s\n" "$CACHE_NAME" "$CACHE_ICON" "$CACHE_PROFILE" > "$CACHE_FILE"
             fi
             
             bat=$(bluetoothctl info "$mac" | awk -F'[(|)]' '/Battery Percentage:/ {print $2}')
             [ -z "$bat" ] && bat="0"
 
-            CACHE_NAME_ESC="${CACHE_NAME//\"/\\\"}"
-            CACHE_ICON_ESC="${CACHE_ICON//\"/\\\"}"
-            CACHE_PROF_ESC="${CACHE_PROFILE//\"/\\\"}"
-
-            connected_list_objs+=("{\"id\":\"$mac\",\"name\":\"$CACHE_NAME_ESC\",\"mac\":\"$mac\",\"icon\":\"$CACHE_ICON_ESC\",\"battery\":\"$bat\",\"profile\":\"$CACHE_PROF_ESC\"}")
+            dev_obj=$(jq -nc \
+                --arg id "$mac" \
+                --arg name "$CACHE_NAME" \
+                --arg mac "$mac" \
+                --arg icon "$CACHE_ICON" \
+                --arg battery "$bat" \
+                --arg profile "$CACHE_PROFILE" \
+                '{id: $id, name: $name, mac: $mac, icon: $icon, battery: $battery, profile: $profile}')
+            connected_list_objs+=("$dev_obj")
         done
 
         if [ ${#connected_list_objs[@]} -gt 0 ]; then
@@ -135,7 +148,6 @@ get_status() {
             if [[ "$connected_macs" == *"$mac"* ]]; then continue; fi
 
             name="${rest#* }"
-            name_esc="${name//\"/\\\"}"
 
             if [[ "$paired_macs" == *"$mac"* ]]; then
                 action="Connect"
@@ -150,9 +162,15 @@ get_status() {
             fi
 
             icon=$(get_icon "unknown" "$name")
-            icon_esc="${icon//\"/\\\"}"
 
-            devices_list_objs+=("{\"id\":\"$mac\",\"name\":\"$name_esc\",\"mac\":\"$mac\",\"icon\":\"$icon_esc\",\"action\":\"$action\"}")
+            dev_obj=$(jq -nc \
+                --arg id "$mac" \
+                --arg name "$name" \
+                --arg mac "$mac" \
+                --arg icon "$icon" \
+                --arg action "$action" \
+                '{id: $id, name: $name, mac: $mac, icon: $icon, action: $action}')
+            devices_list_objs+=("$dev_obj")
         done
 
         if [ ${#devices_list_objs[@]} -gt 0 ]; then
@@ -160,7 +178,15 @@ get_status() {
         fi
     fi
 
-    echo "{\"present\":true,\"power\":\"$power\",\"connected\":$connected_json,\"devices\":$devices_json}"
+    # Validate JSON outputs
+    if ! echo "$connected_json" | jq -e . >/dev/null 2>&1; then connected_json="[]"; fi
+    if ! echo "$devices_json" | jq -e . >/dev/null 2>&1; then devices_json="[]"; fi
+
+    jq -nc \
+        --arg power "$power" \
+        --argjson connected "$connected_json" \
+        --argjson devices "$devices_json" \
+        '{present: true, power: $power, connected: $connected, devices: $devices}'
 }
 
 toggle_power() {

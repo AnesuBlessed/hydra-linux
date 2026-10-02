@@ -489,7 +489,7 @@
       "command": "hypridle"
     },
     {
-      "command": "quickshell -p ~/.config/hypr/scripts/quickshell/Shell.qml"
+      "command": "bash -c 'mkdir -p ~/.cache/quickshell/run/logs && quickshell -p ~/.config/hypr/scripts/quickshell/Shell.qml > ~/.cache/quickshell/run/logs/quickshell.log 2>&1'"
     },
     {
       "command": "~/.config/hypr/scripts/quickshell/focustime/launch_daemon.sh"

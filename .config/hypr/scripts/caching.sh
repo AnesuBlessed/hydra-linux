@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
-# Runtime files must be private to the current user. If the desktop session
-# did not provide XDG_RUNTIME_DIR, keep them under the user's cache instead of
-# falling back to a shared /tmp directory.
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/$(id -u)/bus}"
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    DETECTED_WAYLAND=$(find "${XDG_RUNTIME_DIR}" -maxdepth 1 -name "wayland-*" -type s 2>/dev/null | head -n1 | xargs -r basename)
+    export WAYLAND_DISPLAY="${DETECTED_WAYLAND:-wayland-1}"
+fi
+
 if [[ -n "${XDG_RUNTIME_DIR:-}" && -d "$XDG_RUNTIME_DIR" ]]; then
     export QS_RUN_DIR="$XDG_RUNTIME_DIR/quickshell"
 else

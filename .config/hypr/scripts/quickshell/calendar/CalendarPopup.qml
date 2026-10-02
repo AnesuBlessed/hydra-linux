@@ -347,7 +347,9 @@ Item {
             onStreamFinished: {
                 let txt = this.text.trim();
                 if (txt !== "") {
-                    try { window.weatherData = JSON.parse(txt); } catch(e) {}
+                    try { window.weatherData = JSON.parse(txt); } catch(e) {
+                        console.warn("CalendarPopup: failed to parse weather JSON from weather.sh:", e);
+                    }
                 }
             }
         }

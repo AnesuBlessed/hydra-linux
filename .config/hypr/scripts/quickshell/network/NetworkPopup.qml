@@ -145,7 +145,11 @@ Item {
             if (window.wifiPresent) validModes.push("wifi");
             if (window.btPresent) validModes.push("bt");
 
-            if (validModes.length > 0 && validModes.indexOf(window.activeMode) === -1) {
+            let activeStillLoading = (window.activeMode === "wifi" && window.wifiFirstLoad) ||
+                                     (window.activeMode === "bt" && window.btFirstLoad) ||
+                                     (window.activeMode === "eth" && window.ethFirstLoad);
+
+            if (!activeStillLoading && validModes.length > 0 && validModes.indexOf(window.activeMode) === -1) {
                 window.activeMode = validModes[0];
                 window.powerAnimAllowed = false;
                 powerAnimBlocker.restart();
@@ -566,7 +570,9 @@ Item {
                 if (!window.isEthConn && newConnected && window.activeMode === "eth") window.playSfx("connect.wav");
                 window.ethConnected = newConnected;
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error("NetworkPopup: failed to parse eth JSON:", e, textData);
+        }
         if (!isCache) validateActiveMode();
     }
 
@@ -668,7 +674,9 @@ Item {
 
                 if (isNowWifiConn || window.isBtConn || window.isEthConn) window.updateInfoNodes();
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error("NetworkPopup: failed to parse wifi JSON:", e, textData);
+        }
         if (!isCache) validateActiveMode();
     }
 
@@ -756,7 +764,9 @@ Item {
 
                 if (isNowBtConn || window.isWifiConn || window.isEthConn) window.updateInfoNodes();
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error("NetworkPopup: failed to parse bt JSON:", e, textData);
+        }
         if (!isCache) validateActiveMode();
     }
 

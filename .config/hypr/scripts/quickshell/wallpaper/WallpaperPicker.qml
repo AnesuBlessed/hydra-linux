@@ -100,7 +100,9 @@ Item {
                         for (var i = 0; i < monitors.length; i++) {
                             monitorModel.append({ "name": monitors[i].name, "selected": true });
                         }
-                    } catch(e) {}
+                    } catch(e) {
+                        console.warn("WallpaperPicker: failed to parse monitors JSON from hyprctl:", e);
+                    }
                 }
             }
         }

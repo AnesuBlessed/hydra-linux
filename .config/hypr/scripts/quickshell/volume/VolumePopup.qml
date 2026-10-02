@@ -119,7 +119,9 @@ Item {
             syncModel(inputsModel, data.inputs || []);
             syncModel(appsModel, data.apps || []);
             updateHeroData();
-        } catch(e) {}
+        } catch(e) {
+            console.error("VolumePopup: error processing audio JSON:", e, textData);
+        }
     }
 
     function updateHeroData() {
@@ -205,7 +207,10 @@ Item {
                 // transient failure poisons the cache that Component.onCompleted
                 // replays and the panel is blank until the next good sample.
                 if (payload === "") return;
-                try { JSON.parse(payload); } catch (e) { return; }
+                try { JSON.parse(payload); } catch (e) {
+                    console.warn("VolumePopup: invalid audio JSON payload from get_audio_state.py:", e);
+                    return;
+                }
                 cache.lastAudioJson = payload;
                 processAudioJson(payload);
             }

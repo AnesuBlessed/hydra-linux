@@ -388,7 +388,9 @@ Variants {
                     onStreamFinished: {
                         let txt = this.text.trim();
                         if (txt !== "") {
-                            try { barWindow.musicData = JSON.parse(txt); } catch(e) {}
+                            try { barWindow.musicData = JSON.parse(txt); } catch(e) {
+                                console.warn("TopBar: failed to parse music JSON:", e);
+                            }
                         }
                     }
                 }
@@ -500,7 +502,9 @@ Variants {
                                 if (barWindow.volIcon !== data.icon) barWindow.volIcon = data.icon;
                                 let newMuted = (data.is_muted === "true");
                                 if (barWindow.isMuted !== newMuted) barWindow.isMuted = newMuted;
-                            } catch(e) {}
+                            } catch(e) {
+                                console.warn("TopBar: failed to parse audio JSON:", e, txt);
+                            }
                         }
                         audioWaiter.running = false;
                         audioWaiter.running = true;
@@ -522,7 +526,9 @@ Variants {
                                 if (barWindow.wifiIcon !== data.icon) barWindow.wifiIcon = data.icon;
                                 if (barWindow.wifiSsid !== data.ssid) barWindow.wifiSsid = data.ssid;
                                 if (barWindow.ethStatus !== data.eth_status) barWindow.ethStatus = data.eth_status;
-                            } catch(e) {}
+                            } catch(e) {
+                                console.warn("TopBar: failed to parse network JSON:", e, txt);
+                            }
                         }
                         networkWaiter.running = false;
                         networkWaiter.running = true;
@@ -543,7 +549,9 @@ Variants {
                                 if (barWindow.btStatus !== data.status) barWindow.btStatus = data.status;
                                 if (barWindow.btIcon !== data.icon) barWindow.btIcon = data.icon;
                                 if (barWindow.btDevice !== data.connected) barWindow.btDevice = data.connected;
-                            } catch(e) {}
+                            } catch(e) {
+                                console.warn("TopBar: failed to parse bt JSON:", e, txt);
+                            }
                         }
                         btWaiter.running = false;
                         btWaiter.running = true;
@@ -585,7 +593,9 @@ Variants {
                                 if (barWindow.batPercent !== newBat) barWindow.batPercent = newBat;
                                 if (barWindow.batIcon !== data.icon) barWindow.batIcon = data.icon;
                                 if (barWindow.batStatus !== data.status) barWindow.batStatus = data.status;
-                            } catch(e) {}
+                            } catch(e) {
+                                console.warn("TopBar: failed to parse battery JSON:", e, txt);
+                            }
                         }
                         batteryWaiter.running = false;
                         batteryWaiter.running = true;
