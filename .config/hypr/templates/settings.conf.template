@@ -21,10 +21,18 @@ decoration {
     dim_strength = 0.08
     blur {
         enabled = true
-        size = 8
-        passes = 2
+        size = 12
+        passes = 4
+        noise = 0.015
+        contrast = 1.05
+        brightness = 1.05
+        vibrancy = 0.25
+        vibrancy_darkness = 0.05
+        popups = true
+        popups_ignorealpha = 0.2
+        special = true
         new_optimizations = true
-        xray = true
+        xray = false
         ignore_opacity = true
     }
     shadow {

@@ -63,6 +63,38 @@ hl.layer_rule({
     blur = true,
     ignore_alpha = 0.2,
 })
+hl.layer_rule({
+    name = "\"lr_qs_master\"",
+    match = {
+        namespace = "^(qs-master)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+hl.layer_rule({
+    name = "\"lr_rofi\"",
+    match = {
+        namespace = "^(rofi)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+hl.layer_rule({
+    name = "\"lr_swayosd\"",
+    match = {
+        namespace = "^(swayosd)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
+hl.layer_rule({
+    name = "\"lr_wlogout\"",
+    match = {
+        namespace = "^(wlogout)$",
+    },
+    blur = true,
+    ignore_alpha = 0.2,
+})
 
 -- ─────────────────────────────
 

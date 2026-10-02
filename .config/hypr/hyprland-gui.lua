@@ -2,6 +2,12 @@
 
 -- Settings
 hl.config({
+    decoration = {
+        blur = {
+            size = 12,
+            passes = 4,
+        },
+    },
     general = {
         allow_tearing = true,
         gaps_in = 1,
@@ -15,6 +21,6 @@ hl.config({
     },
     misc = {
         mouse_move_enables_dpms = true,
-        vrr = 2,
+        vrr = 3,
     },
 })
