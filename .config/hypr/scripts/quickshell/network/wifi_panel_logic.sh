@@ -45,6 +45,9 @@ if [[ -n "$CURRENT_RAW" ]]; then
         FREQ=$(awk -F= '$1=="FREQ"{print substr($0,6)}' "$CACHE_FILE" 2>/dev/null)
     fi
     
+    IP="${IP//\"/}"
+    FREQ="${FREQ//\"/}"
+
     if [ -z "$IP" ] || [ "$IP" == "No IP" ] || [ -z "$FREQ" ]; then
         IFACE=$(LC_ALL=C nmcli -t -f DEVICE,TYPE d | awk -F: '$2=="wifi"{print $1;exit}')
         IP=$(ip -4 addr show dev "$IFACE" 2>/dev/null | grep -oP '(?<=inet\s)\d+(\.\d+){3}' | head -n1)
@@ -53,14 +56,20 @@ if [[ -n "$CURRENT_RAW" ]]; then
         FREQ=$(iw dev "$IFACE" link 2>/dev/null | awk '/freq:/ {print $2}')
         [ -n "$FREQ" ] && FREQ="${FREQ} MHz" || FREQ="Unknown"
         
+        IP="${IP//\"/}"
+        FREQ="${FREQ//\"/}"
         printf "IP=%s\nFREQ=%s\n" "$IP" "$FREQ" > "$CACHE_FILE"
     fi
 
-    # Native Bash JSON generation
-    ssid_esc="${ssid//\"/\\\"}"
-    sec_esc="${security//\"/\\\"}"
-    icon_esc="${icon//\"/\\\"}"
-    CONNECTED_JSON="{\"id\":\"$ssid_esc\",\"ssid\":\"$ssid_esc\",\"icon\":\"$icon_esc\",\"signal\":\"$signal\",\"security\":\"$sec_esc\",\"ip\":\"$IP\",\"freq\":\"$FREQ\"}"
+    CONNECTED_JSON=$(jq -nc \
+        --arg id "$ssid" \
+        --arg ssid "$ssid" \
+        --arg icon "$icon" \
+        --arg signal "$signal" \
+        --arg security "$security" \
+        --arg ip "$IP" \
+        --arg freq "$FREQ" \
+        '{id: $id, ssid: $ssid, icon: $icon, signal: $signal, security: $security, ip: $ip, freq: $freq}')
 else
     ssid=""
     CONNECTED_JSON="null"
@@ -92,5 +101,13 @@ else
     NETWORKS_JSON="[$NETWORKS_JSON]"
 fi
 
-# Final JSON output
-echo "{\"present\":true,\"power\":\"on\",\"connected\":$CONNECTED_JSON,\"networks\":$NETWORKS_JSON}"
+# Ensure NETWORKS_JSON is valid JSON
+if ! echo "$NETWORKS_JSON" | jq -e . >/dev/null 2>&1; then
+    NETWORKS_JSON="[]"
+fi
+
+# Final JSON output via jq
+jq -nc \
+    --argjson connected "$CONNECTED_JSON" \
+    --argjson networks "$NETWORKS_JSON" \
+    '{present: true, power: "on", connected: $connected, networks: $networks}'
