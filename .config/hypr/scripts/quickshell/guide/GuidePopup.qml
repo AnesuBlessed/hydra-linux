@@ -698,7 +698,7 @@ Item {
                     ListElement { pkg: "Matugen"; role: "Theme Engine"; icon: "󰏘"; clr: "peach"; link: "https://github.com/InioX/matugen" }
                     ListElement { pkg: "Rofi Wayland"; role: "App Launcher"; icon: ""; clr: "green"; link: "https://github.com/lbonn/rofi" }
                     ListElement { pkg: "Kitty"; role: "Terminal Emulator"; icon: "󰄛"; clr: "yellow"; link: "https://sw.kovidgoyal.net/kitty/" }
-                    ListElement { pkg: "SwayOSD / NC"; role: "Overlays & Notifs"; icon: "󰂚"; clr: "pink"; link: "https://github.com/ErikReider/SwayOSD" }
+                    ListElement { pkg: "Quickshell OSD"; role: "Overlays & Notifs"; icon: "󰂚"; clr: "pink"; link: "https://git.outfoxxed.me/outfoxxed/quickshell" }
                 }
 
                 ColumnLayout {

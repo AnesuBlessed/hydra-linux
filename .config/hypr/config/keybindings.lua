@@ -56,13 +56,10 @@ hl.bind(var_mainMod .. " + N", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/qs_m
 hl.bind(var_mainMod .. " + SHIFT + T", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/qs_manager.sh toggle focustime"))
 hl.bind(var_mainMod .. " + V", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/qs_manager.sh toggle volume"))
 hl.bind(var_mainMod .. " + H", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/qs_manager.sh toggle guide"))
-hl.bind("Caps_Lock", hl.dsp.exec_cmd("sleep 0.1 && swayosd-client --caps-lock"), {
+hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), {
     locked = true,
 })
-hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("swayosd-client --brightness lower"), {
-    locked = true,
-})
-hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("swayosd-client --brightness raise"), {
+hl.bind("XF86MonBrightnessUp", hl.dsp.exec_cmd("brightnessctl set +5%"), {
     locked = true,
 })
 hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh"), {
@@ -93,17 +90,17 @@ hl.bind("XF86AudioPause", hl.dsp.exec_cmd("playerctl play-pause"), {
 hl.bind("XF86AudioPlay", hl.dsp.exec_cmd("playerctl play-pause"), {
     locked = true,
 })
-hl.bind("xf86AudioMicMute", hl.dsp.exec_cmd("swayosd-client --input-volume mute-toggle"), {
+hl.bind("xf86AudioMicMute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"), {
     locked = true,
 })
-hl.bind("xf86audiomute", hl.dsp.exec_cmd("swayosd-client --output-volume mute-toggle"), {
+hl.bind("xf86audiomute", hl.dsp.exec_cmd("wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"), {
     locked = true,
 })
-hl.bind("xf86audiolowervolume", hl.dsp.exec_cmd("swayosd-client --output-volume lower"), {
+hl.bind("xf86audiolowervolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"), {
     repeating = true,
     locked = true,
 })
-hl.bind("xf86audioraisevolume", hl.dsp.exec_cmd("swayosd-client --output-volume raise"), {
+hl.bind("xf86audioraisevolume", hl.dsp.exec_cmd("wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"), {
     repeating = true,
     locked = true,
 })

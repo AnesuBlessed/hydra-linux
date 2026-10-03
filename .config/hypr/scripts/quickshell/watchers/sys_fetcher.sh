@@ -1,29 +1,52 @@
 #!/usr/bin/env bash
 
-# Pure bash data fetcher without subshells
+# Pure bash data fetcher with persistent state across calls (0ms sleep)
+RUNDIR="${XDG_RUNTIME_DIR:-/run/user/$UID}/quickshell"
+mkdir -p "$RUNDIR"
+STATE_FILE="$RUNDIR/sys_fetcher_state"
 
-{ while read -r name u n s i io ir so st g gn; do [[ "$name" == "cpu" ]] && { u1=$u; n1=$n; s1=$s; i1=$i; io1=$io; ir1=$ir; so1=$so; st1=$st; break; }; done; } < /proc/stat
-{ rx1=0; tx1=0; while read -r iface r1 r2 r3 r4 r5 r6 r7 r8 t1 t2 t3 t4 t5 t6 t7 t8; do [[ "$iface" =~ ^(en|eth|enp|eno|ens|enx|wl|wlp|wlan|wlo|wlx) ]] && ((rx1+=r1, tx1+=t1)); done; } < /proc/net/dev
+NOW=$(date +%s%N)
+read -r _ u n s i io ir so st _ < /proc/stat
+TOT=$((u + n + s + i + io + ir + so + st))
+IDL=$i
 
-sleep 0.5
+CORES=$(nproc 2>/dev/null || echo 4)
 
-{ while read -r name u n s i io ir so st g gn; do [[ "$name" == "cpu" ]] && { u2=$u; n2=$n; s2=$s; i2=$i; io2=$io; ir2=$ir; so2=$so; st2=$st; break; }; done; } < /proc/stat
-{ rx2=0; tx2=0; while read -r iface r1 r2 r3 r4 r5 r6 r7 r8 t1 t2 t3 t4 t5 t6 t7 t8; do [[ "$iface" =~ ^(en|eth|enp|eno|ens|enx|wl|wlp|wlan|wlo|wlx) ]] && ((rx2+=r1, tx2+=t1)); done; } < /proc/net/dev
+RX=0; TX=0
+while read -r iface r1 r2 r3 r4 r5 r6 r7 r8 t1 t2 t3 t4 t5 t6 t7 t8; do
+    [[ "$iface" =~ ^(en|eth|enp|eno|ens|enx|wl|wlp|wlan|wlo|wlx) ]] && ((RX+=r1, TX+=t1))
+done < /proc/net/dev
 
-IDLE1=$i1; TOTAL1=$((u1 + n1 + s1 + i1 + io1 + ir1 + so1 + st1))
-IDLE2=$i2; TOTAL2=$((u2 + n2 + s2 + i2 + io2 + ir2 + so2 + st2))
-DIFF_IDLE=$((IDLE2 - IDLE1))
-DIFF_TOTAL=$((TOTAL2 - TOTAL1))
-if [ "$DIFF_TOTAL" -eq 0 ]; then CPU_USAGE=0; else CPU_USAGE=$(( 100 * (DIFF_TOTAL - DIFF_IDLE) / DIFF_TOTAL )); fi
+CPU_USAGE=0; RX_RATE=0; TX_RATE=0
 
-# SAMPLE_WINDOW_DECI is the `sleep` interval between the two reads above,
-# expressed in tenths of a second (0.5s -> 5) because bash arithmetic is
-# integer-only. Keeping the divisor next to the sleep it must agree with stops
-# the reported rate silently doubling if the interval is ever tuned.
-SAMPLE_WINDOW_DECI=5
-RX_RATE=$(( (rx2 - rx1) * 10 / SAMPLE_WINDOW_DECI ))
-TX_RATE=$(( (tx2 - tx1) * 10 / SAMPLE_WINDOW_DECI ))
+if [ -f "$STATE_FILE" ]; then
+    read -r P_NOW P_TOT P_IDL P_RX P_TX < "$STATE_FILE"
+    DIFF_NSEC=$((NOW - P_NOW))
+    DIFF_TOT=$((TOT - P_TOT))
+    DIFF_IDL=$((IDL - P_IDL))
+    if [ "$DIFF_TOT" -gt 0 ]; then
+        CPU_USAGE=$(( 100 * (DIFF_TOT - DIFF_IDL) / DIFF_TOT ))
+    fi
+    if [ "$DIFF_NSEC" -gt 100000000 ]; then
+        RX_RATE=$(( (RX - P_RX) * 1000000000 / DIFF_NSEC ))
+        TX_RATE=$(( (TX - P_TX) * 1000000000 / DIFF_NSEC ))
+    fi
+else
+    # Cold start: quick 0.1s sample once
+    sleep 0.1
+    read -r _ u2 n2 s2 i2 io2 ir2 so2 st2 _ < /proc/stat
+    TOT2=$((u2 + n2 + s2 + i2 + io2 + ir2 + so2 + st2))
+    IDL2=$i2
+    DIFF_TOT=$((TOT2 - TOT))
+    DIFF_IDL=$((IDL2 - IDL))
+    if [ "$DIFF_TOT" -gt 0 ]; then
+        CPU_USAGE=$(( 100 * (DIFF_TOT - DIFF_IDL) / DIFF_TOT ))
+    fi
+fi
 
+echo "$NOW $TOT $IDL $RX $TX" > "$STATE_FILE"
+
+# RAM
 while IFS=": " read -r key val _; do
     case "$key" in
         MemTotal) TOTAL_MEM="${val// /}" ;;
@@ -35,6 +58,7 @@ RAM_PCT=$(( 100 * USED_MEM / TOTAL_MEM ))
 USED_MB=$((USED_MEM / 1024))
 RAM_GB="$((USED_MB / 1024)).$(( (USED_MB % 1024) * 10 / 1024 ))"
 
+# Temperature
 TEMP_RAW=""
 for hwmon in /sys/class/hwmon/hwmon*; do
     if [ -f "$hwmon/name" ]; then
@@ -78,4 +102,4 @@ else
     TEMP=$TEMP_RAW
 fi
 
-echo "$CPU_USAGE|$RAM_PCT|$RAM_GB|$TEMP|$RX_RATE|$TX_RATE"
+echo "$CPU_USAGE|$RAM_PCT|$RAM_GB|$TEMP|$RX_RATE|$TX_RATE|$CORES"

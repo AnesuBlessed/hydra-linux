@@ -73,7 +73,7 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 - **Calendar** with integrated weather forecasts (Open-Meteo API, no API key required).
 - **Network manager** with WiFi, Ethernet, and Bluetooth panels.
 - **Music player** with album art, progress tracking, and equalizer visualization.
-- **Volume and brightness controls** with OSD overlays via SwayOSD.
+- **Volume and brightness controls** with native Quickshell OSD overlays.
 - **Battery monitor** with power profile switching.
 - **Focus time tracker** with session statistics.
 - **Clipboard manager** with full history, per-item delete, and one-click wipe.
@@ -88,7 +88,7 @@ A full-featured Qt6/QML desktop shell with interactive widgets, all fully UI-sca
 ### Matugen Dynamic Theming
 
 - Set any wallpaper and Matugen automatically generates a system-wide color palette.
-- Colors propagate in real-time to Quickshell, Kitty, Cava, Rofi, SwayOSD, and Silent SDDM.
+- Colors propagate in real-time to Quickshell, Kitty, Cava, Rofi, and Silent SDDM.
 - No manual theme editing required.
 
 ### Silent SDDM Login Greeter
@@ -198,12 +198,11 @@ Run with all recommended defaults and no prompts:
 | `Print` | Interactive screenshot (Satty) |
 | `Shift + Print` | Interactive screenshot with editor |
 | `Super + Print` | Fullscreen screenshot |
-| `Volume Up/Down` | Adjust output volume (SwayOSD) |
-| `Volume Mute` | Toggle output mute (SwayOSD) |
+| `Volume Up/Down` | Adjust output volume (Native OSD) |
+| `Volume Mute` | Toggle output mute (Native OSD) |
 | `Mic Mute` | Toggle microphone mute |
-| `Brightness Up/Down` | Adjust screen brightness (SwayOSD) |
+| `Brightness Up/Down` | Adjust screen brightness |
 | `Super + Space` / `Media Play` | Music play / pause toggle |
-| `Caps Lock` | Caps lock status indicator (SwayOSD) |
 
 ---
 
@@ -405,7 +404,6 @@ hydra-linux/
 │   ├── cava/                    # Cava audio visualizer config
 │   ├── matugen/                 # Matugen color generation templates
 │   ├── rofi/                    # Rofi launcher styling
-│   ├── swayosd/                 # SwayOSD volume/brightness overlay
 │   └── fastfetch/               # System info display config
 ├── sddm/
 │   ├── themes/silent/           # Silent SDDM theme
@@ -471,7 +469,7 @@ Hydra Linux enforces strict defense-in-depth principles across its glue scripts:
 
 The installer handles all dependencies automatically. For reference, the core packages include:
 
-**Compositor and Shell**: `hyprland`, `hypridle`, `quickshell-git`, `matugen-bin`, `swayosd-git`, `rofi`, `kitty`
+**Compositor and Shell**: `hyprland`, `hypridle`, `quickshell-git`, `matugen-bin`, `rofi`, `kitty`
 
 **Audio**: `pipewire`, `wireplumber`, `pipewire-pulse`, `pamixer`, `playerctl`, `pavucontrol`, `easyeffects`, `cava`
 

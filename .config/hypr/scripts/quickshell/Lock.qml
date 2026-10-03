@@ -180,7 +180,7 @@ ShellRoot {
 
                 property real globalOrbitAngle: 0
                 NumberAnimation on globalOrbitAngle {
-                    from: 0; to: Math.PI * 2; duration: 90000; loops: Animation.Infinite; running: root.visible
+                    from: 0; to: Math.PI * 2; duration: 90000; loops: Animation.Infinite; running: true
                 }
 
                 // Auto-hide input field if empty and idle for 15 seconds
@@ -198,7 +198,7 @@ ShellRoot {
 
                 Process {
                     id: chassisDetector
-                    running: root.visible
+                    running: true
                     command: ["bash", "-c", "if ls /sys/class/power_supply/BAT* 1> /dev/null 2>&1; then echo 'laptop'; else echo 'desktop'; fi"]
                     stdout: StdioCollector {
                         onStreamFinished: {
@@ -281,7 +281,7 @@ ShellRoot {
                         }
                     }
                 }
-                Timer { interval: 900000; running: root.visible; repeat: true; triggeredOnStart: true; onTriggered: weatherPoller.running = true }
+                Timer { interval: 900000; running: true; repeat: true; triggeredOnStart: true; onTriggered: weatherPoller.running = true }
 
                 // ---------------------------------------------------------
                 // 1. LIVING BACKGROUND
@@ -440,7 +440,7 @@ ShellRoot {
                         }
 
                         Timer {
-                            interval: 1000; running: root.visible; repeat: true; triggeredOnStart: true
+                            interval: 1000; running: true; repeat: true; triggeredOnStart: true
                             onTriggered: {
                                 let d = new Date();
                                 clockHours.text = Qt.formatDateTime(d, "hh");

@@ -5,6 +5,9 @@ import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.SystemTray
+import Quickshell.Hyprland
+import Quickshell.Services.Pipewire
+import Quickshell.Services.UPower
 
 Variants {
     model: Quickshell.screens
@@ -108,7 +111,7 @@ Variants {
             
             property int workspaceCount: GlobalSettingsWatcher.workspaceCount
             
-            property string activeWidget: "" 
+            property string activeWidget: GlobalSettingsWatcher.currentActiveWidget
             property bool isSettingsOpen: activeWidget === "settings"
 
             property real settingsSlideProgress: isSettingsOpen ? 1.0 : 0.0
@@ -125,30 +128,6 @@ Variants {
             }
 
             Process {
-                id: widgetPoller
-                command: ["bash", "-c", "cat " + paths.runDir + "/current_widget 2>/dev/null || echo ''"]
-                running: true
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        let txt = this.text.trim();
-                        if (barWindow.activeWidget !== txt) barWindow.activeWidget = txt;
-                    }
-                }
-            }
-
-            Process {
-                id: widgetWatcher
-                command: ["bash", "-c", "while [ ! -f " + paths.runDir + "/current_widget ]; do sleep 1; done; inotifywait -qq -e modify,close_write " + paths.runDir + "/current_widget 2>/dev/null || sleep 2"]
-                running: true
-                onExited: {
-                    widgetPoller.running = false;
-                    widgetPoller.running = true;
-                    running = false;
-                    running = true;
-                }
-            }
-            
-            Process {
                 id: recPoller
                 command: ["bash", "-c", "if [ -s " + paths.getCacheDir("recording") + "/rec_pid ] && kill -0 $(cat " + paths.getCacheDir("recording") + "/rec_pid) 2>/dev/null; then echo '1'; else echo '0'; fi"]
                 stdout: StdioCollector {
@@ -158,39 +137,36 @@ Variants {
                 }
             }
 
+            Timer {
+                interval: 2000
+                running: true
+                repeat: true
+                onTriggered: {
+                    recPoller.running = false;
+                    recPoller.running = true;
+                }
+            }
+
             Process {
- 	    	id: recWatcher
- 		running: true
- 		command: ["bash", "-c", "inotifywait -qq -e create,delete,modify,close_write " + paths.getCacheDir("recording") + "/ 2>/dev/null || sleep 2"]
- 	        onExited: {
- 	        	recPoller.running = false;
- 	         	recPoller.running = true;
- 	         	running = false;
- 	         	running = true;
- 	        }
-	    }	  
-            Process {
-	        id: updatePoller
-	        command: ["bash", "-c", "if [ -f " + paths.getCacheDir("updater") + "/update_pending ]; then echo '1'; else echo '0'; fi"]
-	        running: true
-	        stdout: StdioCollector {
-	            onStreamFinished: {
-	                barWindow.updateAvailable = (this.text.trim() === "1");
-	            }
-	        }
-	    }
-	    
-	    Process {
-	        id: updateWatcher
-	        running: true
-	        command: ["bash", "-c", "inotifywait -qq -e create,delete,close_write " + paths.getCacheDir("updater") + "/ 2>/dev/null || sleep 5"]
-	        onExited: {
-	            updatePoller.running = false;
-	            updatePoller.running = true;
-	            running = false;
-	            running = true;
-	        }
-	    }
+                id: updatePoller
+                command: ["bash", "-c", "if [ -f " + paths.getCacheDir("updater") + "/update_pending ]; then echo '1'; else echo '0'; fi"]
+                running: true
+                stdout: StdioCollector {
+                    onStreamFinished: {
+                        barWindow.updateAvailable = (this.text.trim() === "1");
+                    }
+                }
+            }
+
+            Timer {
+                interval: 30000
+                running: true
+                repeat: true
+                onTriggered: {
+                    updatePoller.running = false;
+                    updatePoller.running = true;
+                }
+            }
 	                
             // topbarHelpIcon and workspaceCount come from the settings singleton
             // instead of a fourth `cat` + inotifywait pair on the same file.
@@ -306,78 +282,71 @@ Variants {
                 return mocha.text; 
             }
 
-            // Output names look like "eDP-1" / "DP-2"; must match the sanitisation
-            // workspaces.sh applies, because it is used as a filename component.
-            readonly property string outputName: {
-                let n = (modelData && modelData.name) ? String(modelData.name) : "global";
-                return n.replace(/[^A-Za-z0-9._-]/g, "_") || "global";
+            function syncWorkspaces() {
+                let activeId = (Hyprland.focusedWorkspace && Hyprland.focusedWorkspace.id) ? Hyprland.focusedWorkspace.id : 1;
+                let occupiedMap = {};
+                if (Hyprland.workspaces && Hyprland.workspaces.values) {
+                    for (let i = 0; i < Hyprland.workspaces.values.length; i++) {
+                        let w = Hyprland.workspaces.values[i];
+                        occupiedMap[w.id] = true;
+                        if (w.active || w.focused) activeId = w.id;
+                    }
+                }
+                let totalCount = barWindow.workspaceCount || 7;
+                while (workspacesModel.count < totalCount) {
+                    workspacesModel.append({ "wsId": "", "wsState": "", "wsTip": "" });
+                }
+                while (workspacesModel.count > totalCount) {
+                    workspacesModel.remove(workspacesModel.count - 1);
+                }
+                let newActive = -1;
+                for (let i = 1; i <= totalCount; i++) {
+                    let idx = i - 1;
+                    let isAct = (i === activeId);
+                    let isOcc = (occupiedMap[i] === true);
+                    let st = isAct ? "active" : (isOcc ? "occupied" : "empty");
+                    if (isAct) newActive = idx;
+                    if (workspacesModel.get(idx).wsState !== st) {
+                        workspacesModel.setProperty(idx, "wsState", st);
+                    }
+                    if (workspacesModel.get(idx).wsId !== i.toString()) {
+                        workspacesModel.setProperty(idx, "wsId", i.toString());
+                    }
+                    let tip = isAct ? "Active Workspace" : (isOcc ? "Workspace " + i : "Empty");
+                    if (workspacesModel.get(idx).wsTip !== tip) {
+                        workspacesModel.setProperty(idx, "wsTip", tip);
+                    }
+                }
+                if (newActive !== -1 && workspacesModel.activeIndex !== newActive) {
+                    workspacesModel.activeIndex = newActive;
+                }
             }
-            readonly property string wsFile: paths.getRunDir("workspaces") + "/workspaces_" + outputName + ".json"
 
-            Process {
-                id: wsDaemon
-                command: ["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/workspaces.sh", barWindow.outputName]
-                running: true
-            }
-
-            Process {
-		id: wsReader
-		running: true
-                command: ["cat", barWindow.wsFile]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        let txt = this.text.trim();
-                        if (txt !== "") {
-                            try { 
-                                let newData = JSON.parse(txt);
-                                
-                                while (workspacesModel.count < newData.length) {
-                                    workspacesModel.append({ "wsId": "", "wsState": "", "wsTip": "" });
-                                }
-                                
-                                while (workspacesModel.count > newData.length) {
-                                    workspacesModel.remove(workspacesModel.count - 1);
-                                }
-                                
-                                let newActive = -1;
-
-                                for (let i = 0; i < newData.length; i++) {
-                                    if (newData[i].state === "active") newActive = i;
-
-                                    if (workspacesModel.get(i).wsState !== newData[i].state) {
-                                        workspacesModel.setProperty(i, "wsState", newData[i].state);
-                                    }
-                                    if (workspacesModel.get(i).wsId !== newData[i].id.toString()) {
-                                        workspacesModel.setProperty(i, "wsId", newData[i].id.toString());
-                                    }
-                                    // workspaces.sh already computes the focused window
-                                    // title; surface it instead of discarding it.
-                                    let tip = newData[i].tooltip || "";
-                                    if (workspacesModel.get(i).wsTip !== tip) {
-                                        workspacesModel.setProperty(i, "wsTip", tip);
-                                    }
-                                }
-
-                                if (newActive !== -1 && workspacesModel.activeIndex !== newActive) {
-                                    workspacesModel.activeIndex = newActive;
-                                }
-
-                            } catch(e) {}
+            Connections {
+                target: Hyprland
+                function onRawEvent(event) {
+                    let n = event.name;
+                    if (n === "workspace" || n === "focusedmon" || n === "createworkspace" || 
+                        n === "destroyworkspace" || n === "openwindow" || n === "closewindow" || 
+                        n === "movewindow") {
+                        barWindow.syncWorkspaces();
+                    } else if (n === "activelayout") {
+                        let parts = event.data.split(",");
+                        if (parts.length > 1) {
+                            let code = parts[1].trim().substring(0, 2).toLowerCase();
+                            if (code !== "") barWindow.kbLayout = code;
                         }
                     }
                 }
+                function onFocusedWorkspaceChanged() {
+                    barWindow.syncWorkspaces();
+                }
             }
 
-            Process {
-                id: wsWatcher
-                running: true
-                command: ["bash", "-c", "inotifywait -qq -e close_write,modify,moved_to,create " + paths.getRunDir("workspaces") + "/ 2>/dev/null || sleep 2"]
-                onExited: {
-                    wsReader.running = false;
-                    wsReader.running = true;
-                    running = false;
-                    running = true;
-                }
+            Component.onCompleted: {
+                Hyprland.refreshWorkspaces();
+                Hyprland.refreshMonitors();
+                barWindow.syncWorkspaces();
             }
 
             Process {
@@ -473,6 +442,74 @@ Variants {
                 }
             }
 
+            // --- NATIVE AUDIO (PIPEWIRE) ---
+            PwObjectTracker {
+                id: audioTracker
+                objects: [Pipewire.defaultAudioSink]
+            }
+
+            property var audioSink: Pipewire.defaultAudioSink
+
+            Connections {
+                target: audioSink ? audioSink.audio : null
+                function onVolumeChanged() {
+                    let v = Math.round((audioSink.audio.volume || 0) * 100);
+                    barWindow.volPercent = v + "%";
+                    if (barWindow.isMuted) {
+                        barWindow.volIcon = "󰖁";
+                    } else if (v <= 1) {
+                        barWindow.volIcon = "󰕿";
+                    } else if (v < 50) {
+                        barWindow.volIcon = "󰖀";
+                    } else {
+                        barWindow.volIcon = "󰕾";
+                    }
+                }
+                function onMutedChanged() {
+                    let m = audioSink.audio.muted || false;
+                    barWindow.isMuted = m;
+                    if (m) {
+                        barWindow.volIcon = "󰖁";
+                    } else {
+                        let v = Math.round((audioSink.audio.volume || 0) * 100);
+                        if (v <= 1) barWindow.volIcon = "󰕿";
+                        else if (v < 50) barWindow.volIcon = "󰖀";
+                        else barWindow.volIcon = "󰕾";
+                    }
+                }
+            }
+
+            // --- NATIVE BATTERY (UPOWER) ---
+            Connections {
+                target: UPower.displayDevice
+                function onPercentageChanged() {
+                    let dev = UPower.displayDevice;
+                    if (!dev || !dev.isPresent) return;
+                    let p = Math.round(dev.percentage * 100);
+                    barWindow.batPercent = p + "%";
+                    let chg = (dev.state === UPowerDeviceState.Charging);
+                    barWindow.batStatus = chg ? "Charging" : "Discharging";
+                    if (chg) {
+                        if (p >= 90) barWindow.batIcon = "󰂅";
+                        else if (p >= 70) barWindow.batIcon = "󰂊";
+                        else if (p >= 50) barWindow.batIcon = "󰂉";
+                        else if (p >= 30) barWindow.batIcon = "󰂈";
+                        else barWindow.batIcon = "󰢜";
+                    } else {
+                        if (p >= 90) barWindow.batIcon = "󰁹";
+                        else if (p >= 80) barWindow.batIcon = "󰂂";
+                        else if (p >= 70) barWindow.batIcon = "󰂁";
+                        else if (p >= 60) barWindow.batIcon = "󰂀";
+                        else if (p >= 50) barWindow.batIcon = "󰁿";
+                        else if (p >= 40) barWindow.batIcon = "󰁾";
+                        else if (p >= 30) barWindow.batIcon = "󰁽";
+                        else if (p >= 20) barWindow.batIcon = "󰁼";
+                        else barWindow.batIcon = "󰁻";
+                    }
+                }
+            }
+
+            // Initial Keyboard fetch (only runs once on startup)
             Process {
                 id: kbPoller; running: true
                 command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/kb_fetch.sh"]
@@ -480,39 +517,12 @@ Variants {
                     onStreamFinished: {
                         let txt = this.text.trim();
                         if (txt !== "" && barWindow.kbLayout !== txt) barWindow.kbLayout = txt;
-                        kbWaiter.running = false;
-                        kbWaiter.running = true;
-                        barWindow.fastPollerLoaded = true; 
+                        barWindow.fastPollerLoaded = true;
                     }
                 }
             }
-            Process { id: kbWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/kb_wait.sh"]; onExited: { kbPoller.running = false; kbPoller.running = true; } }
 
-            Process {
-                id: audioPoller; running: true
-                command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/audio_fetch.sh"]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        let txt = this.text.trim();
-                        if (txt !== "") {
-                            try {
-                                let data = JSON.parse(txt);
-                                let newVol = data.volume.toString() + "%";
-                                if (barWindow.volPercent !== newVol) barWindow.volPercent = newVol;
-                                if (barWindow.volIcon !== data.icon) barWindow.volIcon = data.icon;
-                                let newMuted = (data.is_muted === "true");
-                                if (barWindow.isMuted !== newMuted) barWindow.isMuted = newMuted;
-                            } catch(e) {
-                                console.warn("TopBar: failed to parse audio JSON:", e, txt);
-                            }
-                        }
-                        audioWaiter.running = false;
-                        audioWaiter.running = true;
-                    }
-                }
-            }
-            Process { id: audioWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/audio_wait.sh"]; onExited: { audioPoller.running = false; audioPoller.running = true; } }
-
+            // --- NETWORK (TIMED POLLER, NO PERSISTENT SUBSHELL) ---
             Process {
                 id: networkPoller; running: true
                 command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/network_fetch.sh"]
@@ -526,17 +536,22 @@ Variants {
                                 if (barWindow.wifiIcon !== data.icon) barWindow.wifiIcon = data.icon;
                                 if (barWindow.wifiSsid !== data.ssid) barWindow.wifiSsid = data.ssid;
                                 if (barWindow.ethStatus !== data.eth_status) barWindow.ethStatus = data.eth_status;
-                            } catch(e) {
-                                console.warn("TopBar: failed to parse network JSON:", e, txt);
-                            }
+                            } catch(e) {}
                         }
-                        networkWaiter.running = false;
-                        networkWaiter.running = true;
                     }
                 }
             }
-            Process { id: networkWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/network_wait.sh"]; onExited: { networkPoller.running = false; networkPoller.running = true; } }
+            Timer {
+                interval: 8000
+                running: true
+                repeat: true
+                onTriggered: {
+                    networkPoller.running = false;
+                    networkPoller.running = true;
+                }
+            }
 
+            // --- BLUETOOTH (TIMED POLLER, NO PERSISTENT SUBSHELL) ---
             Process {
                 id: btPoller; running: true
                 command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/bt_fetch.sh"]
@@ -549,60 +564,44 @@ Variants {
                                 if (barWindow.btStatus !== data.status) barWindow.btStatus = data.status;
                                 if (barWindow.btIcon !== data.icon) barWindow.btIcon = data.icon;
                                 if (barWindow.btDevice !== data.connected) barWindow.btDevice = data.connected;
-                            } catch(e) {
-                                console.warn("TopBar: failed to parse bt JSON:", e, txt);
-                            }
+                            } catch(e) {}
                         }
-                        btWaiter.running = false;
-                        btWaiter.running = true;
                     }
                 }
             }
-            Process { id: btWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/bt_wait.sh"]; onExited: { btPoller.running = false; btPoller.running = true; } }
+            Timer {
+                interval: 10000
+                running: true
+                repeat: true
+                onTriggered: {
+                    btPoller.running = false;
+                    btPoller.running = true;
+                }
+            }
 
+            // --- POWER PROFILE (TIMED POLLER, NO PERSISTENT SUBSHELL) ---
             Process {
                 id: powerProfileFetcher; running: true
                 command: ["bash", "-c", "powerprofilesctl get 2>/dev/null || echo \"balanced\""]
                 stdout: StdioCollector {
                     onStreamFinished: {
                         let txt = this.text.trim();
-                        if (txt !== "" && barWindow.powerProfile !== txt) barWindow.powerProfile = txt;
-                        powerProfileWaiter.running = false;
-                        powerProfileWaiter.running = true;
+                        if (txt !== "" && barWindow.powerProfile !== txt) {
+                            barWindow.powerProfile = txt;
+                            Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/turbo_inhibitor.sh", "sync"]);
+                        }
                     }
                 }
             }
-            Process {
-                id: powerProfileWaiter
-                command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/power_wait.sh"]
-                onExited: {
+            Timer {
+                interval: 10000
+                running: true
+                repeat: true
+                onTriggered: {
                     powerProfileFetcher.running = false;
                     powerProfileFetcher.running = true;
                 }
             }
-            Process {
-                id: batteryPoller; running: true
-                command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/battery_fetch.sh"]
-                stdout: StdioCollector {
-                    onStreamFinished: {
-                        let txt = this.text.trim();
-                        if (txt !== "") {
-                            try {
-                                let data = JSON.parse(txt);
-                                let newBat = data.percent.toString() + "%";
-                                if (barWindow.batPercent !== newBat) barWindow.batPercent = newBat;
-                                if (barWindow.batIcon !== data.icon) barWindow.batIcon = data.icon;
-                                if (barWindow.batStatus !== data.status) barWindow.batStatus = data.status;
-                            } catch(e) {
-                                console.warn("TopBar: failed to parse battery JSON:", e, txt);
-                            }
-                        }
-                        batteryWaiter.running = false;
-                        batteryWaiter.running = true;
-                    }
-                }
-            }
-            Process { id: batteryWaiter; command: ["bash", "-c", "~/.config/hypr/scripts/quickshell/watchers/battery_wait.sh"]; onExited: { batteryPoller.running = false; batteryPoller.running = true; } }
 
             Process {
                 id: weatherPoller
@@ -846,7 +845,7 @@ Variants {
                     width: workspacesModel.count > 0 ? wsLayout.implicitWidth + barWindow.s(20) : 0
                     
                     property real defaultX: (barWindow.isSettingsOpen ? 0 : leftContent.width) + barWindow.s(4)
-                    property real settingsX: mediaBox.settingsX - width - (width > 0 ? barWindow.s(4) : 0)
+                    property real settingsX: sysUsageBox.settingsX - width - (width > 0 ? barWindow.s(4) : 0)
                                         
                     x: defaultX + (settingsX - defaultX) * barWindow.settingsSlideProgress
 
@@ -981,6 +980,168 @@ Variants {
                 }
 
                 Rectangle {
+                    id: sysUsageBox
+                    color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
+                    radius: barWindow.s(14)
+                    border.width: 1
+                    border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.05)
+                    height: barWindow.barHeight
+                    y: (parent.height - barWindow.barHeight) / 2
+                    clip: true
+
+                    property bool showUsage: barWindow.densityTier < 3
+                    width: showUsage ? sysUsageLayout.implicitWidth + barWindow.s(16) : 0
+                    Behavior on width { NumberAnimation { duration: 350; easing.type: Easing.OutQuint } }
+
+                    property real defaultX: workspacesBox.defaultX + workspacesBox.width + (workspacesBox.width > 0 ? barWindow.s(4) : 0)
+                    property real settingsX: mediaBox.settingsX - width - (width > 0 ? barWindow.s(4) : 0)
+
+                    x: defaultX + (settingsX - defaultX) * barWindow.settingsSlideProgress
+
+                    visible: width > 0 || opacity > 0
+                    opacity: showUsage ? 1.0 : 0.0
+                    Behavior on opacity { NumberAnimation { duration: 300 } }
+
+                    Component.onCompleted: SysData.subscribe()
+                    Component.onDestruction: SysData.unsubscribe()
+
+                    Row {
+                        id: sysUsageLayout
+                        anchors.centerIn: parent
+                        spacing: barWindow.s(6)
+
+                        // --- CPU & CORES PILL ---
+                        Rectangle {
+                            id: cpuPill
+                            property bool isHovered: cpuMouse.containsMouse
+                            radius: barWindow.s(10)
+                            height: barWindow.s(32)
+                            color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.6) : Qt.rgba(mocha.surface0.r, mocha.surface0.g, mocha.surface0.b, 0.35)
+                            border.width: 1
+                            border.color: isHovered ? Qt.rgba(cpuAccentColor.r, cpuAccentColor.g, cpuAccentColor.b, 0.4) : Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.06)
+                            clip: true
+
+                            width: barWindow.s(barWindow.showFullText ? 104 : 76)
+                            scale: isHovered ? 1.05 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutExpo } }
+                            Behavior on color { ColorAnimation { duration: 200 } }
+
+                            property color cpuAccentColor: {
+                                if (SysData.cpu >= 85) return mocha.red;
+                                if (SysData.cpu >= 60) return mocha.peach;
+                                return mocha.sapphire;
+                            }
+
+                            Row {
+                                id: cpuRow
+                                anchors.centerIn: parent
+                                spacing: barWindow.s(6)
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: ""
+                                    font.family: "Iosevka Nerd Font"
+                                    font.pixelSize: barWindow.s(16)
+                                    color: cpuPill.cpuAccentColor
+                                    Behavior on color { ColorAnimation { duration: 300 } }
+                                }
+
+                                Text {
+                                    id: cpuText
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: barWindow.s(barWindow.showFullText ? 66 : 38)
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: {
+                                        let coresPrefix = (barWindow.showFullText && SysData.cores > 0) ? (SysData.cores + "C ") : "";
+                                        return coresPrefix + SysData.cpu + "%";
+                                    }
+                                    font.family: "JetBrains Mono"
+                                    font.pixelSize: barWindow.s(12)
+                                    font.weight: Font.Bold
+                                    color: mocha.text
+                                    Behavior on color { ColorAnimation { duration: 200 } }
+                                }
+                            }
+
+                            MouseArea {
+                                id: cpuMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    Quickshell.execDetached(["kitty", "-e", "btop"]);
+                                }
+                            }
+                        }
+
+                        // --- RAM USAGE PILL ---
+                        Rectangle {
+                            id: ramPill
+                            property bool isHovered: ramMouse.containsMouse
+                            property bool showAsPercent: false
+                            radius: barWindow.s(10)
+                            height: barWindow.s(32)
+                            color: isHovered ? Qt.rgba(mocha.surface1.r, mocha.surface1.g, mocha.surface1.b, 0.6) : Qt.rgba(mocha.surface0.r, mocha.surface0.g, mocha.surface0.b, 0.35)
+                            border.width: 1
+                            border.color: isHovered ? Qt.rgba(ramAccentColor.r, ramAccentColor.g, ramAccentColor.b, 0.4) : Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.06)
+                            clip: true
+
+                            width: barWindow.s(90)
+                            scale: isHovered ? 1.05 : 1.0
+                            Behavior on scale { NumberAnimation { duration: 200; easing.type: Easing.OutExpo } }
+                            Behavior on color { ColorAnimation { duration: 200 } }
+
+                            property color ramAccentColor: {
+                                if (SysData.ramPercent >= 85) return mocha.red;
+                                if (SysData.ramPercent >= 70) return mocha.peach;
+                                return mocha.teal;
+                            }
+
+                            Row {
+                                id: ramRow
+                                anchors.centerIn: parent
+                                spacing: barWindow.s(6)
+
+                                Text {
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    text: "󰍛"
+                                    font.family: "Iosevka Nerd Font"
+                                    font.pixelSize: barWindow.s(16)
+                                    color: ramPill.ramAccentColor
+                                    Behavior on color { ColorAnimation { duration: 300 } }
+                                }
+
+                                Text {
+                                    id: ramText
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: barWindow.s(50)
+                                    horizontalAlignment: Text.AlignHCenter
+                                    text: ramPill.showAsPercent ? (SysData.ramPercent + "%") : (SysData.ramGb.toFixed(1) + "G")
+                                    font.family: "JetBrains Mono"
+                                    font.pixelSize: barWindow.s(12)
+                                    font.weight: Font.Bold
+                                    color: mocha.text
+                                    Behavior on color { ColorAnimation { duration: 200 } }
+                                }
+                            }
+
+                            MouseArea {
+                                id: ramMouse
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    ramPill.showAsPercent = !ramPill.showAsPercent;
+                                }
+                                onDoubleClicked: {
+                                    Quickshell.execDetached(["kitty", "-e", "btop"]);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Rectangle {
                     id: mediaBox
                     color: Qt.rgba(mocha.base.r, mocha.base.g, mocha.base.b, barWindow.barAlpha)
                     radius: barWindow.s(14); border.width: 1; border.color: Qt.rgba(mocha.text.r, mocha.text.g, mocha.text.b, 0.05)
@@ -991,7 +1152,7 @@ Variants {
                     width: barWindow.isMediaActive ? innerMediaLayout.implicitWidth + barWindow.s(24) : 0
                     Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.OutQuint } }
 
-                    property real defaultX: workspacesBox.defaultX + workspacesBox.width + (workspacesBox.width > 0 ? barWindow.s(4) : 0)
+                    property real defaultX: sysUsageBox.defaultX + sysUsageBox.width + (sysUsageBox.width > 0 ? barWindow.s(4) : 0)
                     property real settingsX: centerBox.settingsX - width - (width > 0 ? barWindow.s(4) : 0)
 
                     x: defaultX + (settingsX - defaultX) * barWindow.settingsSlideProgress
@@ -1600,6 +1761,7 @@ Variants {
                                         let nextProfile = (barWindow.powerProfile === "performance") ? "power-saver" : ((barWindow.powerProfile === "power-saver") ? "balanced" : "performance");
                                         barWindow.powerProfile = nextProfile;
                                         Quickshell.execDetached(["powerprofilesctl", "set", nextProfile]);
+                                        Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/turbo_inhibitor.sh", nextProfile === "performance" ? "start" : "stop"]);
                                     }
                                 }
                             }

@@ -44,7 +44,6 @@ TEXT_FILES=(
     "$HOME/.config/kitty/kitty-matugen-colors.conf"
     "$HOME/.config/nvim/matugen_colors.lua"
     "$HOME/.config/cava/colors"
-    "$HOME/.config/swayosd/style.css"
     "$HOME/.config/rofi/theme.rasi"
     "$HOME/.cache/matugen/colors-gtk.css"
     "$HOME/.config/qt5ct/colors/matugen.conf"
@@ -79,11 +78,6 @@ cat ~/.config/cava/config_base ~/.config/cava/colors > ~/.config/cava/config 2>/
 if pgrep -x "cava" > /dev/null; then
     killall -USR1 cava
 fi
-
-# Restart swayosd-server in the background and disown it so the script doesn't hang
-killall swayosd-server 2>/dev/null
-swayosd-server --top-margin 0.9 --style "$HOME/.config/swayosd/style.css" > /dev/null 2>&1 &
-disown
 
 # GTK Live-Reload Hack
 # Rapidly toggles the global theme to force GTK3 and GTK4 apps to flush 

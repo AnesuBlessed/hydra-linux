@@ -106,7 +106,7 @@ PanelWindow {
     property string currentActive: "hidden"
 
     onCurrentActiveChanged: {
-        Quickshell.execDetached(["bash", "-c", "echo '" + currentActive + "' > " + paths.runDir + "/current_widget"]);
+        GlobalSettingsWatcher.currentActiveWidget = currentActive;
     }
 
     property bool isVisible: false

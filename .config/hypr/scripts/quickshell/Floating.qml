@@ -923,9 +923,10 @@ Variants {
                                 anchors.leftMargin: floatingWidget.s(15)
                                 anchors.rightMargin: floatingWidget.s(15)
 
-                                visible: index === floatingWidget.activeIndex && floatingWidget.expandProgress > 0.01
-                                source: modelData
-                                asynchronous: false
+                                active: floatingWidget.isExpanded && index === floatingWidget.activeIndex
+                                visible: active && floatingWidget.expandProgress > 0.01
+                                source: active ? modelData : ""
+                                asynchronous: true
 
                                 property var scaleFunc: floatingWidget.s
                                 property var mochaColors: mocha 

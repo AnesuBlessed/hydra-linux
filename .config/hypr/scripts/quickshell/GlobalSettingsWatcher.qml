@@ -20,6 +20,7 @@ Item {
     readonly property var rawSettings: _raw
 
     property var _raw: ({})
+    property string currentActiveWidget: "hidden"
     signal settingsChanged()
 
     readonly property bool topbarHelpIcon: (_raw && _raw.topbarHelpIcon !== undefined) ? _raw.topbarHelpIcon : true

@@ -346,7 +346,7 @@ fi
 CORE_PKGS=(
     "hyprland" "hypridle" "hyprpolkitagent"
     "xdg-desktop-portal-hyprland" "xdg-desktop-portal-gtk"
-    "quickshell-git" "matugen-bin" "swayosd-git" "rofi" "kitty" "cava" "fastfetch"
+    "quickshell-git" "matugen-bin" "rofi" "kitty" "cava" "fastfetch"
     "sddm" "qt6-svg" "qt6-virtualkeyboard" "qt6-multimedia-ffmpeg" "qt6-imageformats"
     "pipewire" "wireplumber" "pipewire-pulse" "pipewire-alsa" "pipewire-jack"
     "libpulse" "pamixer" "playerctl" "pavucontrol" "alsa-utils" "easyeffects" "lsp-plugins"
@@ -449,7 +449,7 @@ BACKUP_DIR="$HOME/.config/hydra_backup/backup_${BACKUP_DATE}"
 backup_configs() {
     mkdir -p "$BACKUP_DIR"
     local backup_err=0
-    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch xdg-desktop-portal environment.d; do
+    for cfg in hypr quickshell kitty cava matugen rofi fastfetch xdg-desktop-portal environment.d; do
         if [ -d "$HOME/.config/$cfg" ] || [ -f "$HOME/.config/$cfg" ]; then
             if ! cp -a "$HOME/.config/$cfg" "$BACKUP_DIR/"; then
                 backup_err=1
@@ -472,7 +472,7 @@ print_phase "3/5" "Deploying Hydra Linux Configurations"
 
 deploy_configs() {
     mkdir -p "$HOME/.config" "$HOME/.local/bin"
-    for cfg in hypr quickshell kitty cava matugen rofi swayosd fastfetch xdg-desktop-portal environment.d; do
+    for cfg in hypr quickshell kitty cava matugen rofi fastfetch xdg-desktop-portal environment.d; do
         if [ -d "$SCRIPT_DIR/.config/$cfg" ]; then
             rm -rf "$HOME/.config/$cfg"
             cp -r "$SCRIPT_DIR/.config/$cfg" "$HOME/.config/"

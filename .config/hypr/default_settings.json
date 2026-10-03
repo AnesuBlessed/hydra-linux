@@ -221,23 +221,16 @@
     {
       "type": "bindl",
       "mods": "",
-      "key": "Caps_Lock",
-      "dispatcher": "exec",
-      "command": "sleep 0.1 && swayosd-client --caps-lock"
-    },
-    {
-      "type": "bindl",
-      "mods": "",
       "key": "XF86MonBrightnessDown",
       "dispatcher": "exec",
-      "command": "swayosd-client --brightness lower"
+      "command": "brightnessctl set 5%-"
     },
     {
       "type": "bindl",
       "mods": "",
       "key": "XF86MonBrightnessUp",
       "dispatcher": "exec",
-      "command": "swayosd-client --brightness raise"
+      "command": "brightnessctl set +5%"
     },
     {
       "type": "bindl",
@@ -307,28 +300,28 @@
       "mods": "",
       "key": "xf86AudioMicMute",
       "dispatcher": "exec",
-      "command": "swayosd-client --input-volume mute-toggle"
+      "command": "wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle"
     },
     {
       "type": "bindl",
       "mods": "",
       "key": "xf86audiomute",
       "dispatcher": "exec",
-      "command": "swayosd-client --output-volume mute-toggle"
+      "command": "wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle"
     },
     {
       "type": "bindel",
       "mods": "",
       "key": "xf86audiolowervolume",
       "dispatcher": "exec",
-      "command": "swayosd-client --output-volume lower"
+      "command": "wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%-"
     },
     {
       "type": "bindel",
       "mods": "",
       "key": "xf86audioraisevolume",
       "dispatcher": "exec",
-      "command": "swayosd-client --output-volume raise"
+      "command": "wpctl set-volume -l 1.5 @DEFAULT_AUDIO_SINK@ 5%+"
     },
     {
       "type": "bind",
@@ -504,22 +497,16 @@
       "command": "playerctld"
     },
     {
-      "command": "swayosd-server --top-margin 0.9 --style \"$HOME/.config/swayosd/style.css\""
-    },
-    {
       "command": "wl-paste --type text --watch cliphist store"
     },
     {
       "command": "wl-paste --type image --watch cliphist store"
     },
     {
-      "command": "~/.config/hypr/scripts/volume_listener.sh"
-    },
-    {
-      "command": "~/.config/hypr/scripts/update_notifier.sh"
-    },
-    {
       "command": "~/.config/hypr/scripts/hdmi_watcher.sh &"
+    },
+    {
+      "command": "bash ~/.config/hypr/scripts/turbo_inhibitor.sh sync &"
     }
   ]
 }

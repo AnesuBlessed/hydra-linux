@@ -119,9 +119,9 @@ EOF
 # Fallback for unconfigured displays
 monitor = , preferred, auto, 1
 
-# Clamshell Mode
-bindl = , switch:on:Lid Switch, exec, hyprctl keyword monitor "eDP-1, disable"
-bindl = , switch:off:Lid Switch, exec, hyprctl reload
+# Clamshell Mode (respects Turbo mode & external displays)
+bindl = , switch:on:Lid Switch, exec, bash ~/.config/hypr/scripts/lid_handler.sh close
+bindl = , switch:off:Lid Switch, exec, bash ~/.config/hypr/scripts/lid_handler.sh open
 EOF
     elif [ ! -f "$MONITORS_CONF" ]; then
         cp "$TMPL_DIR/monitors.conf.template" "$MONITORS_CONF"

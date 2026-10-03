@@ -99,8 +99,14 @@ PanelWindow {
 
         MatugenColors { id: _theme }
 
-        property var blobPalette1: [_theme.mauve, _theme.blue, _theme.peach, _theme.green, _theme.pink]
-        property var blobPalette2: [_theme.sapphire, _theme.teal, _theme.maroon, _theme.yellow, _theme.red]
+        function getBlobColor1(idx) {
+            let colors = [_theme.mauve, _theme.blue, _theme.peach, _theme.green, _theme.pink];
+            return colors[idx % 5] || "#cba6f7";
+        }
+        function getBlobColor2(idx) {
+            let colors = [_theme.sapphire, _theme.teal, _theme.maroon, _theme.yellow, _theme.red];
+            return colors[idx % 5] || "#74c7ec";
+        }
 
         property real globalOrbitAngle: 0
         NumberAnimation on globalOrbitAngle {
@@ -204,8 +210,8 @@ PanelWindow {
                     border.width: 1
                     clip: true
 
-                    property color blob1Color: contentWrapper.blobPalette1[index % 5]
-                    property color blob2Color: contentWrapper.blobPalette2[index % 5]
+                    property color blob1Color: contentWrapper.getBlobColor1(index)
+                    property color blob2Color: contentWrapper.getBlobColor2(index)
 
                     Rectangle {
                         width: parent.width * 0.7; height: width; radius: width / 2

@@ -31,10 +31,11 @@ hl.monitor({
     scale = 1,
 })
 
--- Clamshell Mode: Turn off laptop screen when lid is closed
-hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprctl keyword monitor \"eDP-1, disable\""), {
+-- Clamshell Mode: Handled via smart lid script (respects Turbo mode & external displays)
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/lid_handler.sh close"), {
     locked = true,
 })
-hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprctl keyword monitor \"eDP-1, 1366x768@60.00, 0x0, 1\""), {
+hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("bash ~/.config/hypr/scripts/lid_handler.sh open"), {
     locked = true,
 })
+

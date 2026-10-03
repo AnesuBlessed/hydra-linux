@@ -15,6 +15,7 @@ Item {
     property int temp: 0
     property real netRx: 0
     property real netTx: 0
+    property int cores: 4
     
     // --- Lifecycle Management ---
     property int subscribers: 0
@@ -24,11 +25,12 @@ Item {
     property bool fetchBusy: false
 
     function subscribe() {
-        if (subscribers === 0) {
+        subscribers++;
+        if (subscribers === 1) {
             fetchTimer.restart();
+            fetchProc.running = false;
             fetchProc.running = true; // Fetch immediately on first open
         }
-        subscribers++;
     }
 
     function unsubscribe() {
@@ -43,9 +45,12 @@ Item {
         id: fetchTimer
         interval: 2000
         repeat: true
-        running: false
+        running: root.subscribers > 0
         onTriggered: {
-            if (!root.fetchBusy) root.fetchProc.running = true;
+            if (!root.fetchBusy) {
+                fetchProc.running = false;
+                fetchProc.running = true;
+            }
         }
     }
 
@@ -53,7 +58,10 @@ Item {
         id: fetchProc
         running: false
         onRunningChanged: {
-            if (running) root.fetchBusy = true;
+            root.fetchBusy = running;
+        }
+        onExited: {
+            root.fetchBusy = false;
         }
         // Safely delegates path expansion directly to bash, preventing QML parsing issues
         // Passes dynamic sysdata cache dir in case the script needs it
@@ -77,6 +85,10 @@ Item {
                     if (!isNaN(temp)) root.temp = temp;
                     if (!isNaN(rx)) root.netRx = rx;
                     if (!isNaN(tx)) root.netTx = tx;
+                    if (p.length >= 7) {
+                        let c = parseInt(p[6]);
+                        if (!isNaN(c) && c > 0) root.cores = c;
+                    }
                 }
             }
         }

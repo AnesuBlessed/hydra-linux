@@ -340,7 +340,7 @@ Item {
         Rectangle {
             anchors.fill: parent
             radius: window.s(20)
-            color: Qt.rgba(window.base.r, window.base.g, window.base.b, 0.80)
+            color: window.base
             border.color: window.surface0 
             border.width: 1
             clip: true
@@ -1687,7 +1687,12 @@ Item {
                                             MouseArea {
                                                 id: profileMa
                                                 anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                                onClicked: { window.powerProfile = name; Quickshell.execDetached(["powerprofilesctl", "set", name]); sysPoller.running = true; }
+                                                onClicked: {
+                                                    window.powerProfile = name;
+                                                    Quickshell.execDetached(["powerprofilesctl", "set", name]);
+                                                    Quickshell.execDetached(["bash", Quickshell.env("HOME") + "/.config/hypr/scripts/turbo_inhibitor.sh", name === "performance" ? "start" : "stop"]);
+                                                    sysPoller.running = true;
+                                                }
                                             }
                                         }
                                     }
