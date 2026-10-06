@@ -523,10 +523,8 @@ Item {
                     nodes.push({ id: "sec_" + i, name: obj.security || "Open", icon: "󰦝", action: "Security", isInfoNode: true, isActionable: false, parentIndex: cIndex });
                     if (obj.ip) nodes.push({ id: "ip_" + i, name: obj.ip, icon: "󰩟", action: "IP Address", isInfoNode: true, isActionable: true, parentIndex: cIndex });
                     if (obj.freq) nodes.push({ id: "freq_" + i, name: obj.freq, icon: "󰖧", action: "Band", isInfoNode: true, isActionable: false, parentIndex: cIndex });
-                    if (obj.ssid) {
-                        let safeSsid = obj.ssid.replace(/'/g, "'\\''");
-                        nodes.push({ id: "forget_" + i, name: "Forget", icon: "󰆴", action: "Forget Network", cmdStr: "nmcli connection delete '" + safeSsid + "'", isInfoNode: true, isActionable: true, parentIndex: cIndex });
-                    }
+                    let safeSsid = (obj.ssid || "").replace(/'/g, "'\\''");
+                    nodes.push({ id: "forget_" + i, name: "Forget", icon: "󰆴", action: "Forget Network", cmdStr: "nmcli connection delete '" + safeSsid + "'", isInfoNode: true, isActionable: true, parentIndex: cIndex });
                 } else {
                     nodes.push({ id: "bat_" + obj.mac, name: (obj.battery || "0") + "%", icon: "󰥉", action: "Battery", isInfoNode: true, isActionable: false, parentIndex: cIndex });
                     if (obj.profile) {
