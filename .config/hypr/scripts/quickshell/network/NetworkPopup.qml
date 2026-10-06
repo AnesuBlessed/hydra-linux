@@ -2007,10 +2007,19 @@ Item {
                                     id: floatMa
                                     anchors.fill: parent
                                     hoverEnabled: floatCard.isInteractable
+                                    acceptedButtons: Qt.LeftButton | Qt.RightButton
                                     
                                     cursorShape: (floatCard.triggered || floatCard.isMyBusy || floatCard.renderFill === 1.0 || !floatCard.isInteractable) ? Qt.ArrowCursor : Qt.PointingHandCursor
                                     
-                                    onPressed: { 
+                                    onPressed: (mouse) => { 
+                                        if (mouse.button === Qt.RightButton) {
+                                            if (window.activeMode === "wifi" && !isInfoNode && typeof ssid !== "undefined" && ssid) {
+                                                let safeSsid = ssid.replace(/'/g, "'\\''");
+                                                Quickshell.execDetached(["bash", "-c", "nmcli connection delete '" + safeSsid + "'"]);
+                                                window.playSfx("switch.wav");
+                                            }
+                                            return;
+                                        }
                                         if (floatCard.isInteractable && !floatCard.triggered && !floatCard.isMyBusy && floatCard.fillLevel === 0.0) {
                                             if (window.pendingWifiId !== "") {
                                                 window.pendingWifiId = ""; window.pendingWifiSsid = "";
@@ -2019,7 +2028,8 @@ Item {
                                             fillAnim.start()
                                         }
                                     }
-                                    onReleased: {
+                                    onReleased: (mouse) => {
+                                        if (mouse.button === Qt.RightButton) return;
                                         if (floatCard.isInteractable && !floatCard.triggered && !floatCard.isMyBusy && floatCard.fillLevel < 1.0) {
                                             fillAnim.stop()
                                             drainAnim.start()
