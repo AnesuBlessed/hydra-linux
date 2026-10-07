@@ -216,6 +216,8 @@ Item {
     property string pendingWifiId: ""
     property var savedWifiNetworks: []
 
+    Timer { id: refreshTimer; interval: 500; onTriggered: savedNetworksFetcher.running = true }
+
     Process {
         id: savedNetworksFetcher
         command: ["bash", "-c", "nmcli -t -f NAME,TYPE connection show | awk -F: '$2==\"802-11-wireless\"{print $1}'"]
@@ -2017,6 +2019,7 @@ Item {
                                                 let safeSsid = ssid.replace(/'/g, "'\\''");
                                                 Quickshell.execDetached(["bash", "-c", "nmcli connection delete '" + safeSsid + "'"]);
                                                 window.playSfx("switch.wav");
+                                                refreshTimer.start();
                                             }
                                             return;
                                         }
