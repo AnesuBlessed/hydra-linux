@@ -2038,6 +2038,53 @@ Item {
                                             drainAnim.start()
                                         }
                                     }
+
+                                Rectangle {
+                                    id: physicalForgetBtn
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: window.s(8)
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    width: window.s(26)
+                                    height: window.s(26)
+                                    radius: window.s(6)
+                                    color: physicalForgetMa.containsMouse ? window.red : "transparent"
+                                    visible: {
+                                        if (window.activeMode !== "wifi" || isInfoNode || typeof ssid === "undefined" || !ssid) return false;
+                                        let cleanSsid = ssid.trim();
+                                        for (let i = 0; i < window.savedWifiNetworks.length; i++) {
+                                            if (window.savedWifiNetworks[i].trim() === cleanSsid) return true;
+                                        }
+                                        return false;
+                                    }
+                                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                                    Text {
+                                        anchors.centerIn: parent
+                                        font.family: "Iosevka Nerd Font"
+                                        font.pixelSize: Math.max(window.s(16), 14)
+                                        color: physicalForgetMa.containsMouse ? "#ffffff" : window.subtext0
+                                        text: "󰆴"
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+
+                                    MouseArea {
+                                        id: physicalForgetMa
+                                        anchors.fill: parent
+                                        hoverEnabled: true
+                                        preventStealing: true
+                                        cursorShape: Qt.PointingHandCursor
+                                        onPressed: (mouse) => mouse.accepted = true
+                                        onReleased: (mouse) => mouse.accepted = true
+                                        onClicked: (mouse) => {
+                                            let safeSsid = ssid.replace(/'/g, "'\\''");
+                                            Quickshell.execDetached(["bash", "-c", "nmcli connection delete '" + safeSsid + "'"]);
+                                            window.playSfx("switch.wav");
+                                            refreshTimer.start();
+                                            mouse.accepted = true;
+                                        }
+                                    }
+                                }
+
                                 }
 
                                 NumberAnimation {
