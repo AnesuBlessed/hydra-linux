@@ -2017,7 +2017,13 @@ Item {
                                         if (mouse.button === Qt.RightButton) {
                                             if (window.activeMode === "wifi" && !isInfoNode && typeof ssid !== "undefined" && ssid) {
                                                 let safeSsid = ssid.replace(/'/g, "'\\''");
+                                                let isSaved = false;
+                                            for (let i = 0; i < window.savedWifiNetworks.length; i++) {
+                                                if (window.savedWifiNetworks[i].trim() === floatCard.itemId.trim()) { isSaved = true; break; }
+                                            }
+                                            if (isSaved) {
                                                 Quickshell.execDetached(["bash", "-c", "nmcli connection delete '" + safeSsid + "'"]);
+                                            }
                                                 window.playSfx("switch.wav");
                                                 refreshTimer.start();
                                             }
@@ -2049,13 +2055,11 @@ Item {
                                     radius: window.s(6)
                                     color: physicalForgetMa.containsMouse ? window.red : window.base
                                     visible: {
-                                        let _deps = window.savedWifiNetworks; // Force QML binding update
-                                        if (window.activeMode !== "wifi" || isInfoNode || typeof ssid === "undefined" || !ssid) return false;
-                                        let cleanSsid = ssid.trim();
-                                        for (let i = 0; i < window.savedWifiNetworks.length; i++) {
-                                            if (window.savedWifiNetworks[i].trim() === cleanSsid) return true;
-                                        }
-                                        return false;
+                                        if (window.activeMode !== "wifi" || floatCard.itemId === "action_scan" || floatCard.itemId === "action_settings" || floatCard.isCurrentlyConnected) return false;
+                                        if (typeof action !== "undefined" && action !== "Connect" && action !== "Disconnect") return false;
+                                        let cleanSsid = floatCard.itemId.trim();
+                                        if (cleanSsid === "") return false;
+                                        return true; // Always show on unconnected networks
                                     }
                                     Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -2077,8 +2081,14 @@ Item {
                                         onPressed: (mouse) => mouse.accepted = true
                                         onReleased: (mouse) => mouse.accepted = true
                                         onClicked: (mouse) => {
-                                            let safeSsid = ssid.replace(/'/g, "'\\''");
-                                            Quickshell.execDetached(["bash", "-c", "nmcli connection delete '" + safeSsid + "'"]);
+                                            let safeSsid = floatCard.itemId.replace(/'/g, "'\\''");
+                                            let isSaved = false;
+                                            for (let i = 0; i < window.savedWifiNetworks.length; i++) {
+                                                if (window.savedWifiNetworks[i].trim() === floatCard.itemId.trim()) { isSaved = true; break; }
+                                            }
+                                            if (isSaved) {
+                                                Quickshell.execDetached(["bash", "-c", "nmcli connection delete '" + safeSsid + "'"]);
+                                            }
                                             window.playSfx("switch.wav");
                                             refreshTimer.start();
                                             mouse.accepted = true;
