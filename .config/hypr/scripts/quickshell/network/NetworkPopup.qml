@@ -2047,8 +2047,9 @@ Item {
                                     width: window.s(26)
                                     height: window.s(26)
                                     radius: window.s(6)
-                                    color: physicalForgetMa.containsMouse ? window.red : "transparent"
+                                    color: physicalForgetMa.containsMouse ? window.red : window.base
                                     visible: {
+                                        let _deps = window.savedWifiNetworks; // Force QML binding update
                                         if (window.activeMode !== "wifi" || isInfoNode || typeof ssid === "undefined" || !ssid) return false;
                                         let cleanSsid = ssid.trim();
                                         for (let i = 0; i < window.savedWifiNetworks.length; i++) {
