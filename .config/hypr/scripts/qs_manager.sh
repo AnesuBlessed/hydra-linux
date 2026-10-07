@@ -60,6 +60,7 @@ MANIFEST="$THUMB_DIR/.manifest"
 
 if [[ "$ACTION" != "reload" ]] && ! pgrep -u "$UID" -f "quickshell.*Shell.qml" >/dev/null; then
     mkdir -p "$QS_LOG_DIR"
+    systemctl --user reset-failed quickshell-desktop 2>/dev/null
     systemd-run --user --unit=quickshell-desktop \
         --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
         --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
@@ -226,6 +227,7 @@ if [[ "$ACTION" == "reload" ]]; then
     pkill -9 -u "$UID" -f "quickshell.*Shell.qml" 2>/dev/null || true
 
     mkdir -p "$QS_LOG_DIR"
+    systemctl --user reset-failed quickshell-desktop 2>/dev/null
     systemd-run --user --unit=quickshell-desktop \
         --setenv=WAYLAND_DISPLAY="$WAYLAND_DISPLAY" \
         --setenv=XDG_RUNTIME_DIR="$XDG_RUNTIME_DIR" \
